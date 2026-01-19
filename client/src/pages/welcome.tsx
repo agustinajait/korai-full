@@ -93,6 +93,19 @@ export default function Welcome() {
           </p>
         </GlassCard>
 
+        <div className="flex gap-4">
+          <Link href="/dashboard" className="flex-1">
+            <Button variant="outline" className="w-full h-12 border-white/10 bg-white/5 hover:bg-white/10">
+              Ver Dashboard
+            </Button>
+          </Link>
+          <Link href="/" className="flex-1">
+            <Button variant="outline" className="w-full h-12 border-white/10 bg-white/5 hover:bg-white/10">
+              Ciudadano
+            </Button>
+          </Link>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
            <GlassCard className="p-4 flex items-center gap-3 bg-white/5 hover:bg-white/10 transition-colors cursor-default">
              <div className="p-2 rounded-full bg-green-500/20 text-green-400">
