@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import { Loader2, AlertCircle, TrendingUp, Users } from "lucide-react";
 import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
 
 const COLORS = {
   rojo: "#ef4444",
