@@ -172,7 +172,7 @@ export default function Survey() {
                 🎉
               </motion.span>
             </div>
-            <h2 className="text-3xl font-display font-bold">¡Encuesta completada!</h2>
+            <h2 className="text-3xl font-display font-bold">¡Diagnóstico completado!</h2>
             <p className="text-muted-foreground">
               Antes de terminar, ¿quieres dejar algún comentario adicional sobre tu barrio?
             </p>

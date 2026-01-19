@@ -14,17 +14,20 @@ const COLORS = {
 
 export default function Dashboard() {
   const [cityFilter, setCityFilter] = useState<string>("all");
-  const [days, setDays] = useState(30);
+  const [selectedDimension, setSelectedDimension] = useState<string | null>(null);
   const { data: reports, isLoading, error } = useReports({ city: cityFilter === "all" ? undefined : cityFilter });
 
   const stats = useMemo(() => {
     if (!reports) return null;
     
     let rojo = 0, amarillo = 0, verde = 0;
-    const byDim: Record<string, { rojo: number; amarillo: number; verde: number; n: number }> = {};
+    const byDim: Record<string, { rojo: number; amarillo: number; verde: number; n: number; indicators: Record<string, { rojo: number; amarillo: number; verde: number }> }> = {};
     
     INSTRUMENT.dimensions.forEach(d => {
-      byDim[d.id] = { rojo: 0, amarillo: 0, verde: 0, n: 0 };
+      byDim[d.id] = { rojo: 0, amarillo: 0, verde: 0, n: 0, indicators: {} };
+      INSTRUMENT.indicators.filter(i => i.dimension === d.id).forEach(i => {
+        byDim[d.id].indicators[i.id] = { rojo: 0, amarillo: 0, verde: 0 };
+      });
     });
 
     const frases: any[] = [];
@@ -40,6 +43,12 @@ export default function Dashboard() {
           if (val === 'rojo') byDim[dimId].rojo++;
           else if (val === 'amarillo') byDim[dimId].amarillo++;
           else if (val === 'verde') byDim[dimId].verde++;
+
+          if (byDim[dimId].indicators[key]) {
+            if (val === 'rojo') byDim[dimId].indicators[key].rojo++;
+            else if (val === 'amarillo') byDim[dimId].indicators[key].amarillo++;
+            else if (val === 'verde') byDim[dimId].indicators[key].verde++;
+          }
         }
         nCount++;
         if (val === 'rojo') rCount++;
@@ -175,9 +184,16 @@ export default function Dashboard() {
                   const s = stats?.byDimension?.[d.id] || { rojo: 0, amarillo: 0, verde: 0, n: 0 };
                   const total = s.n || 1;
                   const color = (s.rojo / total >= 0.33) ? 'rojo' : (s.amarillo / total >= 0.33) ? 'amarillo' : 'verde';
+                  const isSelected = selectedDimension === d.id;
                   
                   return (
-                    <div key={d.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                    <div 
+                      key={d.id} 
+                      onClick={() => setSelectedDimension(isSelected ? null : d.id)}
+                      className={`p-4 rounded-2xl bg-white/5 border transition-all cursor-pointer ${
+                        isSelected ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20' : 'border-white/5 hover:bg-white/10'
+                      }`}
+                    >
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">{d.emoji}</span>
@@ -196,6 +212,25 @@ export default function Dashboard() {
                         <div style={{ width: `${(s.amarillo / total) * 100}%` }} className="bg-[#f59e0b]" />
                         <div style={{ width: `${(s.rojo / total) * 100}%` }} className="bg-[#ef4444]" />
                       </div>
+                      
+                      {isSelected && (
+                        <div className="mt-4 pt-4 border-t border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2">
+                          {INSTRUMENT.indicators.filter(i => i.dimension === d.id).map(ind => {
+                            const indStats = (s as any).indicators?.[ind.id] || { rojo: 0, amarillo: 0, verde: 0 };
+                            const indTotal = indStats.rojo + indStats.amarillo + indStats.verde || 1;
+                            return (
+                              <div key={ind.id} className="space-y-1">
+                                <div className="text-[10px] text-[#A9B3DA] leading-tight">{ind.label}</div>
+                                <div className="flex h-1 w-full rounded-full overflow-hidden bg-white/5">
+                                  <div style={{ width: `${(indStats.verde / indTotal) * 100}%` }} className="bg-[#22c55e]" />
+                                  <div style={{ width: `${(indStats.amarillo / indTotal) * 100}%` }} className="bg-[#f59e0b]" />
+                                  <div style={{ width: `${(indStats.rojo / indTotal) * 100}%` }} className="bg-[#ef4444]" />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

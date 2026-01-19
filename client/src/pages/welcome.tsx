@@ -85,7 +85,7 @@ export default function Welcome() {
             disabled={!city}
             className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:to-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/25"
           >
-            Comenzar Encuesta <ArrowRight className="ml-2 w-5 h-5" />
+            Comenzar Diagnóstico <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
 
           <p className="text-xs text-center text-white/30 leading-relaxed">
