@@ -1,6 +1,6 @@
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, MapPin, Target } from "lucide-react";
 import { useState } from "react";
