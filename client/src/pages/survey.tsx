@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { INSTRUMENT } from "@/lib/instrument";
 import { useCreateReport } from "@/hooks/use-reports";
+import { queryClient } from "@/lib/queryClient";
 import { Loader2, ArrowRight } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -79,6 +80,7 @@ export default function Survey() {
       demographics: {} // Simplified for this demo
     }, {
       onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
         setLocation("/dashboard");
       }
     });
