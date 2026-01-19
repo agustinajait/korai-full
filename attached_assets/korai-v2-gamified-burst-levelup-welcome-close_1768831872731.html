@@ -1,0 +1,1987 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>KORAI v1 – Semáforo + Waze (Demo local)</title>
+  <script src="https://cdn.tailwindcss.com">
+function forceScrollToQuestion(){
+  requestAnimationFrame(()=>{
+    const el = document.getElementById('questionCard');
+    if(el){
+      el.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+  });
+}
+
+</script>
+<script>
+/* ===================== Gamification SFX (Web Audio API) ===================== */
+const SFX = (() => {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let ctx = null;
+
+  function ensure(){
+    if(!AudioCtx) return null;
+    if(!ctx) ctx = new AudioCtx();
+    // Resume on first gesture if suspended
+    if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+    return ctx;
+  }
+
+  function tone({freq=440, dur=0.10, type='sine', gain=0.06, pan=0}={}){
+    const c = ensure(); if(!c) return;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = type; o.frequency.value = freq;
+
+    // Optional panner
+    let node = o;
+    if (c.createStereoPanner){
+      const p = c.createStereoPanner();
+      p.pan.value = pan;
+      node.connect(p); p.connect(g);
+    } else {
+      node.connect(g);
+    }
+    g.connect(c.destination);
+
+    const t = c.currentTime;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  }
+
+  function tick(){ tone({freq:900, dur:0.06, type:'triangle', gain:0.035}); }
+  function screen(){ tone({freq:520, dur:0.08, type:'sine', gain:0.03, pan:-0.15}); }
+  function choice(color){
+    if(color==='verde') tone({freq:760, dur:0.10, type:'sine', gain:0.06});
+    if(color==='amarillo') tone({freq:560, dur:0.10, type:'sine', gain:0.06});
+    if(color==='rojo') tone({freq:360, dur:0.12, type:'sine', gain:0.065});
+  }
+  function achievement(){
+    // simple arpeggio
+    const seq = [740, 880, 1040, 1320];
+    seq.forEach((f,i)=> setTimeout(()=> tone({freq:f, dur:0.10, type:'sine', gain:0.06, pan: (i%2?0.12:-0.12)}), i*90));
+  }
+
+  return { ensure, tone, tick, screen, choice, achievement };
+})();
+
+/* ===================== Haptics ===================== */
+function haptic(color){
+  if(!navigator.vibrate) return;
+  if(color==='verde') navigator.vibrate(10);
+  else if(color==='amarillo') navigator.vibrate([12, 18, 12]);
+  else navigator.vibrate([20, 24, 20]);
+}
+
+/* ===================== Confetti ===================== */
+const Confetti = (() => {
+  const canvas = () => document.getElementById('confetti');
+  let parts = [];
+  let raf = null;
+
+  function resize(){
+    const c = canvas(); if(!c) return;
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+
+  function burst(){
+    const c = canvas(); if(!c) return;
+    resize();
+    const W = c.width, H = c.height;
+    parts = [];
+    const n = Math.min(240, Math.max(120, Math.floor(W/6)));
+    for(let i=0;i<n;i++){
+      parts.push({
+        x: W*0.5, y: H*0.18,
+        vx: (Math.random()*2-1) * (4 + Math.random()*6),
+        vy: (Math.random()*-1) * (6 + Math.random()*8),
+        g: 0.22 + Math.random()*0.16,
+        r: 3 + Math.random()*3,
+        a: 1,
+        hue: Math.floor(Math.random()*360),
+        rot: Math.random()*Math.PI*2,
+        vr: (Math.random()*2-1)*0.25
+      });
+    }
+    if(raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(tick);
+  }
+
+  function tick(){
+    const c = canvas(); if(!c) return;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,c.width,c.height);
+    for(const p of parts){
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.a *= 0.992;
+
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.max(0,p.a);
+      ctx.fillStyle = `hsl(${p.hue} 90% 60%)`;
+      ctx.fillRect(-p.r, -p.r, p.r*2.2, p.r*1.4);
+      ctx.restore();
+    }
+    parts = parts.filter(p => p.y < c.height + 40 && p.a > 0.05);
+    if(parts.length){
+      raf = requestAnimationFrame(tick);
+    } else {
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0,0,c.width,c.height);
+    }
+  }
+
+  return { burst };
+})();
+
+/* ===================== UI helpers ===================== */
+function pulseTarget(){
+  try{
+    const el = (typeof event !== 'undefined' && event.currentTarget) ? event.currentTarget : null;
+    if(!el) return;
+    el.classList.remove('pulse');
+    void el.offsetWidth; // reflow
+    el.classList.add('pulse');
+    setTimeout(()=>el.classList.remove('pulse'), 260);
+  }catch(e){}
+}
+
+function celebrateProgress(){
+  const bar = document.querySelector('.bar');
+  if(bar){
+    bar.classList.remove('bar-celebrate');
+    void bar.offsetWidth;
+    bar.classList.add('bar-celebrate');
+    setTimeout(()=>bar.classList.remove('bar-celebrate'), 520);
+  }
+}
+
+function scrollToQuestion(){
+  try{
+    const el = document.getElementById('questionCard');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    else window.scrollTo({top:0, behavior:'smooth'});
+  }catch(e){}
+}
+</script>
+  <style>
+:root{
+  --bg0:#070A13;
+  --bg1:#0B1430;
+  --txt:#EEF2FF;
+  --muted:#A9B3DA;
+
+  --glass: rgba(255,255,255,.06);
+  --glass2: rgba(255,255,255,.10);
+  --stroke: rgba(255,255,255,.12);
+  --stroke2: rgba(255,255,255,.18);
+
+  --green:#22c55e;
+  --yellow:#f59e0b;
+  --red:#ef4444;
+  --brand:#7c5cff;
+
+  --shadow: 0 22px 60px rgba(0,0,0,.42);
+  --shadow2: 0 14px 34px rgba(0,0,0,.32);
+  --r: 18px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  color:var(--txt);
+  background:
+    radial-gradient(1200px 900px at 10% -10%, rgba(124,92,255,.35), transparent 60%),
+    radial-gradient(900px 700px at 85% 0%, rgba(34,197,94,.16), transparent 60%),
+    radial-gradient(900px 700px at 70% 115%, rgba(245,158,11,.12), transparent 60%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+  overflow-x:hidden;
+}
+
+/* soft grain */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;
+  opacity:.22;
+}
+
+/* container */
+.wrap{max-width:1100px;margin:0 auto;padding:18px}
+@media (max-width:520px){ .wrap{padding:14px} }
+
+/* cards */
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
+  border:1px solid var(--stroke);
+  border-radius: calc(var(--r) + 4px);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position:relative;
+  overflow:hidden;
+  animation: enterUp .40s ease both;
+}
+.card::after{
+  content:"";
+  position:absolute; inset:-2px;
+  background:
+    radial-gradient(500px 220px at 18% 0%, rgba(124,92,255,.18), transparent 60%),
+    radial-gradient(420px 220px at 82% 0%, rgba(34,197,94,.10), transparent 60%);
+  opacity:.9;
+  pointer-events:none;
+}
+.card > *{ position:relative; z-index:1; }
+
+/* headings */
+h1,h2,h3{letter-spacing:-.02em}
+.title{
+  font-weight: 900;
+  font-size: clamp(20px, 3.2vw, 34px);
+  margin:0;
+}
+.subtitle{color:var(--muted); line-height:1.45}
+.muted{color:var(--muted)}
+
+/* buttons */
+.btn{
+  border:1px solid var(--stroke2);
+  background: rgba(255,255,255,.06);
+  color:var(--txt);
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor:pointer;
+  transition: transform .14s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, filter .18s ease;
+  box-shadow: 0 10px 24px rgba(0,0,0,.20);
+  user-select:none;
+}
+.btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.28); box-shadow: 0 16px 32px rgba(0,0,0,.26);}
+.btn:active{transform: translateY(0); box-shadow: 0 9px 20px rgba(0,0,0,.20);}
+.btn-primary{
+  background: linear-gradient(135deg, rgba(124,92,255,1), rgba(124,92,255,.72));
+  border-color: transparent;
+  box-shadow: 0 18px 44px rgba(124,92,255,.22);
+}
+.btn-primary:hover{filter:saturate(1.08);}
+
+/* semáforo options (these class names exist in your markup) */
+.choice{
+  width:100%;
+  text-align:left;
+  border-radius: 16px;
+  border:1px solid var(--stroke2);
+  background: rgba(255,255,255,.075);
+  color: var(--txt);
+  padding: 14px 14px;
+  cursor:pointer;
+  transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, filter .18s ease;
+  position:relative;
+  overflow:hidden;
+}
+.choice::before{
+  content:"";
+  position:absolute; inset:0;
+  background: radial-gradient(420px 160px at 12% 0%, rgba(255,255,255,.12), transparent 55%);
+  opacity:.85;
+  pointer-events:none;
+}
+.choice:hover{transform: translateY(-1px); box-shadow: var(--shadow2); background: rgba(255,255,255,.085);}
+.choice:active{transform: translateY(0);}
+
+.choice-dot{
+  width:18px; height:18px; border-radius:999px;
+  border:2px solid rgba(255,255,255,.9);
+  box-shadow: 0 10px 20px rgba(0,0,0,.22);
+  flex: 0 0 auto;
+}
+
+.choice-green{border-color: rgba(34,197,94,.42); background: rgba(34,197,94,.08);}
+.choice-green .choice-dot{background: linear-gradient(180deg, rgba(34,197,94,1), rgba(34,197,94,.72));}
+
+.choice-yellow{border-color: rgba(245,158,11,.45); background: rgba(245,158,11,.08);}
+.choice-yellow .choice-dot{background: linear-gradient(180deg, rgba(245,158,11,1), rgba(245,158,11,.72));}
+
+.choice-red{border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.08);}
+.choice-red .choice-dot{background: linear-gradient(180deg, rgba(239,68,68,1), rgba(239,68,68,.72));}
+
+.choice-selected{
+  outline: 2px solid rgba(124,92,255,.58);
+  box-shadow: 0 18px 44px rgba(124,92,255,.14);
+}
+
+/* pulse on click */
+.pulse{
+  animation: pop .24s ease both;
+}
+@keyframes pop{
+  0%{ transform: scale(1); }
+  60%{ transform: scale(1.015); }
+  100%{ transform: scale(1); }
+}
+
+/* progress bar */
+.bar{
+  height:10px;
+  border-radius:999px;
+  background: rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
+  overflow:hidden;
+}
+.bar > div{
+  height:100%;
+  border-radius:999px;
+  transition: width .35s ease;
+}
+.bar-celebrate{
+  animation: shimmer .45s ease both;
+}
+@keyframes shimmer{
+  0%{ filter:saturate(.95) brightness(1); }
+  60%{ filter:saturate(1.25) brightness(1.08); }
+  100%{ filter:saturate(1) brightness(1); }
+}
+
+/* screen transitions */
+.screen{
+  animation: fadeSlide .28s ease both;
+}
+@keyframes fadeSlide{
+  from{opacity:0; transform: translateY(6px);}
+  to{opacity:1; transform: translateY(0);}
+}
+
+/* confetti canvas */
+#confetti{
+  position:fixed; inset:0; pointer-events:none;
+  z-index: 9999;
+}
+
+@keyframes enterUp{
+  from{opacity:0; transform: translateY(8px);}
+  to{opacity:1; transform: translateY(0);}
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation:none !important; transition:none !important; }
+}
+
+/* ---------- Contrast fixes for Tailwind utility classes on dark UI ---------- */
+.text-slate-900,.text-slate-800,.text-slate-700{color:var(--txt)!important;}
+.text-slate-600,.text-slate-500{color:var(--muted)!important;}
+.text-slate-400{color:rgba(236,240,255,.72)!important;}
+.bg-slate-50,.bg-white{background: rgba(255,255,255,.06)!important;}
+.border-slate-100,.border-slate-200{border-color: rgba(255,255,255,.14)!important;}
+.hover\:bg-slate-50:hover{background: rgba(255,255,255,.08)!important;}
+
+/* Ensure form elements are readable */
+select,input,textarea{color:var(--txt); background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.14);} 
+option{color:#0b1022;}
+
+/* Mobile: hide sidebar progress entirely (avoid scroll-jump) */
+@media (max-width: 1024px){
+  .progressSide{display:none !important;}
+}
+
+</style>
+<style id="korai-contrast-fix">
+:root{
+  color-scheme: dark;
+  --k-bg: #070A13;
+  --k-text: #EEF2FF;
+  --k-muted: rgba(238,242,255,.72);
+  --k-stroke: rgba(255,255,255,.14);
+}
+html, body{
+  background: radial-gradient(1100px 700px at 18% -10%, rgba(124,92,255,.28), transparent 60%),
+              radial-gradient(900px 600px at 92% 0%, rgba(46,234,124,.14), transparent 62%),
+              radial-gradient(900px 600px at 70% 115%, rgba(245,158,11,.12), transparent 60%),
+              linear-gradient(180deg, var(--k-bg), #0B1330);
+  color: var(--k-text) !important;
+}
+/* Make Tailwind dark-friendly */
+.text-slate-900, .text-slate-800, .text-slate-700, .text-slate-600, .text-slate-500,
+.text-gray-900, .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500,
+.text-neutral-900, .text-neutral-800, .text-neutral-700, .text-neutral-600, .text-neutral-500{
+  color: var(--k-text) !important;
+  opacity: .92;
+}
+.text-slate-400, .text-slate-300, .text-gray-400, .text-gray-300, .text-neutral-400, .text-neutral-300{
+  color: var(--k-muted) !important;
+  opacity: .95;
+}
+.bg-white, .bg-slate-50, .bg-gray-50, .bg-neutral-50{ background: rgba(255,255,255,.06) !important; }
+.bg-slate-100, .bg-gray-100, .bg-neutral-100{ background: rgba(255,255,255,.07) !important; }
+
+/* Cards/panels */
+.card, .glass, .panel, .rounded-2xl, .rounded-xl{
+  background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05)) !important;
+  border: 1px solid var(--k-stroke) !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.45) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Semáforo choices */
+.choice{
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  color: var(--k-text) !important;
+  transition: transform .12s ease, box-shadow .18s ease, filter .18s ease;
+}
+.choice:hover{ transform: translateY(-1px); box-shadow: 0 16px 40px rgba(0,0,0,.35); }
+.choice-green{ border-color: rgba(34,197,94,.60) !important; box-shadow: inset 0 0 0 1px rgba(34,197,94,.25); }
+.choice-yellow{ border-color: rgba(245,158,11,.60) !important; box-shadow: inset 0 0 0 1px rgba(245,158,11,.25); }
+.choice-red{ border-color: rgba(239,68,68,.60) !important; box-shadow: inset 0 0 0 1px rgba(239,68,68,.25); }
+
+.choice-dot{ border: 2px solid rgba(255,255,255,.9) !important; }
+.choice-green .choice-dot{ background: rgba(34,197,94,1) !important; }
+.choice-yellow .choice-dot{ background: rgba(245,158,11,1) !important; }
+.choice-red .choice-dot{ background: rgba(239,68,68,1) !important; }
+
+.choiceSelected{ outline: 2px solid rgba(124,92,255,.60) !important; }
+button, .btn{ color: var(--k-text) !important; }
+/* Selected choice glow + check */
+.choice-selected, .choiceSelected{
+  box-shadow: 0 18px 44px rgba(124,92,255,.18), inset 0 0 0 1px rgba(124,92,255,.25) !important;
+  transform: translateY(-1px);
+}
+.choice-selected .choice-dot::after, .choiceSelected .choice-dot::after{
+  content:"✓";
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  color:#0B1330;
+  font-size:12px;
+  font-weight:900;
+}
+.choice-green.choice-selected{ box-shadow: 0 18px 44px rgba(34,197,94,.18), inset 0 0 0 1px rgba(34,197,94,.22) !important; }
+.choice-yellow.choice-selected{ box-shadow: 0 18px 44px rgba(245,158,11,.18), inset 0 0 0 1px rgba(245,158,11,.22) !important; }
+.choice-red.choice-selected{ box-shadow: 0 18px 44px rgba(239,68,68,.18), inset 0 0 0 1px rgba(239,68,68,.22) !important; }
+</style>
+
+<style id="korai-check-fix">
+.choice.selected .choice-dot::after{
+  content:"✓";
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  color:#0B1330;
+}
+</style>
+
+
+<style id="korai-progress-move">
+.progress-sidebar, .left-progress, aside{ display:none !important; }
+.top-progress{
+  position:sticky;
+  top:0;
+  z-index:50;
+  padding:10px 14px;
+  backdrop-filter: blur(10px);
+}
+</style>
+
+<style id="korai-choice-glow">
+@keyframes choicePop{
+  0%{ transform: translateY(0) scale(1); }
+  40%{ transform: translateY(-1px) scale(1.02); }
+  100%{ transform: translateY(0) scale(1); }
+}
+/* The app marks selection with class "choice-selected" (keep logic intact) */
+.choice{ position:relative; overflow:hidden; }
+.choice.choice-selected{
+  animation: choicePop .18s ease-out;
+}
+.choice.choice-selected::before{
+  content:"";
+  position:absolute; inset:0;
+  background: radial-gradient(420px 160px at 15% 0%, rgba(255,255,255,.20), transparent 55%);
+  pointer-events:none;
+  opacity:.75;
+}
+.choice-green.choice-selected{
+  background: rgba(34,197,94,.14) !important;
+  border-color: rgba(34,197,94,.90) !important;
+  box-shadow: 0 18px 46px rgba(34,197,94,.20), 0 0 0 1px rgba(34,197,94,.18) inset !important;
+}
+.choice-yellow.choice-selected{
+  background: rgba(245,158,11,.14) !important;
+  border-color: rgba(245,158,11,.92) !important;
+  box-shadow: 0 18px 46px rgba(245,158,11,.20), 0 0 0 1px rgba(245,158,11,.18) inset !important;
+}
+.choice-red.choice-selected{
+  background: rgba(239,68,68,.14) !important;
+  border-color: rgba(239,68,68,.92) !important;
+  box-shadow: 0 18px 46px rgba(239,68,68,.20), 0 0 0 1px rgba(239,68,68,.18) inset !important;
+}
+/* Ensure the checkmark renders on the dot for the actual selected class */
+.choice.choice-selected .choice-dot{
+  position:relative;
+}
+.choice.choice-selected .choice-dot::after{
+  content:"✓";
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  font-size:12px;
+  color:#0B1330;
+}
+</style>
+<style>
+/* ===== Level toast ===== */
+.level-toast{
+  position:fixed;
+  top:16px; left:50%;
+  transform:translateX(-50%) scale(.9);
+  background:linear-gradient(135deg,#7c5cff,#22c55e);
+  color:white;
+  padding:12px 18px;
+  border-radius:16px;
+  font-weight:800;
+  box-shadow:0 20px 50px rgba(0,0,0,.45);
+  opacity:0;
+  transition:all .3s ease;
+  z-index:99999;
+}
+.level-toast.show{
+  opacity:1;
+  transform:translateX(-50%) scale(1);
+}
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<canvas id=\"confetti\"></canvas>
+  <div id="app" class="min-h-screen"></div>
+
+  <script>
+// --- UX: beep + optional haptic (only works after user interaction) ---
+function scrollToQuestion(){
+  try{
+    const el = document.getElementById('questionCard');
+    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    else window.scrollTo({top:0, behavior:'smooth'});
+  }catch(e){}
+}
+
+function playChoiceSound(color){
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if(!AudioCtx) return;
+    const ctx = playChoiceSound._ctx || (playChoiceSound._ctx = new AudioCtx());
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    const freq = color==='verde' ? 740 : (color==='amarillo' ? 520 : 320);
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.value = 0.0001;
+    o.connect(g); g.connect(ctx.destination);
+    const t = ctx.currentTime;
+    g.gain.exponentialRampToValueAtTime(0.08, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    o.start(t); o.stop(t + 0.15);
+    if (navigator.vibrate) navigator.vibrate(10);
+  }catch(e){}
+}
+
+
+
+/* ===================== Mini Burst per selection ===================== */
+function burstAt(x,y,color){
+  const c = document.getElementById('confetti');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  c.width = window.innerWidth; c.height = window.innerHeight;
+  const parts = [];
+  const hues = color==='verde'? [120,135]: color==='amarillo'?[45,55]:[0,10];
+  for(let i=0;i<24;i++){
+    parts.push({
+      x,y,
+      vx:(Math.random()*2-1)*3,
+      vy:(Math.random()*-1)*4,
+      g:0.25,
+      a:1,
+      r:2+Math.random()*2,
+      h:hues[0]+Math.random()*(hues[1]-hues[0])
+    });
+  }
+  let t=0;
+  (function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    parts.forEach(p=>{
+      p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.a*=0.92;
+      ctx.fillStyle=`hsla(${p.h},90%,60%,${p.a})`;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+    });
+    if(t++<20) requestAnimationFrame(draw);
+  })();
+}
+
+/* ===================== Level-up per dimension ===================== */
+function checkLevelUp(){
+  const instrument = getInstrument();
+  const dims = instrument.dimensions;
+  const indicators = instrument.indicators;
+  for(const d of dims){
+    const ids = indicators.filter(i=>i.dimension===d.id).map(i=>i.id);
+    const allAnswered = ids.every(id=>state.answers[id]);
+    if(allAnswered && !state._leveled?.[d.id]){
+      state._leveled = state._leveled||{};
+      state._leveled[d.id]=true;
+      try{ SFX.achievement(); }catch(e){}
+      showLevelToast(d);
+    }
+  }
+}
+function showLevelToast(d){
+  const toast = document.createElement('div');
+  toast.className='level-toast';
+  toast.innerHTML = `⭐ Nivel completado<br/><b>${d.emoji||''} ${d.name}</b>`;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.classList.add('show'),10);
+  setTimeout(()=>toast.classList.remove('show'),1600);
+  setTimeout(()=>toast.remove(),2000);
+}
+
+
+  const INSTRUMENT = {"version": "v1", "instrument": "Semáforo de la Pobreza (adaptación anónima/personal)", "dimensions": [{"id": "salud", "name": "Salud", "emoji": "🩺"}, {"id": "educacion", "name": "Educación", "emoji": "📚"}, {"id": "trabajo", "name": "Trabajo", "emoji": "💼"}, {"id": "vivienda", "name": "Vivienda", "emoji": "🏠"}, {"id": "prevision", "name": "Previsión", "emoji": "🧾"}, {"id": "cultura", "name": "Cultura / Recreación / Vida social", "emoji": "🤝"}], "indicators": [{"id": "salud_01", "dimension": "salud", "label": "Nos alimentamos bien", "invert": false}, {"id": "salud_02", "dimension": "salud", "label": "Tenemos una alimentación sana y balanceada", "invert": false}, {"id": "salud_03", "dimension": "salud", "label": "Cuidamos nuestra higiene", "invert": false}, {"id": "salud_04", "dimension": "salud", "label": "Tenemos dientes sanos", "invert": false}, {"id": "salud_05", "dimension": "salud", "label": "Tenemos la vista sana", "invert": false}, {"id": "salud_06", "dimension": "salud", "label": "Necesitamos tratamiento para una enfermedad perenne", "invert": true}, {"id": "salud_07", "dimension": "salud", "label": "Tenemos calendario de vacunación (niños)", "invert": false}, {"id": "salud_08", "dimension": "salud", "label": "Tenemos acceso a un buen servicio de salud", "invert": false}, {"id": "educacion_01", "dimension": "educacion", "label": "Sabemos leer y escribir", "invert": false}, {"id": "educacion_02", "dimension": "educacion", "label": "Sabemos un segundo idioma", "invert": false}, {"id": "educacion_03", "dimension": "educacion", "label": "Los niños van a la escuela", "invert": false}, {"id": "educacion_04", "dimension": "educacion", "label": "Hay adultos que asisten a alguna institución educativa", "invert": false}, {"id": "educacion_05", "dimension": "educacion", "label": "Tenemos útiles escolares", "invert": false}, {"id": "educacion_06", "dimension": "educacion", "label": "Tenemos comunicación con las autoridades escolares", "invert": false}, {"id": "educacion_07", "dimension": "educacion", "label": "Manejamos informática", "invert": false}, {"id": "educacion_08", "dimension": "educacion", "label": "Tenemos acceso a una escuela de buena calidad", "invert": false}, {"id": "trabajo_01", "dimension": "trabajo", "label": "Tenemos ingresos suficientes", "invert": false}, {"id": "trabajo_02", "dimension": "trabajo", "label": "Ganamos cada mes lo mismo", "invert": false}, {"id": "trabajo_03", "dimension": "trabajo", "label": "Tenemos varios ingresos", "invert": false}, {"id": "trabajo_04", "dimension": "trabajo", "label": "Buscamos empleo", "invert": false}, {"id": "trabajo_05", "dimension": "trabajo", "label": "Tenemos algún oficio", "invert": false}, {"id": "trabajo_06", "dimension": "trabajo", "label": "Todos los adultos trabajan", "invert": false}, {"id": "trabajo_07", "dimension": "trabajo", "label": "Planificamos en qué se gasta la plata", "invert": false}, {"id": "trabajo_08", "dimension": "trabajo", "label": "Los niños también trabajan", "invert": true}, {"id": "vivienda_01", "dimension": "vivienda", "label": "Tenemos agua potable", "invert": false}, {"id": "vivienda_02", "dimension": "vivienda", "label": "Tenemos conexión eléctrica", "invert": false}, {"id": "vivienda_03", "dimension": "vivienda", "label": "Tenemos línea telefónica e internet", "invert": false}, {"id": "vivienda_04", "dimension": "vivienda", "label": "Compartimos la vivienda con otra familia", "invert": false}, {"id": "vivienda_05", "dimension": "vivienda", "label": "Nuestro barrio es seguro", "invert": false}, {"id": "vivienda_06", "dimension": "vivienda", "label": "Tenemos heladera y otros electrodomésticos", "invert": false}, {"id": "vivienda_07", "dimension": "vivienda", "label": "Dormimos en habitaciones separadas", "invert": false}, {"id": "vivienda_08", "dimension": "vivienda", "label": "Nuestra vivienda es segura", "invert": false}, {"id": "prevision_01", "dimension": "prevision", "label": "Tenemos DNI", "invert": false}, {"id": "prevision_02", "dimension": "prevision", "label": "Tenemos cuenta de banco", "invert": false}, {"id": "prevision_03", "dimension": "prevision", "label": "Podemos sacar crédito", "invert": false}, {"id": "prevision_04", "dimension": "prevision", "label": "Tenemos ahorros", "invert": false}, {"id": "prevision_05", "dimension": "prevision", "label": "Tenemos seguro", "invert": false}, {"id": "prevision_06", "dimension": "prevision", "label": "Pagamos impuestos y servicios", "invert": false}, {"id": "prevision_07", "dimension": "prevision", "label": "Tenemos proyectos a futuro", "invert": false}, {"id": "prevision_08", "dimension": "prevision", "label": "Sabemos tomar decisiones", "invert": false}, {"id": "cultura_01", "dimension": "cultura", "label": "Tenemos amigos/familia a quien recurrir", "invert": false}, {"id": "cultura_02", "dimension": "cultura", "label": "Practicamos deportes", "invert": false}, {"id": "cultura_03", "dimension": "cultura", "label": "Participamos en las actividades de la comunidad", "invert": false}, {"id": "cultura_04", "dimension": "cultura", "label": "Tenemos algún pasatiempo", "invert": false}, {"id": "cultura_05", "dimension": "cultura", "label": "Respetamos las diferencia", "invert": false}, {"id": "cultura_06", "dimension": "cultura", "label": "Integramos grupos en la comunidad", "invert": false}, {"id": "cultura_07", "dimension": "cultura", "label": "Estamos informados", "invert": false}, {"id": "cultura_08", "dimension": "cultura", "label": "Hay violencia en nuestra familia", "invert": true}]};
+
+  const OPTIONS = [
+    {id:'rojo',    score:0, label:'Rojo',    help:'No / Muy insuficiente'},
+    {id:'amarillo',score:1, label:'Amarillo',help:'Parcial / Inestable'},
+    {id:'verde',   score:2, label:'Verde',   help:'Sí / Suficiente'},
+  ];
+
+  const STORAGE_KEY = 'korai_v1_records';
+  const STORAGE_CFG_KEY = 'korai_v1_instrument_override';
+
+  function storageAvailable() {
+    try {
+      const k = '__korai_test__';
+      localStorage.setItem(k, '1');
+      localStorage.removeItem(k);
+      return true;
+    } catch(e) { return false; }
+  }
+
+  // In-memory fallback (for environments where localStorage is blocked on file://)
+  if (!window.__KORAI_MEM__) window.__KORAI_MEM__ = { records: [], instrument: null };
+
+  function loadRecords() {
+    try {
+      if (storageAvailable()) {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+      return Array.isArray(window.__KORAI_MEM__.records) ? window.__KORAI_MEM__.records : [];
+    } catch (e) {
+      return Array.isArray(window.__KORAI_MEM__.records) ? window.__KORAI_MEM__.records : [];
+    }
+  }
+
+  function saveRecords(recs) {
+    try {
+      if (storageAvailable()) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(recs));
+      } else {
+        window.__KORAI_MEM__.records = recs;
+      }
+    } catch(e) {
+      window.__KORAI_MEM__.records = recs;
+    }
+  }
+
+
+  function loadInstrumentOverride() {
+    try {
+      if (storageAvailable()) {
+        const raw = localStorage.getItem(STORAGE_CFG_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.dimensions && parsed.indicators) return parsed;
+        return null;
+      }
+      const mem = window.__KORAI_MEM__?.instrument;
+      if (mem && mem.dimensions && mem.indicators) return mem;
+      return null;
+    } catch (e) {
+      const mem = window.__KORAI_MEM__?.instrument;
+      if (mem && mem.dimensions && mem.indicators) return mem;
+      return null;
+    }
+  }
+  function getInstrument() { return loadInstrumentOverride() || INSTRUMENT; }
+
+
+  
+  // ---------- Formatting & UI helpers (required by dashboard/result) ----------
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#39;');
+  }
+  function fmtPct(x) {
+    // Accept 0..1 or 0..100
+    const v = (x == null || isNaN(x)) ? 0 : Number(x);
+    const p = v <= 1 ? v * 100 : v;
+    return `${Math.round(p)}%`;
+  }
+  function fmtNum(n) {
+    const v = (n == null || isNaN(n)) ? 0 : Number(n);
+    return v.toLocaleString('es-AR');
+  }
+  function chip(label, value = '', tone = 'muted') {
+    const tones = {
+      muted: 'bg-slate-100 text-slate-700 border-slate-200',
+      red: 'bg-red-50 text-red-700 border-red-200',
+      yellow: 'bg-amber-50 text-amber-800 border-amber-200',
+      green: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      blue: 'bg-blue-50 text-blue-700 border-blue-200'
+    };
+    const cls = tones[tone] || tones.muted;
+    const v = value ? `<span class="ml-2 font-semibold">${escapeHtml(value)}</span>` : '';
+    return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs border ${cls}">${escapeHtml(label)}${v}</span>`;
+  }
+  function colorTone(c) { return c === 'R' ? 'red' : (c === 'A' ? 'yellow' : 'green'); }
+  // --------------------------------------------------------------------------
+const state = {
+    screen: 'home',
+    contexto: { ciudad: 'Berazategui', barrio: '', edad_rango: '', estado_civil: '', hijos_a_cargo: null, adultos_mayores_a_cargo: null },
+    answers: {},
+    texto_abierto: '',
+    lastResult: null,
+    dashboard: { ciudad: 'Berazategui', barrio: '', days: 30, dimFocus: null },
+    survey: { mode: 'guided', idx: 0, showAll: false }
+  };
+
+  function go(screen) {
+    try{ SFX.screen(); }catch(e){}
+ state.screen = screen; render(); scrollToQuestion(); }
+
+  function optionById(id) { return OPTIONS.find(o => o.id === id) || null; }
+  function scoreIndicator(ind, answerId) {
+    const opt = optionById(answerId);
+    if (!opt) return null;
+    const raw = opt.score;
+    return ind.invert ? (2 - raw) : raw;
+  }
+  function avgToColor(avg) {
+    if (avg === null) return 'gris';
+    if (avg < 0.8) return 'rojo';
+    if (avg < 1.5) return 'amarillo';
+    return 'verde';
+  }
+  function computeResult(instrument, answers) {
+    const dims = instrument.dimensions.map(d => d.id);
+
+    const perDim = Object.fromEntries(dims.map(d => [d, {
+      n:0, r:0, a:0, v:0, pctR:0, pctA:0, pctV:0, color:'gris'
+    }]));
+
+    let totalN=0, totalR=0, totalA=0, totalV=0;
+    let totalScore=0, totalScoreMax=0; // opcional para futuras lecturas numéricas
+
+    for (const ind of instrument.indicators) {
+      const opt = optionById(answers[ind.id]);
+      if (!opt) continue;
+
+      // score numérico (mantener por compatibilidad / futura analítica)
+      const raw = opt.score; // rojo=0, amarillo=1, verde=2
+      const s = ind.invert ? (2 - raw) : raw;
+      totalScore += s; totalScoreMax += 2;
+
+      // color (para regla 33%)
+      const key = (raw === 0) ? 'rojo' : (raw === 1) ? 'amarillo' : 'verde';
+      const d = perDim[ind.dimension];
+      d.n += 1;
+      if (key === 'rojo') d.r += 1;
+      else if (key === 'amarillo') d.a += 1;
+      else d.v += 1;
+
+      totalN += 1;
+      if (key === 'rojo') totalR += 1;
+      else if (key === 'amarillo') totalA += 1;
+      else totalV += 1;
+    }
+
+    function color33(rCount, aCount, nCount) {
+      if (!nCount) return 'gris';
+      const pR = rCount / nCount;
+      const pA = aCount / nCount;
+      if (pR >= 0.33) return 'rojo';
+      if (pA >= 0.33) return 'amarillo';
+      return 'verde';
+    }
+
+    for (const d of dims) {
+      const x = perDim[d];
+      if (x.n) {
+        x.pctR = x.r / x.n;
+        x.pctA = x.a / x.n;
+        x.pctV = x.v / x.n;
+      }
+      x.color = color33(x.r, x.a, x.n);
+    }
+
+    const overall = {
+      n: totalN,
+      r: totalR,
+      a: totalA,
+      v: totalV,
+      pctR: totalN ? totalR/totalN : 0,
+      pctA: totalN ? totalA/totalN : 0,
+      pctV: totalN ? totalV/totalN : 0,
+      color: color33(totalR, totalA, totalN),
+      // indicador numérico opcional: severidad 0..200
+      severity: Math.round((2*(totalN?totalR/totalN:0) + 1*(totalN?totalA/totalN:0))*100),
+      score_total: totalScore,
+      score_max: totalScoreMax
+    };
+
+    return { perDim, overall };
+  }
+
+  
+  function colorChip(color) {
+    if (color === 'rojo') return 'badge badge-red';
+    if (color === 'amarillo') return 'badge badge-yellow';
+    if (color === 'verde') return 'badge badge-green';
+    return 'badge';
+  }
+
+  function topKeywords(text, k=10) {
+    const stop = new Set(['de','la','el','y','en','a','que','los','las','un','una','por','para','con','mi','mis','me','yo','no','si','sí','muy','ya','al','del','se','es','hay','porque','pero','como','más','menos','este','esta','esto','tengo','tenemos','estoy','estamos','son','ser','sobre','lo','le','les','su','sus']);
+    const words = (text || '').toLowerCase().replace(/[^a-záéíóúñü0-9\s]/g,' ').split(/\s+/).filter(w => w.length >= 4 && !stop.has(w));
+    const freq = new Map();
+    for (const w of words) freq.set(w, (freq.get(w)||0)+1);
+    return [...freq.entries()].sort((a,b)=>b[1]-a[1]).slice(0,k).map(([w,c])=>({w,c}));
+  }
+
+  function aggregate(records, instrument, filters) {
+    const now = Date.now();
+    const from = now - (filters.days * 24*60*60*1000);
+
+    const filtered = records.filter(r => {
+      const t = new Date(r.timestamp).getTime();
+      if (!isFinite(t) || t < from) return false;
+      if (filters.ciudad && (r.territorio?.ciudad || '') !== filters.ciudad) return false;
+      if (filters.barrio && (r.territorio?.barrio || '') !== filters.barrio) return false;
+      return true;
+    });
+
+    let rojo=0, amarillo=0, verde=0;
+    const byDim = {};
+    instrument.dimensions.forEach(d => byDim[d.id] = {rojo:0, amarillo:0, verde:0, n:0});
+    const frases = [];
+
+    for (const r of filtered) {
+      const overall = r.semaforo_overall?.color;
+      if (overall === 'rojo') rojo++; else if (overall === 'amarillo') amarillo++; else if (overall === 'verde') verde++;
+      for (const d of instrument.dimensions) {
+        const c = r.semaforo?.[d.id];
+        if (!c) continue;
+        byDim[d.id][c] += 1; byDim[d.id].n += 1;
+      }
+      if (r.texto_abierto && String(r.texto_abierto).trim().length) {
+        frases.push({ t: r.timestamp, ciudad: r.territorio?.ciudad || '', barrio: r.territorio?.barrio || '', overall: overall || 'gris', text: String(r.texto_abierto).trim() });
+      }
+    }
+
+    const n = filtered.length;
+    const dist = n ? { rojo: rojo/n, amarillo: amarillo/n, verde: verde/n } : {rojo:0, amarillo:0, verde:0};
+    const temas = topKeywords(frases.map(f => f.text).join(' '), 10);
+    frases.sort((a,b) => new Date(b.t) - new Date(a.t));
+    return {n, dist, byDim, frases, temas};
+  }
+
+  function seedDemo(n=250) {
+    const instrument = getInstrument();
+    const cities = [
+      {ciudad:'Berazategui', barrios:['Centro','Sourigues','Ranelagh','Barrio Marítimo','Villa España']},
+      {ciudad:'Quilmes', barrios:['Bernal','Quilmes Centro','Ezpeleta','San Francisco Solano']},
+      {ciudad:'Florencio Varela', barrios:['Centro','Bosques','Ingeniero Allan']},
+    ];
+    const records = loadRecords();
+    const now = Date.now();
+    const randChoice = arr => arr[Math.floor(Math.random()*arr.length)];
+
+    for (let i=0;i<n;i++) {
+      const city = randChoice(cities);
+      const barrio = Math.random() < 0.75 ? randChoice(city.barrios) : '';
+      const daysAgo = Math.floor(Math.random()*60);
+      const ts = new Date(now - daysAgo*24*60*60*1000 - Math.floor(Math.random()*8)*60*60*1000).toISOString();
+
+      let bias = 0;
+      if (city.ciudad === 'Florencio Varela') bias = -0.25;
+      if (city.ciudad === 'Quilmes') bias = 0.15;
+      if (city.ciudad === 'Berazategui') bias = -0.05;
+
+      const answers = {};
+      for (const ind of instrument.indicators) {
+        const r = Math.random() + bias;
+        let a = 'amarillo';
+        if (r < 0.33) a = 'rojo'; else if (r > 0.72) a = 'verde';
+        if (Math.random() < 0.02) continue;
+        answers[ind.id] = a;
+      }
+      const result = computeResult(instrument, answers);
+      const frases = [
+        'Me preocupa el trabajo y que la plata no alcance.',
+        'Estoy bien pero me cuesta sostener los gastos.',
+        'La salud y los controles médicos son un problema.',
+        'Tengo ganas de estudiar algo para mejorar.',
+        'La inseguridad del barrio me preocupa.',
+        'Me siento cansado y con mucha incertidumbre.',
+        'Estoy tratando de organizarme mejor con la plata.',
+        'Necesito más oportunidades laborales.',
+      ];
+      const texto = Math.random()<0.65 ? randChoice(frases) : '';
+      const sem = {}; instrument.dimensions.forEach(d => sem[d.id] = result.perDim[d.id].color);
+
+      records.push({
+        timestamp: ts,
+        territorio: {ciudad: city.ciudad, barrio},
+        perfil_contextual: {
+          edad_rango: randChoice(['18-24','25-29','30-39','40-49','50-59','60+']),
+          estado_civil: randChoice(['soltero/a','convivencia','casado/a','separado/a','viudo/a','prefiero no decir']),
+          hijos_a_cargo: Math.random()<0.55,
+          adultos_mayores_a_cargo: Math.random()<0.22
+        },
+        answers,
+        semaforo: sem,
+        semaforo_overall: result.overall,
+        texto_abierto: texto
+      });
+    }
+    saveRecords(records);
+  }
+
+  function layout(content) {
+    return `
+      <div class="max-w-6xl mx-auto p-6">
+        <div class="flex items-center justify-between gap-3 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 text-white flex items-center justify-center font-black text-xl">K</div>
+            <div>
+              <div class="text-xl font-black leading-tight">Korai v1</div>
+              <div class="text-sm text-slate-600">Semáforo + colaboración gamificada (demo local)</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-ghost" onclick="go('home')">Ciudadano</button>
+            <button class="btn btn-primary" onclick="go('dashboard')">Dashboard</button>
+          </div>
+        </div>
+        ${content}
+      </div>
+    `;
+  }
+
+  function alertBox(title, body) {
+    return `
+      <div class="card p-5 border border-slate-100">
+        <div class="font-black text-lg mb-1">${title}</div>
+        <div class="text-slate-700">${body}</div>
+      </div>
+    `;
+  }
+
+  function renderHome() {
+    const instrument = getInstrument();
+    const recs = loadRecords();
+    const ciudad = state.contexto.ciudad || '—';
+    const countCity = recs.filter(r => (r.territorio?.ciudad||'')===ciudad).length;
+
+    return layout(`
+      <div class="grid lg:grid-cols-2 gap-6 items-start fade-in">
+        <div class="card p-8" id="questionCard">
+          <div class="text-3xl font-black mb-2">Tu mirada importa</div>
+          <div class="text-slate-700 text-lg mb-6">
+            Este diagnóstico nos ayuda a comprender mejor la realidad de tu comunidad.<br/>
+Tus respuestas se suman a una lectura colectiva que permite identificar oportunidades, necesidades y prioridades del territorio.<br/><br/>
+Completarlo te llevará menos de <b>3 minutos</b>.
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-3 mb-4">
+            <div>
+              <label class="text-sm font-bold text-slate-700">Ciudad</label>
+              <select class="k-input" onchange="state.contexto.ciudad=this.value">
+                ${['Berazategui','Quilmes','Florencio Varela','Otro'].map(x => `<option ${state.contexto.ciudad===x?'selected':''}>${x}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-bold text-slate-700">Barrio (opcional)</label>
+              <input class="k-input" placeholder="Ej: Centro, Ranelagh…" value="${escapeHtml(state.contexto.barrio||'')}"
+                     oninput="state.contexto.barrio=this.value"/>
+            </div>
+
+            <div>
+              <label class="text-sm font-bold text-slate-700">Edad (rango)</label>
+              <select class="k-input" onchange="state.contexto.edad_rango=this.value">
+                <option value="">Seleccionar…</option>
+                ${['18-24','25-29','30-39','40-49','50-59','60+'].map(x => `<option value="${x}" ${state.contexto.edad_rango===x?'selected':''}>${x}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-bold text-slate-700">Estado civil</label>
+              <select class="k-input" onchange="state.contexto.estado_civil=this.value">
+                <option value="">Seleccionar…</option>
+                ${['soltero/a','convivencia','casado/a','separado/a','viudo/a','prefiero no decir'].map(x => `<option value="${x}" ${state.contexto.estado_civil===x?'selected':''}>${x}</option>`).join('')}
+              </select>
+            </div>
+
+            <div>
+              <label class="text-sm font-bold text-slate-700">¿Tenés hijos a cargo?</label>
+              <select class="k-input" onchange="state.contexto.hijos_a_cargo=(this.value==='true'?true:this.value==='false'?false:null)">
+                <option value="">Prefiero no decir</option>
+                <option value="true" ${state.contexto.hijos_a_cargo===true?'selected':''}>Sí</option>
+                <option value="false" ${state.contexto.hijos_a_cargo===false?'selected':''}>No</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-bold text-slate-700">¿Adultos mayores a cargo?</label>
+              <select class="k-input" onchange="state.contexto.adultos_mayores_a_cargo=(this.value==='true'?true:this.value==='false'?false:null)">
+                <option value="">Prefiero no decir</option>
+                <option value="true" ${state.contexto.adultos_mayores_a_cargo===true?'selected':''}>Sí</option>
+                <option value="false" ${state.contexto.adultos_mayores_a_cargo===false?'selected':''}>No</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-3 mt-3">
+            <button class="btn btn-primary" onclick="startSurvey()">Comenzar diagnóstico</button>
+            <button class="btn btn-ghost" onclick="seedDemo(250); render();">Cargar demo (250)</button>
+            <button class="btn btn-ghost" onclick="resetAll()">Reset local</button>
+          </div>
+
+          <div class="text-xs text-slate-500 mt-4">
+            Instrumento: <b>${escapeHtml(instrument.instrument)}</b> • Indicadores: <b>${instrument.indicators.length}</b>
+            <br/>Participaciones registradas en <b>${escapeHtml(ciudad)}</b>: <b>${countCity}</b>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          ${alertBox(' (tipo Waze)','. Tu aporte suma a una lectura colectiva. Al finalizar, desbloqueás un reconocimiento por participar.')}
+          ${alertBox('',', DNI, teléfono ni email. Evitá escribir datos personales en el texto abierto.')}
+          ${alertBox('','. En producción se reemplaza el almacenamiento por un endpoint (API) y autenticación para clientes.')}
+        </div>
+      </div>
+    `);
+  }
+
+  function startSurvey() { state.answers = {}; state.texto_abierto=''; state.lastResult=null; go('survey'); }
+
+  
+function renderSurvey() {
+    const instrument = getInstrument();
+    const indicators = instrument.indicators;
+    const dimsById = Object.fromEntries(instrument.dimensions.map(d => [d.id, d]));
+    const answered = Object.keys(state.answers).length;
+    const total = indicators.length;
+    const pct = Math.round((answered/total)*100);
+
+    if (!state.survey) state.survey = { mode:'guided', idx:0, showAll:false };
+    if (state.survey.idx < 0) state.survey.idx = 0;
+    if (state.survey.idx >= total) state.survey.idx = total - 1;
+
+    // pick current indicator; if already answered, advance to next unanswered
+    const nextUnanswered = (fromIdx, dir=1) => {
+      let i = fromIdx;
+      for (let steps=0; steps<total; steps++) {
+        const ind = indicators[i];
+        if (!state.answers[ind.id]) return i;
+        i = (i + dir + total) % total;
+      }
+      return fromIdx;
+    };
+    state.survey.idx = nextUnanswered(state.survey.idx, 1);
+
+    const cur = indicators[state.survey.idx];
+    const dim = dimsById[cur.dimension] || { name: cur.dimension, emoji:'' };
+    const currentValue = state.answers[cur.id] || null;
+
+    const dimCounts = instrument.dimensions.map(d => {
+      const ids = indicators.filter(i => i.dimension === d.id).map(i => i.id);
+      const a = ids.filter(id => state.answers[id]).length;
+      return { id:d.id, name:d.name, emoji:d.emoji, a, t: ids.length };
+    });
+
+    const canFinish = answered === total;
+
+    const choiceBtn = (color, label, desc) => {
+      const isSel = currentValue === color;
+      const cls = color === 'verde' ? 'choice choice-green' : color === 'amarillo' ? 'choice choice-yellow' : 'choice choice-red';
+      return `
+        <button class="${cls} ${isSel?'choice-selected':''}" onclick="setAnswerAndAdvance('${cur.id}','${color}')">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <div class="font-black text-lg">${label}</div>
+              <div class="text-sm opacity-90">${desc}</div>
+            </div>
+            <div class="choice-dot"></div>
+          </div>
+        </button>
+      `;
+    };
+
+    return layout(`
+      <div class="grid lg:grid-cols-12 gap-6 fade-in">
+        <!-- Lateral: progreso -->
+        <div class="lg:col-span-4 progressSide">
+          <div class="card p-6 sticky top-6">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="text-xl font-black">Diagnóstico (anónimo)</div>
+                <div class="text-sm text-slate-600">Progreso por dimensión</div>
+              </div>
+              <button class="btn btn-ghost" onclick="go('home')">Salir</button>
+            </div>
+
+            <div class="mt-4">
+              <div class="flex items-center justify-between text-sm">
+                <div class="font-bold">${answered}/${total} respondidas</div>
+                <div class="text-slate-500">${pct}%</div>
+              </div>
+              <div class="bar mt-2"><div style="width:${pct}%;background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444)"></div></div>
+            </div>
+
+            <div class="mt-5 space-y-2">
+              ${dimCounts.map(dc => {
+                const dimPct = Math.round((dc.a/dc.t)*100);
+                return `
+                  <button class="w-full text-left px-4 py-3 rounded-2xl border border-slate-100 hover:bg-slate-50"
+                    onclick="jumpToDimension('${dc.id}')">
+                    <div class="flex items-center justify-between">
+                      <div class="font-bold">${dc.emoji} ${escapeHtml(dc.name)}</div>
+                      <div class="text-xs text-slate-500">${dc.a}/${dc.t}</div>
+                    </div>
+                    <div class="bar mt-2"><div style="width:${dimPct}%;background:#2563eb"></div></div>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+
+            <div class="mt-5 p-4 rounded-2xl border border-slate-100">
+              <div class="font-black mb-1">Tu voz (opcional)</div>
+              <div class="text-xs text-slate-500 mb-2">No incluyas datos personales.</div>
+              <textarea class="k-input" style="min-height:90px" placeholder="En pocas palabras, ¿cómo estás viviendo hoy?"
+                oninput="state.texto_abierto=this.value">${escapeHtml(state.texto_abierto||'')}</textarea>
+            </div>
+
+            <div class="mt-5 flex flex-wrap gap-3">
+              <button class="btn btn-ghost" onclick="go('dashboard')">Ver dashboard</button>
+              <button class="btn btn-primary" onclick="finishSurvey()" ${canFinish?'':'style="opacity:.5;cursor:not-allowed" disabled'}>
+                Finalizar y ver mi semáforo
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Centro: pregunta -->
+        <div class="lg:col-span-8">
+          <div class="card p-8">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <div class="text-sm text-slate-500 font-bold">Paso ${state.survey.idx+1} de ${total}</div>
+                <div class="text-3xl font-black mt-1">${escapeHtml(dim.emoji)} ${escapeHtml(dim.name)}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm text-slate-500">Indicador</div>
+                <div class="text-lg font-black">${escapeHtml(cur.id.replace('_',' ').toUpperCase())}</div>
+              </div>
+            </div>
+
+            <div class="mt-6 p-6 rounded-2xl border border-slate-100 bg-slate-50">
+              <div class="text-xl font-black leading-snug">${escapeHtml(cur.label)}</div>
+              ${cur.help ? `<div class="text-sm text-slate-600 mt-2">${escapeHtml(cur.help)}</div>` : ``}
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4 mt-6">
+              ${choiceBtn('verde', 'Verde', 'Está resuelto / en condiciones adecuadas')}
+              ${choiceBtn('amarillo', 'Amarillo', 'Parcial / riesgo moderado')}
+              ${choiceBtn('rojo', 'Rojo', 'Problema significativo / urgencia')}
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 mt-8">
+              <div class="flex gap-2">
+                <button class="btn btn-ghost" onclick="prevQuestion()">← Anterior</button>
+                <button class="btn btn-ghost" onclick="nextQuestion()">Siguiente →</button>
+              </div>
+              <div class="text-sm text-slate-600">
+                Tip: seleccioná una opción y avanzamos automáticamente.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  function jumpToDimension(dimId) {
+    const instrument = getInstrument();
+    const indicators = instrument.indicators;
+    const idx = indicators.findIndex(i => i.dimension === dimId);
+    if (idx >= 0) { state.survey.idx = idx; render(); scrollToQuestion(); }
+  }
+
+    function setAnswerAndAdvance(indId, color) {
+  const rect = event?.currentTarget?.getBoundingClientRect?.();
+  if(rect) burstAt(rect.left+rect.width/2, rect.top+rect.height/2, color);
+
+    try{ SFX.choice(color); SFX.tick(); haptic(color); pulseTarget(); celebrateProgress(); }catch(e){}
+
+    const instrument = getInstrument();
+    state.answers[indId] = color;
+  checkLevelUp();
+
+    const total = instrument.indicators.length;
+    const answered = Object.keys(state.answers).length;
+
+    // If completed, auto-finish (prevents infinite loop)
+    if (answered >= total) {
+      finishSurvey();
+      return;
+    }
+
+    // Otherwise, jump to the next unanswered indicator
+    nextQuestion();
+  }
+
+
+    function nextQuestion() {
+    try{ SFX.tick(); }catch(e){}
+    const instrument = getInstrument();
+    const indicators = instrument.indicators;
+    const total = indicators.length;
+
+    if (!state.survey) state.survey = { idx:0 };
+
+    // If all answered, auto-finish
+    if (Object.keys(state.answers).length >= total) {
+      finishSurvey();
+      return;
+    }
+
+    // Find next unanswered, scanning forward (no infinite cycling)
+    for (let steps = 1; steps <= total; steps++) {
+      const idx = state.survey.idx + steps;
+      if (idx >= total) break; // stop at end
+      const ind = indicators[idx];
+      if (!state.answers[ind.id]) {
+        state.survey.idx = idx;
+        render(); scrollToQuestion();
+        return;
+      }
+    }
+
+    // If none ahead, scan from start up to current
+    for (let idx = 0; idx <= state.survey.idx; idx++) {
+      const ind = indicators[idx];
+      if (!state.answers[ind.id]) {
+        state.survey.idx = idx;
+        render(); scrollToQuestion();
+        return;
+      }
+    }
+
+    // Fallback
+    finishSurvey();
+  }
+
+
+    function prevQuestion() {
+    const instrument = getInstrument();
+    const indicators = instrument.indicators;
+    const total = indicators.length;
+    if (!state.survey) state.survey = { idx:0 };
+
+    let idx = state.survey.idx - 1;
+    if (idx < 0) idx = 0;
+    state.survey.idx = idx;
+    render(); scrollToQuestion();
+  }
+
+
+
+  function finishSurvey() {
+    const instrument = getInstrument();
+    const total = instrument.indicators.length;
+    const answered = Object.keys(state.answers).length;
+    if (answered < total) {
+      alert(`Faltan ${total-answered} preguntas por responder para finalizar.`);
+      return;
+    }
+    
+    try{ SFX.achievement(); Confetti.burst(); }catch(e){}
+    const result = computeResult(instrument, state.answers);
+    state.lastResult = result;
+    const sem = {}; instrument.dimensions.forEach(d => sem[d.id] = result.perDim[d.id].color);
+
+    const rec = {
+      timestamp: new Date().toISOString(),
+      territorio: { ciudad: state.contexto.ciudad || '', barrio: state.contexto.barrio || '' },
+      perfil_contextual: {
+        edad_rango: state.contexto.edad_rango || '',
+        estado_civil: state.contexto.estado_civil || '',
+        hijos_a_cargo: state.contexto.hijos_a_cargo,
+        adultos_mayores_a_cargo: state.contexto.adultos_mayores_a_cargo
+      },
+      answers: state.answers,
+      semaforo: sem,
+      semaforo_overall: result.overall,
+      texto_abierto: (state.texto_abierto||'').trim()
+    };
+    const records = loadRecords(); records.push(rec); saveRecords(records);
+    go('result');
+  }
+
+  function renderResult() {
+    const instrument = getInstrument();
+    const r = state.lastResult || computeResult(instrument, state.answers);
+    const overall = r.overall.color;
+    const title = overall === 'rojo' ? 'Señal de alerta' : overall === 'amarillo' ? 'Señal intermedia' : 'Señal favorable';
+
+    return layout(`
+      <div class="grid lg:grid-cols-3 gap-6 fade-in">
+        <div class="lg:col-span-2 card p-8">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <div class="text-3xl font-black mb-1">Tu semáforo</div>
+              <div class="text-slate-600">Lectura por dimensión (regla 33% sobre Rojo/Amarillo).</div>
+              <div class="mt-4 p-4 rounded-2xl border border-slate-200 bg-white/70">
+                <div class="font-extrabold">Aporte completado</div>
+                <div class="text-slate-600 mt-1">Gracias por participar. Tu aporte ya forma parte del diagnóstico colectivo de tu comunidad.</div>
+                <div class="text-slate-700 mt-2"><b>Reconocimiento desbloqueado:</b> Colaborador/a activo/a.</div>
+              </div>
+            </div>
+            <div class="text-right">
+              ${chip(overall, title)}
+              <div class="text-xs text-slate-500 mt-2">Distribución global: <b>R ${fmtPct(r.overall.pctR)}</b> · <b>A ${fmtPct(r.overall.pctA)}</b> · <b>V ${fmtPct(r.overall.pctV)}</b></div>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4 mt-6">
+            ${instrument.dimensions.map(d => {
+              const x = r.perDim[d.id];
+              return `
+                <div class="p-5 rounded-2xl border border-slate-100">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="text-2xl">${d.emoji}</div>
+                      <div>
+                        <div class="font-black">${escapeHtml(d.name)}</div>
+                        <div class="text-xs text-slate-500">N válido: ${x.n || 0}</div>
+                      </div>
+                    </div>
+                    <div>${chip(x.color, x.color === 'rojo' ? 'Rojo' : x.color === 'amarillo' ? 'Amarillo' : x.color === 'verde' ? 'Verde' : '—')}</div>
+                  </div>
+                  <div class="mt-3 text-sm text-slate-700">R ${fmtPct(x.pctR||0)} · A ${fmtPct(x.pctA||0)} · V ${fmtPct(x.pctV||0)}</div>
+                  <div class="bar mt-2"><div style="width:${Math.round((x.pctR||0)*100)}%;background:#dc2626"></div></div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-100">
+            <div class="font-black mb-1">Cierre</div>
+            <div class="text-slate-700">Gracias por sumar tu experiencia. Tu aporte se integra a una lectura colectiva que mejora la comprensión del territorio.</div>
+          </div>
+
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button class="btn btn-primary" onclick="go('dashboard')">Ver dashboard</button>
+            <button class="btn" onclick="resetFlow()">Nuevo diagnóstico</button>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="card p-6" id="questionCard">
+            <div class="font-black text-lg mb-2">Reconocimiento desbloqueado</div>
+            <div class="flex items-center gap-3">
+              <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-2xl">★</div>
+              <div>
+                <div class="font-black">Colaborador comunitario</div>
+                <div class="text-sm text-slate-600">Por completar el diagnóstico anónimo.</div>
+              </div>
+            </div>
+            <div class="text-xs text-slate-500 mt-4">Este reconocimiento no depende de tus respuestas.</div>
+          </div>
+
+          <div class="card p-6">
+            <div class="font-black text-lg mb-2">Tus datos en local</div>
+            <div class="text-slate-700 text-sm"> (localStorage).  desde el dashboard.</div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  function resetFlow() {
+    state.screen = 'home';
+    state.answers = {};
+    state.texto_abierto = '';
+    state.lastResult = null;
+    state.contexto = { ciudad: state.contexto.ciudad || 'Berazategui', barrio: state.contexto.barrio || '', edad_rango:'', estado_civil:'', hijos_a_cargo:false, adultos_mayores_a_cargo:false };
+    state.dashboard.dimFocus = null;
+    render();
+    scrollToQuestion();
+  }
+
+  function renderDashboard() {
+    const instrument = getInstrument();
+    const recordsAll = loadRecords();
+    const days = Number(state.dashboard.days || 30);
+
+    const filters = {
+      ciudad: state.dashboard.ciudad || (uniqueCities(recordsAll)[0] || ''),
+      barrio: (state.dashboard.barrio || '').trim(),
+      days
+    };
+    state.dashboard.ciudad = filters.ciudad;
+
+    const cur = computeTerritoryView(recordsAll, instrument, filters, 0);
+    const prev = computeTerritoryView(recordsAll, instrument, filters, days);
+
+    const kpi = computeKPI(cur, prev);
+
+    const dimTable = instrument.dimensions.map(d => {
+      const row = cur.byDim[d.id];
+      const prevRow = prev.byDim[d.id];
+      const deltaSev = (row.nValid >= 30 && prevRow.nValid >= 30) ? (row.severity - prevRow.severity) : null;
+      const drivers = row.drivers.slice(0,3).map(x => `${escapeHtml(x.label)} <span class="text-slate-500">(${fmtPct(x.pctR)})</span>`).join('<br/>');
+      return {
+        id: d.id,
+        name: d.name,
+        emoji: d.emoji,
+        color: row.color,
+        dist: row.pct,
+        severity: row.severity,
+        nValid: row.nValid,
+        driversHtml: drivers || '<span class="text-slate-400">—</span>',
+        deltaSev
+      };
+    });
+
+    const focusId = state.dashboard.dimFocus;
+    const focus = focusId ? buildDimensionDrilldown(cur, instrument, focusId) : null;
+
+    return layout(`
+      <div class="space-y-6 fade-in">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="text-3xl font-black">Dashboard territorial</div>
+            <div class="text-slate-600">Lectura cuantitativa + cualitativa basada en Semáforo (regla 33%).</div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn" onclick="go('home')">Nuevo diagnóstico</button>
+            <button class="btn btn-primary" onclick="seedDemo(250); render();" >Cargar demo (250)</button>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card p-6">
+          <div class="font-black text-lg mb-4">Filtros</div>
+          <div class="grid md:grid-cols-4 gap-4">
+            <div>
+              <label class="text-sm font-bold text-slate-700">Ciudad</label>
+              <select class="k-input mt-1" onchange="state.dashboard.ciudad=this.value; state.dashboard.dimFocus=null; render();">
+                ${uniqueCities(recordsAll).map(c => `<option ${filters.ciudad===c?'selected':''}>${escapeHtml(c)}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-bold text-slate-700">Barrio (opcional)</label>
+              <input class="k-input mt-1" placeholder="Filtrar por barrio…" value="${escapeHtml(filters.barrio)}"
+                oninput="state.dashboard.barrio=this.value; state.dashboard.dimFocus=null; render();"/>
+            </div>
+            <div>
+              <label class="text-sm font-bold text-slate-700">Período</label>
+              <select class="k-input mt-1" onchange="state.dashboard.days=this.value; state.dashboard.dimFocus=null; render();">
+                ${[7,30,60,90].map(x => `<option value="${x}" ${days===x?'selected':''}>Últimos ${x} días</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-bold text-slate-700">Registros</label>
+              <div class="mt-1 p-3 rounded-xl bg-slate-50 border border-slate-100 text-sm">
+                <div><b>N:</b> ${cur.n}</div>
+                <div class="text-slate-500">Válidos (texto): ${cur.frases.length}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI -->
+        <div class="grid md:grid-cols-4 gap-4">
+          ${kpi.cards.map(c => `
+            <div class="card p-5">
+              <div class="text-xs text-slate-500 font-bold">${escapeHtml(c.label)}</div>
+              <div class="text-3xl font-black mt-1">${escapeHtml(c.value)}</div>
+              <div class="text-sm text-slate-600 mt-2">${c.sub}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Tabla Dimensiones -->
+        <div class="card p-6">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="font-black text-lg">Semáforo por dimensión</div>
+              <div class="text-sm text-slate-600">Color territorial por mayoría; severidad = 2×%Rojo + 1×%Amarillo (0–200). Click para ver drivers.</div>
+            </div>
+            <div class="text-xs text-slate-500">Comparación vs período anterior (mismo largo).</div>
+          </div>
+
+          <div class="overflow-auto mt-4 dims-table">
+            <table class="w-full text-sm">
+              <thead class="text-xs text-slate-500">
+                <tr class="border-b border-slate-100">
+                  <th class="text-left py-2 pr-3">Dimensión</th>
+                  <th class="text-left py-2 pr-3">Color</th>
+                  <th class="text-left py-2 pr-3">% R / A / V</th>
+                  <th class="text-left py-2 pr-3">Severidad</th>
+                  <th class="text-left py-2 pr-3">Drivers (Top 3)</th>
+                  <th class="text-left py-2 pr-3">Δ Sev</th>
+                  <th class="text-left py-2 pr-3">N válido</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${dimTable.map(r => `
+                  <tr class="border-b border-slate-50 hover:bg-slate-50 cursor-pointer" onclick="state.dashboard.dimFocus='${r.id}'; render();">
+                    <td class="py-3 pr-3">
+                      <div class="flex items-center gap-3">
+                        <div class="text-xl">${r.emoji}</div>
+                        <div class="font-bold">${escapeHtml(r.name)}</div>
+                      </div>
+                    </td>
+                    <td class="py-3 pr-3">${r.nValid < 30 ? '<span class="text-slate-400">N insuf.</span>' : chip(r.color, r.color==='rojo'?'Rojo':r.color==='amarillo'?'Amarillo':'Verde')}</td>
+                    <td class="py-3 pr-3">
+                      ${r.nValid < 30 ? '<span class="text-slate-400">—</span>' : `
+                        <div class="segbar mb-2" title="R/A/V">
+                          <div style="width:${Math.round(r.dist.rojo*100)}%;background:#ef4444"></div>
+                          <div style="width:${Math.round(r.dist.amarillo*100)}%;background:#f59e0b"></div>
+                          <div style="width:${Math.round(r.dist.verde*100)}%;background:#22c55e"></div>
+                        </div>
+                        <div class="text-xs text-slate-700 font-bold">
+                          <span class="text-red-600">R ${fmtPct(r.dist.rojo)}</span>
+                          <span class="text-slate-400">·</span>
+                          <span class="text-amber-700">A ${fmtPct(r.dist.amarillo)}</span>
+                          <span class="text-slate-400">·</span>
+                          <span class="text-green-700">V ${fmtPct(r.dist.verde)}</span>
+                        </div>
+                      `}
+                    </td>
+                    <td class="py-3 pr-3">${r.nValid < 30 ? '—' : `<b>${r.severity}</b>`}</td>
+                    <td class="py-3 pr-3">${r.driversHtml}</td>
+                    <td class="py-3 pr-3">${r.deltaSev===null ? '<span class="text-slate-400">—</span>' : (r.deltaSev>0 ? `<span class="text-red-600 font-bold">+${r.deltaSev}</span>` : r.deltaSev<0 ? `<span class="text-emerald-700 font-bold">${r.deltaSev}</span>` : '<span class="text-slate-600">0</span>')}</td>
+                    <td class="py-3 pr-3">${r.nValid}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 text-xs text-slate-500">Regla de calidad: si N válido &lt; 30, se evita asignar color territorial.</div>
+        </div>
+
+<!-- Cards Dimensiones (mobile) -->
+<div class="dims-cards mt-4">
+  ${dimTable.map(r => `
+    <div class="card p-5" style="box-shadow:none">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="text-2xl">${r.emoji}</div>
+          <div>
+            <div class="font-black text-base">${escapeHtml(r.name)}</div>
+            <div class="text-xs text-slate-600 mt-1">N válido: ${r.nValid}</div>
+          </div>
+        </div>
+        <div>${r.nValid < 30
+            ? '<span class="chip chip-warn">N insuf.</span>'
+            : `<span class="chip ${r.color==='rojo'?'chip-bad':r.color==='amarillo'?'chip-warn':'chip-good'}">${r.color==='rojo'?'Rojo':r.color==='amarillo'?'Amarillo':'Verde'}</span>`
+          }</div>
+      </div>
+
+      <div class="mt-4">
+        ${r.nValid < 30 ? '<div class="text-slate-400">—</div>' : `
+          <div class="segbar" title="R/A/V">
+            <div class="seg seg-r" style="width:${Math.round(r.dist.R*100)}%"></div>
+            <div class="seg seg-a" style="width:${Math.round(r.dist.A*100)}%"></div>
+            <div class="seg seg-v" style="width:${Math.round(r.dist.V*100)}%"></div>
+          </div>
+          <div class="text-xs text-slate-600 mt-2">${Math.round(r.dist.R*100)}% R · ${Math.round(r.dist.A*100)}% A · ${Math.round(r.dist.V*100)}% V</div>
+        `}
+      </div>
+
+      <div class="mt-4 flex items-center justify-between gap-3">
+        <div>
+          <div class="text-xs text-slate-600">Severidad</div>
+          <div class="font-black text-lg">${r.nValid < 30 ? '—' : r.severity}</div>
+        </div>
+        <button class="btn btn-sm" onclick="state.dashboard.dimFocus='${r.id}'; render();">Ver por qué</button>
+      </div>
+
+      <div class="mt-4">
+        <div class="text-xs text-slate-600 mb-2">Drivers (Top 3)</div>
+        <div class="text-sm">${r.driversHtml}</div>
+      </div>
+    </div>
+  `).join('')}
+</div>
+
+
+        <!-- Drilldown -->
+        ${focus ? `
+          <div class="card p-6">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="font-black text-lg">${escapeHtml(focus.dim.emoji)} ${escapeHtml(focus.dim.name)} – Detalle</div>
+                <div class="text-sm text-slate-600">Drivers calculados sobre el subgrupo: personas rojas en esta dimensión.</div>
+              </div>
+              <button class="btn" onclick="state.dashboard.dimFocus=null; render();">Cerrar</button>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-4 mt-4">
+              <div class="p-5 rounded-2xl border border-slate-100">
+                <div class="font-black mb-2">Distribución</div>
+                <div class="space-y-2">
+                  ${renderDistLine('Rojo', focus.row.pct.rojo, '#dc2626')}
+                  ${renderDistLine('Amarillo', focus.row.pct.amarillo, '#eab308')}
+                  ${renderDistLine('Verde', focus.row.pct.verde, '#059669')}
+                </div>
+                <div class="text-xs text-slate-500 mt-3">N válido: ${focus.row.nValid}</div>
+                <div class="text-xs text-slate-500 mt-1">Severidad: <b>${focus.row.severity}</b></div>
+              </div>
+
+              <div class="p-5 rounded-2xl border border-slate-100 lg:col-span-2">
+                <div class="font-black mb-2">Indicadores (ordenados por % Rojo)</div>
+                <div class="overflow-auto">
+                  <table class="w-full text-sm">
+                    <thead class="text-xs text-slate-500">
+                      <tr class="border-b border-slate-100">
+                        <th class="text-left py-2 pr-3">Indicador</th>
+                        <th class="text-left py-2 pr-3">% Rojo</th>
+                        <th class="text-left py-2 pr-3">% Amarillo</th>
+                        <th class="text-left py-2 pr-3">% Verde</th>
+                        <th class="text-left py-2 pr-3">N</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${focus.indicators.map(it => `
+                        <tr class="border-b border-slate-50 ${it.isTop ? 'bg-slate-50' : ''}">
+                          <td class="py-2 pr-3 font-bold">${escapeHtml(it.label)}</td>
+                          <td class="py-2 pr-3">${fmtPct(it.pctR)}</td>
+                          <td class="py-2 pr-3">${fmtPct(it.pctA)}</td>
+                          <td class="py-2 pr-3">${fmtPct(it.pctV)}</td>
+                          <td class="py-2 pr-3">${it.n}</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-4 mt-4">
+              <div class="p-5 rounded-2xl border border-slate-100 lg:col-span-1">
+                <div class="font-black mb-2">Temas dominantes (texto abierto)</div>
+                <div class="flex flex-wrap gap-2">
+                  ${focus.temas.map(t => `<span class="chip bg-slate-900 text-white">${escapeHtml(t.w)} <span class="opacity-70">(${t.c})</span></span>`).join('') || '<span class="text-slate-400 text-sm">—</span>'}
+                </div>
+              </div>
+              <div class="p-5 rounded-2xl border border-slate-100 lg:col-span-2">
+                <div class="font-black mb-2">Voz del territorio (muestra)</div>
+                <div class="space-y-3">
+                  ${focus.frases.slice(0,6).map(f => `
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div class="text-xs text-slate-500">${escapeHtml(f.ciudad || '')}${f.barrio ? ' · '+escapeHtml(f.barrio):''} · ${new Date(f.t).toLocaleDateString('es-AR')}</div>
+                      <div class="text-slate-800">${escapeHtml(f.text)}</div>
+                    </div>
+                  `).join('') || '<div class="text-slate-400 text-sm">No hay textos suficientes en los filtros actuales.</div>'}
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Voz del territorio (global) -->
+        <div class="card p-6">
+          <div class="font-black text-lg mb-2">Voz del territorio (global)</div>
+          <div class="text-sm text-slate-600 mb-4">Temas extraídos por keywords (v1) y frases anónimas. Se muestra solo si hay base suficiente.</div>
+
+          <div class="grid lg:grid-cols-3 gap-4">
+            <div class="p-5 rounded-2xl border border-slate-100">
+              <div class="font-black mb-2">Temas dominantes</div>
+              <div class="flex flex-wrap gap-2">
+                ${cur.temas.map(t => `<span class="chip bg-slate-900 text-white">${escapeHtml(t.w)} <span class="opacity-70">(${t.c})</span></span>`).join('') || '<span class="text-slate-400 text-sm">—</span>'}
+              </div>
+            </div>
+
+            <div class="p-5 rounded-2xl border border-slate-100 lg:col-span-2">
+              <div class="font-black mb-2">Frases recientes</div>
+              <div class="space-y-3">
+                ${cur.frases.slice(0,8).map(f => `
+                  <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div class="text-xs text-slate-500">${escapeHtml(f.ciudad || '')}${f.barrio ? ' · '+escapeHtml(f.barrio):''} · ${new Date(f.t).toLocaleDateString('es-AR')}</div>
+                    <div class="text-slate-800">${escapeHtml(f.text)}</div>
+                  </div>
+                `).join('') || '<div class="text-slate-400 text-sm">No hay textos suficientes en los filtros actuales.</div>'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export / Import -->
+        <div class="card p-6">
+          <div class="font-black text-lg mb-2">Datos (demo local)</div>
+          <div class="text-sm text-slate-600 mb-4">Exportá o importá diagnósticos y/o el instrumento. Esto facilita llevar el MVP a producción luego.</div>
+
+          <div class="flex flex-wrap gap-2">
+            <button class="btn" onclick="exportRecords()">Exportar registros (JSON)</button>
+            <label class="btn cursor-pointer">
+              Importar registros (JSON)
+              <input type="file" accept="application/json" style="display:none" onchange="importRecords(this.files[0])">
+            </label>
+            <button class="btn" onclick="exportInstrument()">Exportar instrumento (JSON)</button>
+            <label class="btn cursor-pointer">
+              Importar instrumento (JSON)
+              <input type="file" accept="application/json" style="display:none" onchange="importInstrument(this.files[0])">
+            </label>
+            <button class="btn btn-primary" onclick="clearAll()">Reset demo</button>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  function computeKPI(cur, prev) {
+    const dimWorst = cur.dimWorst;
+    const deltaSev = (cur.globalSeverity !== null && prev.globalSeverity !== null) ? (cur.globalSeverity - prev.globalSeverity) : null;
+
+    const cards = [
+      { label:'N diagnósticos', value:String(cur.n), sub: (prev.n ? `vs prev: ${prev.n}` : '—') },
+      { label:'% Rojo global', value: fmtPct(cur.distGlobal.rojo), sub: (prev.n ? `vs prev: ${fmtPct(prev.distGlobal.rojo)}` : '—') },
+      { label:'Dimensión más crítica', value: dimWorst ? dimWorst.name : '—', sub: dimWorst ? `Sev ${dimWorst.severity} · R ${fmtPct(dimWorst.pct.rojo)} <span class="text-slate-400">·</span> <button class="link" onclick="state.dashboard.dimFocus='${dimWorst.id}'; render();">Ver por qué</button>` : '—' },
+      { label:'Tendencia', value: (deltaSev===null ? '—' : (deltaSev>0 ? `↑ +${deltaSev}` : deltaSev<0 ? `↓ ${deltaSev}` : '0')), sub: 'Δ severidad global' }
+    ];
+    return { cards };
+  }
+
+  function computeTerritoryView(recordsAll, instrument, filters, offsetDays) {
+    const now = Date.now();
+    const to = now - (offsetDays * 24*60*60*1000);
+    const from = to - (filters.days * 24*60*60*1000);
+
+    const records = recordsAll.filter(r => {
+      const t = new Date(r.timestamp).getTime();
+      if (!isFinite(t) || t < from || t >= to) return false;
+      if (filters.ciudad && (r.territorio?.ciudad || '') !== filters.ciudad) return false;
+      if (filters.barrio && (r.territorio?.barrio || '') !== filters.barrio) return false;
+      return true;
+    });
+
+    // Global dist based on overall.color (computed via rule 33%)
+    let rojo=0, amarillo=0, verde=0;
+    for (const r of records) {
+      const c = r.semaforo_overall?.color;
+      if (c === 'rojo') rojo++;
+      else if (c === 'amarillo') amarillo++;
+      else if (c === 'verde') verde++;
+    }
+    const n = records.length;
+    const distGlobal = n ? { rojo: rojo/n, amarillo: amarillo/n, verde: verde/n } : {rojo:0, amarillo:0, verde:0};
+    const globalSeverity = n ? Math.round((2*distGlobal.rojo + 1*distGlobal.amarillo)*100) : null;
+
+    const byDim = {};
+    instrument.dimensions.forEach(d => {
+      byDim[d.id] = computeDimMetrics(records, instrument, d.id);
+    });
+
+    // Worst dimension by severity (with N threshold)
+    const dimWorst = instrument.dimensions
+      .map(d => ({ id:d.id, name:d.name, emoji:d.emoji, ...byDim[d.id] }))
+      .filter(x => x.nValid >= 30)
+      .sort((a,b) => (b.severity - a.severity))[0] || null;
+
+    // frases + temas (global)
+    const frases = records
+      .filter(r => r.texto_abierto && String(r.texto_abierto).trim().length)
+      .map(r => ({ t: r.timestamp, ciudad: r.territorio?.ciudad || '', barrio: r.territorio?.barrio || '', text: String(r.texto_abierto).trim() }))
+      .sort((a,b) => new Date(b.t) - new Date(a.t));
+
+    const temas = topKeywords(frases.map(f => f.text).join(' '), 10);
+
+    return { n, distGlobal, globalSeverity, byDim, dimWorst, frases, temas, records };
+  }
+
+  function computeDimMetrics(records, instrument, dimId) {
+    let cR=0, cA=0, cV=0, nValid=0;
+    for (const r of records) {
+      const c = r.semaforo?.[dimId];
+      if (!c) continue;
+      nValid++;
+      if (c === 'rojo') cR++;
+      else if (c === 'amarillo') cA++;
+      else if (c === 'verde') cV++;
+    }
+    const pct = nValid ? { rojo: cR/nValid, amarillo: cA/nValid, verde: cV/nValid } : {rojo:0, amarillo:0, verde:0};
+    const color = nValid < 30 ? 'gris' : territoryDimColor(pct);
+    const severity = nValid ? Math.round((2*pct.rojo + 1*pct.amarillo)*100) : 0;
+
+    // Drivers sobre subset rojo en dimensión
+    const subset = records.filter(r => r.semaforo?.[dimId] === 'rojo');
+    const indicators = instrument.indicators.filter(ind => ind.dimension === dimId);
+
+    const driverStats = indicators.map(ind => {
+      let n=0, r=0, a=0, v=0;
+      for (const rec of subset) {
+        const ans = rec.answers?.[ind.id];
+        if (!ans) continue;
+        n++;
+        if (ans === 'rojo') r++;
+        else if (ans === 'amarillo') a++;
+        else if (ans === 'verde') v++;
+      }
+      return { id: ind.id, label: ind.label, n, pctR: n? r/n : 0, pctA: n? a/n : 0, pctV: n? v/n : 0 };
+    }).sort((x,y) => y.pctR - x.pctR);
+
+    return { nValid, pct, color, severity, drivers: driverStats };
+  }
+
+  function territoryDimColor(pct) {
+    // pct in {rojo,amarillo,verde}
+    if (pct.rojo >= pct.amarillo && pct.rojo >= pct.verde) return 'rojo';
+    if (pct.amarillo >= pct.verde) return 'amarillo';
+    return 'verde';
+  }
+
+  function buildDimensionDrilldown(cur, instrument, dimId) {
+    const dim = instrument.dimensions.find(d => d.id === dimId);
+    const row = cur.byDim[dimId];
+
+    // indicadores (ordenados) + top marker
+    const topIds = new Set(row.drivers.slice(0,3).map(x => x.id));
+    const indicators = row.drivers.map(x => ({ ...x, isTop: topIds.has(x.id) }));
+
+    // frases asociadas: subgrupo rojo en dim
+    const subset = cur.records.filter(r => r.semaforo?.[dimId] === 'rojo' && r.texto_abierto && String(r.texto_abierto).trim().length)
+      .map(r => ({ t:r.timestamp, ciudad:r.territorio?.ciudad||'', barrio:r.territorio?.barrio||'', text:String(r.texto_abierto).trim() }))
+      .sort((a,b) => new Date(b.t) - new Date(a.t));
+
+    const temas = topKeywords(subset.map(f => f.text).join(' '), 10);
+
+    return { dim, row, indicators, frases: subset, temas };
+  }
+
+  
+
+  function renderDistLine(label, pct, color) {
+    const w = Math.round(pct*100);
+    return `
+      <div>
+        <div class="flex items-center justify-between text-sm">
+          <div class="font-bold">${label}</div>
+          <div class="text-slate-600">${w}%</div>
+        </div>
+        <div class="bar mt-1"><div style="width:${w}%;background:${color}"></div></div>
+      </div>
+    `;
+  }
+
+  function exportJSON() {
+    downloadFile('korai_records.json', JSON.stringify(loadRecords(), null, 2), 'application/json');
+  }
+  function importJSON(evt) {
+    const file = evt.target.files?.[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result||''));
+        if (!Array.isArray(parsed)) throw new Error('Formato inválido (se esperaba array).');
+        const merged = loadRecords().concat(parsed);
+        saveRecords(merged);
+        render();
+        alert('Importación OK. Registros totales: ' + merged.length);
+      } catch (e) { alert('Error importando JSON: ' + e.message); }
+    };
+    reader.readAsText(file);
+  }
+
+  function exportInstrument() {
+    downloadFile('korai_instrument.json', JSON.stringify(getInstrument(), null, 2), 'application/json');
+  }
+  function importInstrument(evt) {
+    const file = evt.target.files?.[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result||''));
+        if (!parsed || !Array.isArray(parsed.dimensions) || !Array.isArray(parsed.indicators)) throw new Error('Instrumento inválido.');
+        localStorage.setItem(STORAGE_CFG_KEY, JSON.stringify(parsed));
+        render();
+        alert('Instrumento importado. Indicadores: ' + parsed.indicators.length);
+      } catch (e) { alert('Error importando instrumento: ' + e.message); }
+    };
+    reader.readAsText(file);
+  }
+  function clearInstrumentOverride() { localStorage.removeItem(STORAGE_CFG_KEY); render(); }
+
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function uniqueCities(records) {
+    const set = new Set(['Berazategui']);
+    for (const r of records) { const c = r.territorio?.ciudad; if (c) set.add(c); }
+    return [...set];
+  }
+  function escapeHtml(s) {
+    return String(s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+  }
+  function resetAll() { if (!confirm('Esto borrará los registros locales. ¿Continuar?')) return; localStorage.removeItem(STORAGE_KEY); render(); }
+
+  function render() {
+    const app = document.getElementById('app'); if (!app) return;
+    switch(state.screen) {
+      case 'home': app.innerHTML = renderHome(); break;
+      case 'survey': app.innerHTML = renderSurvey(); forceScrollToQuestion(); break;
+      case 'result': app.innerHTML = renderResult(); break;
+      case 'dashboard': app.innerHTML = renderDashboard(); break;
+      default: app.innerHTML = renderHome();
+    }
+  }
+
+  render();
+  </script>
+</body>
+</html>
