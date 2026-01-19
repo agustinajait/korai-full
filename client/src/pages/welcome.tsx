@@ -49,7 +49,7 @@ export default function Welcome() {
             KORAI
           </h1>
           <p className="text-lg text-muted-foreground font-medium">
-            El semáforo social inteligente
+            Tu asistente de bienestar comunitario
           </p>
         </div>
 
