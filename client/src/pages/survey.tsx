@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -10,8 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { INSTRUMENT } from "@/lib/instrument";
 import { useCreateReport } from "@/hooks/use-reports";
 import { queryClient } from "@/lib/queryClient";
-import { Loader2, ArrowRight } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Loader2, ArrowRight, CheckCircle2, Trophy, Gift, QrCode } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function Survey() {
   const [_, setLocation] = useLocation();
@@ -19,6 +19,8 @@ export default function Survey() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [comment, setComment] = useState("");
   const [showCommentScreen, setShowCommentScreen] = useState(false);
+  const [showResultsScreen, setShowResultsScreen] = useState(false);
+  const [selectedBenefit, setSelectedBenefit] = useState<string | null>(null);
   const [showLevelUp, setShowLevelUp] = useState<{show: boolean, dimension: string}>({show: false, dimension: ""});
 
   const { mutate: submitReport, isPending } = useCreateReport();
@@ -33,18 +35,37 @@ export default function Survey() {
   const indicators = INSTRUMENT.indicators;
   const currentIndicator = indicators[currentIdx];
   const dimension = INSTRUMENT.dimensions.find(d => d.id === currentIndicator?.dimension);
-  
-  // Check for level up (end of dimension)
+
+  const results = useMemo(() => {
+    if (!showResultsScreen) return null;
+    const perDim: Record<string, any> = {};
+    INSTRUMENT.dimensions.forEach(d => {
+      const dimInds = indicators.filter(i => i.dimension === d.id);
+      const dimAnswers = dimInds.map(i => answers[i.id]);
+      const r = dimAnswers.filter(a => a === 'rojo').length;
+      const a = dimAnswers.filter(a => a === 'amarillo').length;
+      const v = dimAnswers.filter(a => a === 'verde').length;
+      const n = dimAnswers.length;
+      const color = (r / n >= 0.33) ? 'rojo' : (a / n >= 0.33) ? 'amarillo' : 'verde';
+      perDim[d.id] = { r, a, v, n, color };
+    });
+
+    const totalR = Object.values(perDim).reduce((acc, d) => acc + d.r, 0);
+    const totalA = Object.values(perDim).reduce((acc, d) => acc + d.a, 0);
+    const totalN = Object.values(perDim).reduce((acc, d) => acc + d.n, 0);
+    const overallColor = (totalR / totalN >= 0.33) ? 'rojo' : (totalA / totalN >= 0.33) ? 'amarillo' : 'verde';
+
+    return { perDim, overallColor, totalR, totalA, totalV: totalN - totalR - totalA, totalN };
+  }, [showResultsScreen, answers, indicators]);
+
   const handleAnswer = (value: "rojo" | "amarillo" | "verde") => {
     const newAnswers = { ...answers, [currentIndicator.id]: value };
     setAnswers(newAnswers);
 
-    // Check if next indicator is new dimension
     const nextIdx = currentIdx + 1;
     if (nextIdx < indicators.length) {
       const nextInd = indicators[nextIdx];
       if (nextInd.dimension !== currentIndicator.dimension) {
-        // Dimension change -> Celebration!
         confetti({
           particleCount: 50,
           spread: 60,
@@ -58,10 +79,9 @@ export default function Survey() {
           setCurrentIdx(nextIdx);
         }, 2000);
       } else {
-        setTimeout(() => setCurrentIdx(nextIdx), 250); // Small delay for visual feedback
+        setTimeout(() => setCurrentIdx(nextIdx), 250);
       }
     } else {
-      // End of survey
       confetti({
         particleCount: 150,
         spread: 100,
@@ -81,16 +101,144 @@ export default function Survey() {
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
-        setLocation("/dashboard");
+        setShowResultsScreen(true);
       }
     });
   };
+
+  if (showResultsScreen && results) {
+    return (
+      <div className="min-h-screen pt-20 pb-10 px-4 max-w-6xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="flex-1 space-y-6">
+            <header className="space-y-2">
+              <h1 className="text-4xl font-black">¡Diagnóstico completado!</h1>
+              <p className="text-muted-foreground text-lg">
+                Gracias por sumar tu mirada. Tu aporte se integra a una lectura colectiva del territorio.
+              </p>
+              <div className="flex items-center gap-2 mt-4 text-xs font-bold uppercase tracking-widest text-[#A9B3DA]">
+                <span className={`${results.overallColor === 'rojo' ? 'text-red-400' : results.overallColor === 'amarillo' ? 'text-yellow-400' : 'text-green-400'}`}>
+                  {results.overallColor} Señal de alerta
+                </span>
+                <span className="opacity-40">|</span>
+                <span>Distribución global: R {Math.round(results.totalR/results.totalN*100)}% · A {Math.round(results.totalA/results.totalN*100)}% · V {Math.round(results.totalV/results.totalN*100)}%</span>
+              </div>
+            </header>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {INSTRUMENT.dimensions.map(d => {
+                const s = results.perDim[d.id];
+                return (
+                  <div key={d.id} className="p-5 rounded-3xl bg-white/5 border border-white/10 shadow-xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{d.emoji}</span>
+                        <div>
+                          <div className="font-bold text-base">{d.name}</div>
+                          <div className="text-[10px] text-muted-foreground uppercase">N válido: {s.n}</div>
+                        </div>
+                      </div>
+                      <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                        s.color === 'rojo' ? 'bg-red-500/20 text-red-400' : 
+                        s.color === 'amarillo' ? 'bg-yellow-500/20 text-yellow-400' : 
+                        'bg-green-500/20 text-green-400'
+                      }`}>
+                        {s.color} {s.color === 'rojo' ? 'Rojo' : s.color === 'amarillo' ? 'Amarillo' : 'Verde'}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-[10px] font-bold text-white/40">
+                        R {Math.round(s.r/s.n*100)}% · A {Math.round(s.a/s.n*100)}% · V {Math.round(s.v/s.n*100)}%
+                      </div>
+                      <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-white/5">
+                        <div style={{ width: `${(s.v / s.n) * 100}%` }} className="bg-[#22c55e]" />
+                        <div style={{ width: `${(s.a / s.n) * 100}%` }} className="bg-[#f59e0b]" />
+                        <div style={{ width: `${(s.r / s.n) * 100}%` }} className="bg-[#ef4444]" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <aside className="w-full md:w-80 space-y-6">
+            <div className="bg-gradient-to-br from-primary/20 to-transparent border border-primary/30 rounded-3xl p-6 shadow-2xl">
+              <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-400" /> Reconocimiento desbloqueado
+              </h3>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-2xl border border-primary/30">🎖️</div>
+                <div>
+                  <div className="font-black text-sm">Colaborador comunitario</div>
+                  <div className="text-xs text-muted-foreground leading-tight">Por completar el diagnóstico.</div>
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground">Este reconocimiento no depende de tus respuestas.</p>
+            </div>
+
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-2xl">
+              <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                <Gift className="w-5 h-5 text-primary" /> Beneficios locales
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                Algunas ciudades pueden sumar beneficios de marcas locales para quienes participan.
+              </p>
+              
+              <div className="space-y-3">
+                {[
+                  { id: 'discount', icon: '🛍️', title: '10% off en comercios adheridos', desc: 'Presentá tu badge "Colaborador comunitario".' },
+                  { id: 'coffee', icon: '☕', title: 'Café + medialuna a precio especial', desc: 'Promo válida en locales participantes.' },
+                  { id: 'raffle', icon: '🎟️', title: 'Sorteos mensuales', desc: 'Participás automáticamente al completar el diagnóstico.' }
+                ].map(b => (
+                  <button 
+                    key={b.id}
+                    onClick={() => setSelectedBenefit(b.id)}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all ${
+                      selectedBenefit === b.id ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20' : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-xl">{b.icon}</span>
+                      <div className="font-bold text-xs leading-tight">{b.title}</div>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground leading-snug">{b.desc}</div>
+                  </button>
+                ))}
+              </div>
+
+              {selectedBenefit && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-6 pt-6 border-t border-white/10 text-center"
+                >
+                  <div className="bg-white p-4 rounded-2xl inline-block mb-3">
+                    <QRCodeSVG value={`KORAI-REWARD-${selectedBenefit}-${Date.now()}`} size={120} />
+                  </div>
+                  <div className="text-[10px] font-bold text-primary uppercase flex items-center justify-center gap-1">
+                    <QrCode className="w-3 h-3" /> Canjeá tu beneficio con este QR
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            <Button 
+              onClick={() => setLocation("/dashboard")}
+              className="w-full h-14 bg-white text-black hover:bg-white/90 font-bold rounded-2xl shadow-xl"
+            >
+              Ir al Dashboard Colectivo
+            </Button>
+          </aside>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentIndicator && !showCommentScreen) return null;
 
   return (
     <div className="min-h-screen pt-20 pb-10 px-4 flex flex-col items-center max-w-xl mx-auto">
-      {/* Level Up Toast */}
       <AnimatePresence>
         {showLevelUp.show && (
           <motion.div
