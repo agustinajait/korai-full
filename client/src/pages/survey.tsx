@@ -135,38 +135,12 @@ export default function Survey() {
   if (showResultsScreen && results) {
     return (
       <div className="min-h-screen pt-20 pb-10 px-4 max-w-6xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
-        {/* Estado General de la Comunidad */}
-        <section className={`p-8 rounded-[40px] border relative overflow-hidden transition-colors duration-1000 ${
-          results.overallColor === 'rojo' ? 'bg-red-500/10 border-red-500/30' : 
-          results.overallColor === 'amarillo' ? 'bg-yellow-500/10 border-yellow-500/30' : 
-          'bg-green-500/10 border-green-500/30'
-        }`}>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 blur-[100px] opacity-20 rounded-full" 
-               style={{ backgroundColor: results.overallColor === 'rojo' ? '#ef4444' : results.overallColor === 'amarillo' ? '#f59e0b' : '#22c55e' }} />
-          
-          <div className="relative z-10 flex flex-col items-center text-center space-y-4">
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl animate-pulse ${
-              results.overallColor === 'rojo' ? 'bg-red-500 text-white' : 
-              results.overallColor === 'amarillo' ? 'bg-yellow-500 text-black' : 
-              'bg-green-500 text-white'
-            }`}>
-              <CheckCircle2 className="w-12 h-12" />
-            </div>
-            <div>
-              <h2 className="text-3xl font-black uppercase tracking-tighter">Estado General de la Comunidad</h2>
-              <p className="text-[#A9B3DA] font-bold">
-                Tu diagnóstico contribuye a un semáforo {results.overallColor.toUpperCase()} en tu territorio
-              </p>
-            </div>
-          </div>
-        </section>
-
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex-1 space-y-6">
             <header className="space-y-2">
-              <h1 className="text-4xl font-black">Visualización Territorial</h1>
+              <h1 className="text-4xl font-black">Tu Diagnóstico</h1>
               <p className="text-muted-foreground text-lg">
-                Análisis de severidad por dimensiones críticas del bienestar.
+                Este es el resultado de tu autodiagnóstico. Tu mirada es fundamental para entender la realidad de tu barrio.
               </p>
             </header>
 
@@ -180,7 +154,7 @@ export default function Survey() {
                         <span className="text-2xl">{d.emoji}</span>
                         <div>
                           <div className="font-bold text-base">{d.name}</div>
-                          <div className="text-[10px] text-muted-foreground uppercase">Severidad: {s.severity}%</div>
+                          <div className="text-[10px] text-muted-foreground uppercase">Nivel: {s.color}</div>
                         </div>
                       </div>
                       <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${
@@ -192,26 +166,15 @@ export default function Survey() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-[9px] font-bold uppercase text-[#A9B3DA]">
-                        <span>Nivel de Riesgo</span>
-                        <span>{s.severity}%</span>
-                      </div>
-                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${s.severity}%` }}
-                          transition={{ duration: 1, ease: "easeOut" }}
-                          className={`h-full rounded-full ${
-                            s.color === 'rojo' ? 'bg-red-500' : s.color === 'amarillo' ? 'bg-yellow-500' : 'bg-green-500'
-                          }`}
-                        />
-                      </div>
+                    <div className="flex h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                      <div style={{ width: `${(s.v / s.n) * 100}%` }} className="bg-[#22c55e]" />
+                      <div style={{ width: `${(s.a / s.n) * 100}%` }} className="bg-[#f59e0b]" />
+                      <div style={{ width: `${(s.r / s.n) * 100}%` }} className="bg-[#ef4444]" />
                     </div>
 
                     <div className="pt-2">
                       <p className="text-[11px] leading-relaxed text-white/70 italic bg-white/5 p-3 rounded-xl border border-white/5">
-                        "{s.explanation}"
+                        {s.color === 'rojo' ? 'Se detectan áreas de mejora urgente.' : s.color === 'amarillo' ? 'Existen aspectos que requieren atención.' : 'La situación es mayormente positiva.'}
                       </p>
                     </div>
                   </div>
