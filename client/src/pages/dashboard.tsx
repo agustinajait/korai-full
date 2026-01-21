@@ -99,6 +99,17 @@ export default function Dashboard() {
       }
     });
 
+    // Identificar el área más crítica (mayor severidad)
+    let mostCriticalDimId = null;
+    let maxSeverity = -1;
+    Object.keys(byDim).forEach(dimId => {
+      const d = byDim[dimId];
+      if (d.severity > maxSeverity) {
+        maxSeverity = d.severity;
+        mostCriticalDimId = dimId;
+      }
+    });
+
     const total = reports.length;
     return {
       total,
@@ -108,6 +119,7 @@ export default function Dashboard() {
         verde: total ? verde / total : 0 
       },
       byDim,
+      mostCriticalDimId,
       frases: frases.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     };
   }, [reports]);
@@ -230,15 +242,23 @@ export default function Dashboard() {
                 {INSTRUMENT.dimensions.map(d => {
                   const s = (stats?.byDim?.[d.id] || { rojo: 0, amarillo: 0, verde: 0, n: 0, indicators: {}, color: 'verde', severity: 0, explanation: '' }) as any;
                   const isSelected = selectedDimension === d.id;
+                  const isMostCritical = stats?.mostCriticalDimId === d.id && s.severity > 0;
                   
                   return (
                     <div 
                       key={d.id} 
                       onClick={() => setSelectedDimension(isSelected ? null : d.id)}
-                      className={`p-6 rounded-3xl bg-white/5 border transition-all cursor-pointer space-y-4 ${
-                        isSelected ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20' : 'border-white/5 hover:bg-white/10'
+                      className={`p-6 rounded-3xl bg-white/5 border transition-all cursor-pointer space-y-4 relative ${
+                        isSelected ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20' : 
+                        isMostCritical ? 'border-red-500/50 bg-red-500/5 shadow-[0_0_20px_rgba(239,68,68,0.1)]' :
+                        'border-white/5 hover:bg-white/10'
                       }`}
                     >
+                      {isMostCritical && (
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg z-10 animate-bounce">
+                          ÁREA MÁS CRÍTICA
+                        </div>
+                      )}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <span className="text-2xl">{d.emoji}</span>
