@@ -41,21 +41,47 @@ export default function Survey() {
     const perDim: Record<string, any> = {};
     INSTRUMENT.dimensions.forEach(d => {
       const dimInds = indicators.filter(i => i.dimension === d.id);
-      const dimAnswers = dimInds.map(i => answers[i.id]);
-      const r = dimAnswers.filter(a => a === 'rojo').length;
-      const a = dimAnswers.filter(a => a === 'amarillo').length;
-      const v = dimAnswers.filter(a => a === 'verde').length;
+      const dimAnswers = dimInds.map(i => ({ 
+        id: i.id, 
+        label: i.label, 
+        value: answers[i.id] 
+      }));
+      
+      const r = dimAnswers.filter(a => a.value === 'rojo').length;
+      const a = dimAnswers.filter(a.value === 'amarillo').length;
+      const v = dimAnswers.filter(a.value === 'verde').length;
       const n = dimAnswers.length;
-      const color = (r / n >= 0.33) ? 'rojo' : (a / n >= 0.33) ? 'amarillo' : 'verde';
-      perDim[d.id] = { r, a, v, n, color };
+      
+      // Lógica de severidad: si > 50% es rojo, es crítico.
+      const color = (r / n >= 0.5) ? 'rojo' : (a / n >= 0.5 || (r+a)/n >= 0.5) ? 'amarillo' : 'verde';
+      
+      // Calcular severidad (0-100)
+      // Representa qué tan cerca está de "empeorar" o el peso del riesgo
+      const severity = Math.round(((r * 1 + a * 0.5) / n) * 100);
+      
+      // Encontrar el indicador más problemático para la explicación
+      const worstInd = dimAnswers.find(a => a.value === 'rojo') || dimAnswers.find(a => a.value === 'amarillo');
+      
+      let explanation = "";
+      if (color === 'rojo') {
+        explanation = `Estado Crítico: El ${Math.round((r/n)*100)}% de los indicadores reporta niveles de riesgo alto, especialmente en "${worstInd?.label || 'acceso básico'}", lo que arrastra la dimensión a Rojo.`;
+      } else if (color === 'amarillo') {
+        explanation = `Riesgo Moderado: Se detectan alertas en un ${Math.round(((r+a)/n)*100)}% del área. La situación de "${worstInd?.label || 'ciertos servicios'}" requiere atención para evitar una transición a rojo.`;
+      } else {
+        explanation = `Estado Óptimo: La dimensión se mantiene en niveles saludables. El ${Math.round((v/n)*100)}% de las respuestas son positivas, reflejando estabilidad general.`;
+      }
+
+      perDim[d.id] = { r, a, v, n, color, severity, explanation };
     });
 
     const totalR = Object.values(perDim).reduce((acc, d) => acc + d.r, 0);
     const totalA = Object.values(perDim).reduce((acc, d) => acc + d.a, 0);
+    const totalV = Object.values(perDim).reduce((acc, d) => acc + d.v, 0);
     const totalN = Object.values(perDim).reduce((acc, d) => acc + d.n, 0);
-    const overallColor = (totalR / totalN >= 0.33) ? 'rojo' : (totalA / totalN >= 0.33) ? 'amarillo' : 'verde';
+    
+    const communityColor = (totalR / totalN >= 0.33) ? 'rojo' : (totalA / totalN >= 0.33) ? 'amarillo' : 'verde';
 
-    return { perDim, overallColor, totalR, totalA, totalV: totalN - totalR - totalA, totalN };
+    return { perDim, overallColor: communityColor, totalR, totalA, totalV, totalN };
   }, [showResultsScreen, answers, indicators]);
 
   const handleAnswer = (value: "rojo" | "amarillo" | "verde") => {
@@ -109,52 +135,84 @@ export default function Survey() {
   if (showResultsScreen && results) {
     return (
       <div className="min-h-screen pt-20 pb-10 px-4 max-w-6xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        {/* Estado General de la Comunidad */}
+        <section className={`p-8 rounded-[40px] border relative overflow-hidden transition-colors duration-1000 ${
+          results.overallColor === 'rojo' ? 'bg-red-500/10 border-red-500/30' : 
+          results.overallColor === 'amarillo' ? 'bg-yellow-500/10 border-yellow-500/30' : 
+          'bg-green-500/10 border-green-500/30'
+        }`}>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 blur-[100px] opacity-20 rounded-full" 
+               style={{ backgroundColor: results.overallColor === 'rojo' ? '#ef4444' : results.overallColor === 'amarillo' ? '#f59e0b' : '#22c55e' }} />
+          
+          <div className="relative z-10 flex flex-col items-center text-center space-y-4">
+            <div className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl animate-pulse ${
+              results.overallColor === 'rojo' ? 'bg-red-500 text-white' : 
+              results.overallColor === 'amarillo' ? 'bg-yellow-500 text-black' : 
+              'bg-green-500 text-white'
+            }`}>
+              <CheckCircle2 className="w-12 h-12" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-black uppercase tracking-tighter">Estado General de la Comunidad</h2>
+              <p className="text-[#A9B3DA] font-bold">
+                Tu diagnóstico contribuye a un semáforo {results.overallColor.toUpperCase()} en tu territorio
+              </p>
+            </div>
+          </div>
+        </section>
+
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex-1 space-y-6">
             <header className="space-y-2">
-              <h1 className="text-4xl font-black">¡Diagnóstico completado!</h1>
+              <h1 className="text-4xl font-black">Visualización Territorial</h1>
               <p className="text-muted-foreground text-lg">
-                Gracias por sumar tu mirada. Tu aporte se integra a una lectura colectiva del territorio.
+                Análisis de severidad por dimensiones críticas del bienestar.
               </p>
-              <div className="flex items-center gap-2 mt-4 text-xs font-bold uppercase tracking-widest text-[#A9B3DA]">
-                <span className={`${results.overallColor === 'rojo' ? 'text-red-400' : results.overallColor === 'amarillo' ? 'text-yellow-400' : 'text-green-400'}`}>
-                  {results.overallColor} Señal de alerta
-                </span>
-                <span className="opacity-40">|</span>
-                <span>Distribución global: R {Math.round(results.totalR/results.totalN*100)}% · A {Math.round(results.totalA/results.totalN*100)}% · V {Math.round(results.totalV/results.totalN*100)}%</span>
-              </div>
             </header>
 
             <div className="grid sm:grid-cols-2 gap-4">
               {INSTRUMENT.dimensions.map(d => {
                 const s = results.perDim[d.id];
                 return (
-                  <div key={d.id} className="p-5 rounded-3xl bg-white/5 border border-white/10 shadow-xl">
-                    <div className="flex items-center justify-between mb-4">
+                  <div key={d.id} className="p-6 rounded-3xl bg-white/5 border border-white/10 shadow-xl space-y-4 hover:bg-white/10 transition-colors">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{d.emoji}</span>
                         <div>
                           <div className="font-bold text-base">{d.name}</div>
-                          <div className="text-[10px] text-muted-foreground uppercase">N válido: {s.n}</div>
+                          <div className="text-[10px] text-muted-foreground uppercase">Severidad: {s.severity}%</div>
                         </div>
                       </div>
-                      <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                        s.color === 'rojo' ? 'bg-red-500/20 text-red-400' : 
-                        s.color === 'amarillo' ? 'bg-yellow-500/20 text-yellow-400' : 
-                        'bg-green-500/20 text-green-400'
+                      <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${
+                        s.color === 'rojo' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 
+                        s.color === 'amarillo' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 
+                        'bg-green-500/20 text-green-400 border-green-500/30'
                       }`}>
-                        {s.color} {s.color === 'rojo' ? 'Rojo' : s.color === 'amarillo' ? 'Amarillo' : 'Verde'}
+                        {s.color}
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <div className="text-[10px] font-bold text-white/40">
-                        R {Math.round(s.r/s.n*100)}% · A {Math.round(s.a/s.n*100)}% · V {Math.round(s.v/s.n*100)}%
+
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-[9px] font-bold uppercase text-[#A9B3DA]">
+                        <span>Nivel de Riesgo</span>
+                        <span>{s.severity}%</span>
                       </div>
-                      <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-white/5">
-                        <div style={{ width: `${(s.v / s.n) * 100}%` }} className="bg-[#22c55e]" />
-                        <div style={{ width: `${(s.a / s.n) * 100}%` }} className="bg-[#f59e0b]" />
-                        <div style={{ width: `${(s.r / s.n) * 100}%` }} className="bg-[#ef4444]" />
+                      <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${s.severity}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className={`h-full rounded-full ${
+                            s.color === 'rojo' ? 'bg-red-500' : s.color === 'amarillo' ? 'bg-yellow-500' : 'bg-green-500'
+                          }`}
+                        />
                       </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <p className="text-[11px] leading-relaxed text-white/70 italic bg-white/5 p-3 rounded-xl border border-white/5">
+                        "{s.explanation}"
+                      </p>
                     </div>
                   </div>
                 );
