@@ -248,7 +248,7 @@ export default function Survey() {
               onClick={() => setLocation("/dashboard")}
               className="w-full h-14 bg-white text-black hover:bg-white/90 font-bold rounded-2xl shadow-xl"
             >
-              Ir al Dashboard Colectivo
+              Ir al Dashboard Admin
             </Button>
           </aside>
         </div>
