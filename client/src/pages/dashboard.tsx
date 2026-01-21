@@ -181,7 +181,7 @@ export default function Dashboard() {
               </div>
               <div className="p-6 grid sm:grid-cols-2 gap-4">
                 {INSTRUMENT.dimensions.map(d => {
-                  const s = stats?.byDimension?.[d.id] || { rojo: 0, amarillo: 0, verde: 0, n: 0 };
+                  const s = stats?.byDim?.[d.id] || { rojo: 0, amarillo: 0, verde: 0, n: 0, indicators: {} };
                   const total = s.n || 1;
                   const color = (s.rojo / total >= 0.33) ? 'rojo' : (s.amarillo / total >= 0.33) ? 'amarillo' : 'verde';
                   const isSelected = selectedDimension === d.id;
@@ -216,7 +216,7 @@ export default function Dashboard() {
                       {isSelected && (
                         <div className="mt-4 pt-4 border-t border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2">
                           {INSTRUMENT.indicators.filter(i => i.dimension === d.id).map(ind => {
-                            const indStats = (s as any).indicators?.[ind.id] || { rojo: 0, amarillo: 0, verde: 0 };
+                            const indStats = s.indicators?.[ind.id] || { rojo: 0, amarillo: 0, verde: 0 };
                             const indTotal = indStats.rojo + indStats.amarillo + indStats.verde || 1;
                             return (
                               <div key={ind.id} className="space-y-1">
