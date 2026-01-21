@@ -47,9 +47,9 @@ export default function Survey() {
         value: answers[i.id] 
       }));
       
-      const r = dimAnswers.filter(a => a.value === 'rojo').length;
-      const a = dimAnswers.filter(a.value === 'amarillo').length;
-      const v = dimAnswers.filter(a.value === 'verde').length;
+      const r = dimAnswers.filter(ans => ans.value === 'rojo').length;
+      const a = dimAnswers.filter(ans => ans.value === 'amarillo').length;
+      const v = dimAnswers.filter(ans => ans.value === 'verde').length;
       const n = dimAnswers.length;
       
       // Lógica de severidad: si > 50% es rojo, es crítico.
