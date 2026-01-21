@@ -84,7 +84,32 @@ export default function Survey() {
     return { perDim, overallColor: communityColor, totalR, totalA, totalV, totalN };
   }, [showResultsScreen, answers, indicators]);
 
+  const playBip = (color: string) => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      const freq = color === 'verde' ? 760 : color === 'amarillo' ? 560 : 360;
+      oscillator.frequency.value = freq;
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.01);
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.12);
+    } catch (e) {
+      console.warn("Audio Context not supported or blocked", e);
+    }
+  };
+
   const handleAnswer = (value: "rojo" | "amarillo" | "verde") => {
+    playBip(value);
     const newAnswers = { ...answers, [currentIndicator.id]: value };
     setAnswers(newAnswers);
 
