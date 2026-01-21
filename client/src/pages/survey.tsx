@@ -77,7 +77,7 @@ export default function Survey() {
       neighborhood: context.neighborhood || "",
       answers,
       openText: comment,
-      demographics: {} // Simplified for this demo
+      demographics: context.demographics || {}
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["/api/reports"] });

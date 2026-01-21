@@ -34,6 +34,7 @@ export default function Dashboard() {
     
     reports.forEach(r => {
       const answers = r.answers as Record<string, string>;
+      const demo = (r.demographics || {}) as any;
       let rCount = 0, aCount = 0, nCount = 0;
 
       Object.entries(answers).forEach(([key, val]) => {
@@ -73,7 +74,8 @@ export default function Dashboard() {
           text: r.openText,
           city: r.city,
           color: overallColor,
-          timestamp: r.createdAt
+          timestamp: r.createdAt,
+          demo: demo
         });
       }
     });
@@ -250,11 +252,35 @@ export default function Dashboard() {
                     <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-full ${
                       f.color === 'rojo' ? 'bg-[#ef4444]' : f.color === 'amarillo' ? 'bg-[#f59e0b]' : 'bg-[#22c55e]'
                     }`} />
-                    <div className="text-xs text-[#A9B3DA] mb-1 flex justify-between">
-                      <span>{f.city}</span>
-                      <span>{new Date(f.timestamp).toLocaleDateString()}</span>
+                    <div className="text-xs text-[#A9B3DA] mb-2 flex justify-between items-start">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-white/80">{f.city}</span>
+                        {f.demo && (
+                          <span className="text-[10px] opacity-60">
+                            {f.demo.ageRange || 'N/A'} · {f.demo.civilStatus || 'N/A'}
+                            {(f.demo.hasChildren === 'Sí' || f.demo.hasAdults === 'Sí') && ' · Cargas familiares'}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[9px] opacity-40 uppercase tracking-tighter">{new Date(f.timestamp).toLocaleDateString()}</span>
                     </div>
-                    <p className="text-sm italic leading-relaxed">"{f.text}"</p>
+                    <div className="flex items-center gap-2 mb-2">
+                       <div className="px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase">
+                         Usuario Diagnosticado
+                       </div>
+                       <div className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 text-[9px] font-black uppercase flex items-center gap-1">
+                         <span>🏆</span> Colaborador Comunitario
+                       </div>
+                    </div>
+                    <p className="text-sm italic leading-relaxed text-white/90">"{f.text}"</p>
+                    <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-2 gap-2">
+                       <div className="flex items-center gap-1.5 text-[9px] text-[#A9B3DA]">
+                         <span className="w-1.5 h-1.5 rounded-full bg-green-400" /> Acceso a red de beneficios
+                       </div>
+                       <div className="flex items-center gap-1.5 text-[9px] text-[#A9B3DA]">
+                         <span className="w-1.5 h-1.5 rounded-full bg-blue-400" /> Prioridad en programas
+                       </div>
+                    </div>
                   </div>
                 )) : (
                   <div className="text-center py-8 text-[#A9B3DA] text-sm">No hay comentarios aún.</div>

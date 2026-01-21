@@ -13,12 +13,26 @@ export default function Welcome() {
   const [_, setLocation] = useLocation();
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [ageRange, setAgeRange] = useState("");
+  const [civilStatus, setCivilStatus] = useState("");
+  const [hasChildren, setHasChildren] = useState("");
+  const [hasAdults, setHasAdults] = useState("");
+  const [showMore, setShowMore] = useState(false);
 
   const handleStart = () => {
     if (!city) return;
     
     // Save context to local storage (simple state persistence)
-    localStorage.setItem("korai_context", JSON.stringify({ city, neighborhood }));
+    localStorage.setItem("korai_context", JSON.stringify({ 
+      city, 
+      neighborhood,
+      demographics: {
+        ageRange,
+        civilStatus,
+        hasChildren,
+        hasAdults
+      }
+    }));
     setLocation("/survey");
   };
 
@@ -77,6 +91,72 @@ export default function Welcome() {
                 value={neighborhood}
                 onChange={e => setNeighborhood(e.target.value)}
               />
+            </div>
+
+            <div className="pt-2">
+              <button 
+                onClick={() => setShowMore(!showMore)}
+                className="text-xs font-bold text-primary/80 hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-wider"
+              >
+                {showMore ? "Ocultar opciones" : "Más opciones"}
+              </button>
+              
+              {showMore && (
+                <div className="grid grid-cols-2 gap-4 mt-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-white/50 uppercase">Edad</Label>
+                    <Select onValueChange={setAgeRange}>
+                      <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                        <SelectValue placeholder="Rango..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-white/10 text-white">
+                        {['18-29','30-39','40-49','50-59','60+'].map(x => (
+                          <SelectItem key={x} value={x}>{x}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-white/50 uppercase">Estado Civil</Label>
+                    <Select onValueChange={setCivilStatus}>
+                      <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-white/10 text-white">
+                        {['soltero/a','casado/a','conviviente','separado/a','viudo/a','prefiero no decir'].map(x => (
+                          <SelectItem key={x} value={x}>{x}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-white/50 uppercase">Hijos a cargo</Label>
+                    <Select onValueChange={setHasChildren}>
+                      <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                        <SelectValue placeholder="..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-white/10 text-white">
+                        <SelectItem value="No">No</SelectItem>
+                        <SelectItem value="Sí">Sí</SelectItem>
+                        <SelectItem value="No decir">No decir</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-white/50 uppercase">Adultos a cargo</Label>
+                    <Select onValueChange={setHasAdults}>
+                      <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                        <SelectValue placeholder="..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-white/10 text-white">
+                        <SelectItem value="No">No</SelectItem>
+                        <SelectItem value="Sí">Sí</SelectItem>
+                        <SelectItem value="No decir">No decir</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
