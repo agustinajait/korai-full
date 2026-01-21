@@ -373,7 +373,7 @@ export default function Dashboard() {
             <div className="bg-gradient-to-br from-[#7c5cff]/20 to-transparent backdrop-blur-xl border border-[#7c5cff]/30 rounded-3xl p-6 shadow-2xl">
               <h3 className="text-lg font-black mb-2">Participación Cívica</h3>
               <p className="text-sm text-[#A9B3DA] mb-4">Tu diagnóstico individual se suma a la inteligencia territorial de Korai.</p>
-              <Link href="/survey">
+              <Link href="/">
                 <Button className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-12">
                   Sumar mi aporte
                 </Button>

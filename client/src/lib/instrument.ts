@@ -91,7 +91,7 @@ export const INSTRUMENT = {
   ] as Indicator[]
 };
 
-export const CITIES = ["Berazategui", "Quilmes", "Florencio Varela", "Ezpeleta", "Bernal"];
+export const CITIES = ["Berazategui", "Quilmes", "Florencio Varela", "Ezpeleta", "Bernal", "Avellaneda"];
 
 export const CHOICE_COLORS = {
   rojo: "hsl(0, 84%, 60%)",

@@ -160,13 +160,15 @@ export default function Welcome() {
             </div>
           </div>
 
-          <Button 
-            onClick={handleStart}
-            disabled={!city}
-            className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:to-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/25"
-          >
-            Comenzar Diagnóstico <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+          <div className="pt-4">
+            <Button 
+              onClick={handleStart}
+              disabled={!city}
+              className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:to-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/25"
+            >
+              Comenzar Diagnóstico <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </div>
 
           <p className="text-xs text-center text-white/30 leading-relaxed">
             Tu participación es anónima y ayuda a mejorar tu comunidad.

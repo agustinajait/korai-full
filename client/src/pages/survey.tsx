@@ -350,6 +350,25 @@ export default function Survey() {
                 selected={answers[currentIndicator.id] === "rojo"}
               />
             </div>
+
+            <div className="flex justify-between items-center mt-8 pt-4 border-t border-white/5">
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))}
+                disabled={currentIdx === 0}
+                className="text-muted-foreground hover:text-white"
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setCurrentIdx(Math.min(indicators.length - 1, currentIdx + 1))}
+                disabled={currentIdx === indicators.length - 1 || !answers[currentIndicator.id]}
+                className="text-muted-foreground hover:text-white"
+              >
+                Siguiente
+              </Button>
+            </div>
           </motion.div>
         </>
       ) : (
