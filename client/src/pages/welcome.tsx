@@ -30,7 +30,8 @@ export default function Welcome() {
         ageRange,
         civilStatus,
         hasChildren,
-        hasAdults
+        hasAdults,
+        dniHash: neighborhood // Reusing neighborhood or adding a temporary field for DNI
       }
     }));
     setLocation("/survey");
@@ -84,13 +85,14 @@ export default function Welcome() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white/80 font-display">Barrio (Opcional)</Label>
+              <Label className="text-white/80 font-display">DNI (Hash único para diagnóstico)</Label>
               <Input 
-                placeholder="Ej. Centro, El Sol..." 
+                placeholder="Ingresa tu DNI" 
                 className="bg-black/20 border-white/10 h-12 text-lg focus:ring-primary/50 placeholder:text-white/20"
                 value={neighborhood}
                 onChange={e => setNeighborhood(e.target.value)}
               />
+              <p className="text-[10px] text-white/40">El DNI se utiliza para asegurar un único diagnóstico por persona.</p>
             </div>
 
             <div className="pt-2">

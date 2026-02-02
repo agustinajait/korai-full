@@ -328,7 +328,7 @@ export default function Dashboard() {
               <h3 className="text-lg font-black mb-4 flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-primary" /> Últimos aportes
               </h3>
-              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                 {stats.frases.length > 0 ? stats.frases.map((f, i) => (
                   <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5 relative group">
                     <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-full ${
@@ -338,13 +338,15 @@ export default function Dashboard() {
                       <div className="flex flex-col">
                         <span className="font-bold text-white/80">{f.city}</span>
                         {f.demo && (
-                          <span className="text-[10px] opacity-60">
-                            {f.demo.ageRange || 'N/A'} · {f.demo.civilStatus || 'N/A'}
-                            {(f.demo.hasChildren === 'Sí' || f.demo.hasAdults === 'Sí') && ' · Cargas familiares'}
-                          </span>
+                          <div className="flex flex-col text-[10px] opacity-60">
+                            <span>{f.demo.ageRange || 'N/A'} · {f.demo.civilStatus || 'N/A'}</span>
+                            <span className="text-primary/70 font-mono mt-1">ID: {f.demo.dniHash ? `HASH_${f.demo.dniHash.substring(0,4)}...` : 'N/A'}</span>
+                          </div>
                         )}
                       </div>
-                      <span className="text-[9px] opacity-40 uppercase tracking-tighter">{new Date(f.timestamp).toLocaleDateString()}</span>
+                      <span className="text-[9px] opacity-40 uppercase tracking-tighter">
+                        {new Date(f.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                        <div className="px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase">
