@@ -209,64 +209,106 @@ export default function Survey() {
           </div>
 
           <aside className="w-full md:w-80 space-y-6">
-            <div className="bg-gradient-to-br from-primary/20 to-transparent border border-primary/30 rounded-3xl p-6 shadow-2xl">
-              <h3 className="text-lg font-black mb-4 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-yellow-400" /> Reconocimiento desbloqueado
-              </h3>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-2xl border border-primary/30">🎖️</div>
-                <div>
-                  <div className="font-black text-sm">Colaborador comunitario</div>
-                  <div className="text-xs text-muted-foreground leading-tight">Por completar el diagnóstico.</div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+              className="bg-gradient-to-br from-primary/30 via-primary/10 to-transparent border border-primary/40 rounded-[32px] p-8 shadow-[0_20px_50px_rgba(124,92,255,0.3)] relative overflow-hidden group hover:scale-[1.02] transition-transform duration-500"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl -z-10 group-hover:bg-primary/40 transition-colors" />
+              
+              <div className="flex flex-col items-center text-center space-y-4">
+                <motion.div 
+                  initial={{ rotate: -15, scale: 0.5 }}
+                  animate={{ rotate: 0, scale: 1 }}
+                  transition={{ delay: 0.4, type: "spring" }}
+                  className="w-24 h-24 rounded-[30%] bg-gradient-to-tr from-yellow-400 to-orange-500 flex items-center justify-center text-5xl shadow-[0_10px_30px_rgba(245,158,11,0.4)] border-4 border-white/20"
+                >
+                  🎖️
+                </motion.div>
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black text-white tracking-tight italic uppercase">Sello de Distinción</h3>
+                  <div className="text-primary font-black text-lg tracking-widest uppercase">Colaborador Comunitario</div>
                 </div>
+                <p className="text-sm text-[#A9B3DA] leading-relaxed max-w-[240px]">
+                  ¡Felicidades! Tu participación activa fortalece la inteligencia colectiva de tu barrio.
+                </p>
               </div>
-              <p className="text-[10px] text-muted-foreground">Este reconocimiento no depende de tus respuestas.</p>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-2xl">
-              <h3 className="text-lg font-black mb-4 flex items-center gap-2">
-                <Gift className="w-5 h-5 text-primary" /> Beneficios locales
-              </h3>
-              <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                Algunas ciudades pueden sumar beneficios de marcas locales para quienes participan.
-              </p>
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-8 shadow-2xl space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/20">
+                  <Gift className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black">Tu Recompensa</h3>
+                  <p className="text-xs text-[#A9B3DA]">Selecciona un beneficio local para canjear</p>
+                </div>
+              </div>
               
-              <div className="space-y-3">
+              <div className="grid gap-3">
                 {[
-                  { id: 'discount', icon: '🛍️', title: '10% off en comercios adheridos', desc: 'Presentá tu badge "Colaborador comunitario".' },
-                  { id: 'coffee', icon: '☕', title: 'Café + medialuna a precio especial', desc: 'Promo válida en locales participantes.' },
-                  { id: 'raffle', icon: '🎟️', title: 'Sorteos mensuales', desc: 'Participás automáticamente al completar el diagnóstico.' }
+                  { id: 'discount', icon: '🛍️', title: '10% OFF Comercios', desc: 'Válido en tiendas adheridas', color: 'from-blue-500/20' },
+                  { id: 'coffee', icon: '☕', title: 'Merienda Especial', desc: 'Café + medialuna de regalo', color: 'from-orange-500/20' },
+                  { id: 'raffle', icon: '🎟️', title: 'Sorteo Mensual', desc: 'Participación automática', color: 'from-purple-500/20' }
                 ].map(b => (
                   <button 
                     key={b.id}
-                    onClick={() => setSelectedBenefit(b.id)}
-                    className={`w-full text-left p-4 rounded-2xl border transition-all ${
-                      selectedBenefit === b.id ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20' : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    onClick={() => {
+                      setSelectedBenefit(b.id);
+                      playBip('verde');
+                    }}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all relative overflow-hidden group ${
+                      selectedBenefit === b.id 
+                        ? 'bg-primary/20 border-primary shadow-[0_0_20px_rgba(124,92,255,0.2)]' 
+                        : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-xl">{b.icon}</span>
-                      <div className="font-bold text-xs leading-tight">{b.title}</div>
+                    <div className={`absolute inset-0 bg-gradient-to-r ${b.color} to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
+                    <div className="relative flex items-center gap-4">
+                      <span className="text-3xl group-hover:scale-110 transition-transform">{b.icon}</span>
+                      <div className="flex-1">
+                        <div className="font-black text-sm uppercase tracking-tight">{b.title}</div>
+                        <div className="text-[10px] text-[#A9B3DA] font-medium">{b.desc}</div>
+                      </div>
+                      {selectedBenefit === b.id && (
+                        <motion.div 
+                          layoutId="active-check"
+                          className="w-6 h-6 rounded-full bg-primary flex items-center justify-center"
+                        >
+                          <CheckCircle2 className="w-4 h-4 text-white" />
+                        </motion.div>
+                      )}
                     </div>
-                    <div className="text-[10px] text-muted-foreground leading-snug">{b.desc}</div>
                   </button>
                 ))}
               </div>
 
-              {selectedBenefit && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 pt-6 border-t border-white/10 text-center"
-                >
-                  <div className="bg-white p-4 rounded-2xl inline-block mb-3">
-                    <QRCodeSVG value={`KORAI-REWARD-${selectedBenefit}-${Date.now()}`} size={120} />
-                  </div>
-                  <div className="text-[10px] font-bold text-primary uppercase flex items-center justify-center gap-1">
-                    <QrCode className="w-3 h-3" /> Canjeá tu beneficio con este QR
-                  </div>
-                </motion.div>
-              )}
+              <AnimatePresence mode="wait">
+                {selectedBenefit && (
+                  <motion.div 
+                    key={selectedBenefit}
+                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="mt-8 pt-8 border-t border-white/10 text-center space-y-4"
+                  >
+                    <div className="relative inline-block">
+                      <div className="absolute -inset-4 bg-primary/20 blur-2xl rounded-full animate-pulse" />
+                      <div className="bg-white p-6 rounded-3xl relative shadow-2xl">
+                        <QRCodeSVG value={`KORAI-REWARD-${selectedBenefit}-${Date.now()}`} size={160} level="H" />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs font-black text-primary uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                        <QrCode className="w-4 h-4" /> Código de Canje Activo
+                      </div>
+                      <p className="text-[10px] text-[#A9B3DA] font-medium">Presenta este código en el comercio seleccionado</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <Button 
