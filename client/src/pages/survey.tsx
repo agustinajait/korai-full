@@ -234,7 +234,7 @@ export default function Survey() {
                   ¡Felicidades! Tu participación activa fortalece la inteligencia colectiva de tu barrio.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-8 shadow-2xl space-y-6">
               <div className="flex items-center gap-3">
