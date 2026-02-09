@@ -23,7 +23,12 @@ export async function registerRoutes(
     }
   });
 
-  app.get(api.reports.list.path, async (req, res) => {
+  function requireAdmin(req: any, res: any, next: any) {
+    if (req.session?.isAdmin) return next();
+    return res.status(401).json({ message: "No autorizado" });
+  }
+
+  app.get(api.reports.list.path, requireAdmin, async (req, res) => {
     const filters = {
       city: req.query.city as string,
       neighborhood: req.query.neighborhood as string,
@@ -33,14 +38,40 @@ export async function registerRoutes(
     res.json(reports);
   });
 
-  app.get(api.reports.stats.path, async (req, res) => {
+  app.get(api.reports.stats.path, requireAdmin, async (req, res) => {
     const city = req.query.city as string;
     const stats = await storage.getStats(city);
     res.json(stats);
   });
 
-  // Seed data endpoint (or auto-seed)
-  // For now, we'll auto-seed if empty on startup, but I'll add a helper function here
+  app.post("/api/admin/login", (req, res) => {
+    const { password } = req.body;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminPassword) {
+      return res.status(500).json({ message: "Admin password not configured" });
+    }
+
+    if (password === adminPassword) {
+      req.session.isAdmin = true;
+      return req.session.save(() => {
+        res.json({ ok: true });
+      });
+    }
+
+    return res.status(401).json({ message: "Contraseña incorrecta" });
+  });
+
+  app.get("/api/admin/session", (req, res) => {
+    res.json({ isAdmin: req.session.isAdmin === true });
+  });
+
+  app.post("/api/admin/logout", (req, res) => {
+    req.session.destroy(() => {
+      res.json({ ok: true });
+    });
+  });
+
   await seedDatabase();
 
   return httpServer;
