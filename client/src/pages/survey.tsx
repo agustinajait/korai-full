@@ -12,7 +12,7 @@ import { useCreateReport } from "@/hooks/use-reports";
 import { queryClient } from "@/lib/queryClient";
 import { Loader2, ArrowRight, CheckCircle2, Trophy, Gift, QrCode, Target, Calendar } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { generarSello, generatePrioridadesDesdeRespuestas, generateMetasDesdeScores, type Sello } from "@/lib/korai-logic";
+import { generarSello, generatePlanDesdeScores, type Sello } from "@/lib/korai-logic";
 
 export default function Survey() {
   const [_, setLocation] = useLocation();
@@ -157,14 +157,10 @@ export default function Survey() {
 
         localStorage.setItem("korai_user_answers", JSON.stringify(answers));
 
-        localStorage.removeItem("korai_user_prioridades_v1");
-        localStorage.removeItem("korai_user_metas_v1");
+        localStorage.removeItem("korai_user_plan_v1");
 
-        const prioridades = generatePrioridadesDesdeRespuestas(answers);
-        localStorage.setItem("korai_user_prioridades_v1", JSON.stringify(prioridades));
-
-        const metas = generateMetasDesdeScores(answers);
-        localStorage.setItem("korai_user_metas_v1", JSON.stringify(metas));
+        const plan = generatePlanDesdeScores(answers);
+        localStorage.setItem("korai_user_plan_v1", JSON.stringify(plan));
 
         const newSello = generarSello(context.city || undefined);
         localStorage.setItem("korai_user_sello_v1", JSON.stringify(newSello));
@@ -246,7 +242,7 @@ export default function Survey() {
                 </motion.div>
                 <div className="space-y-1">
                   <h3 className="text-2xl font-black text-white tracking-tight italic uppercase" data-testid="text-sello-title">
-                    {sello?.municipio || "Sello de Distinción"}
+                    {sello?.texto || sello?.municipio || "Sello de Distinción"}
                   </h3>
                   <div className="text-primary font-black text-lg tracking-widest uppercase">Colaborador Comunitario</div>
                 </div>
@@ -337,7 +333,7 @@ export default function Survey() {
                 className="w-full h-12 font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
                 data-testid="button-go-prioridades"
               >
-                <Target className="w-5 h-5" /> Mis Prioridades
+                <Target className="w-5 h-5" /> Tu Plan
               </Button>
               <Button 
                 onClick={() => setLocation("/metas")}

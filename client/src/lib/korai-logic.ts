@@ -12,41 +12,61 @@ export interface DimensionScore {
   color: "rojo" | "amarillo" | "verde";
 }
 
-export interface Prioridad {
+export interface PlanItem {
   rank: number;
-  dimensionId: string;
-  titulo: string;
-  necesidad: string;
-  accion: string;
-  cuando: string;
-  color: "rojo" | "amarillo" | "verde";
-  emoji: string;
-}
-
-export interface Meta {
   dimensionId: string;
   dimensionName: string;
   emoji: string;
-  color: "rojo" | "amarillo" | "verde";
-  corto: string;
-  mediano: string;
-  largo: string;
-  recursos: { nombre: string; url?: string }[];
+  nivelColor: "rojo" | "amarillo" | "verde";
+  titulo: string;
+  motivo: string;
+  metaCorto: string;
+  accionesCorto: string[];
+  metaMediano: string;
+  metaLargo: string;
+  recursos: { nombre: string; descripcionCorta?: string; url?: string }[];
+  cuando: string;
 }
 
 export interface Sello {
   municipio: string;
+  texto: string;
+  fechaISO: string;
   fecha: string;
   idParticipacion: string;
 }
 
-const ACCIONES: Record<string, string> = {
-  salud: "Acercate al centro de salud m\u00e1s cercano para un chequeo gratuito y revisa el calendario de vacunaci\u00f3n.",
-  educacion: "Consulta en la municipalidad sobre programas de terminalidad educativa y becas disponibles.",
-  trabajo: "Inscribite en la oficina de empleo local y en el Portal Empleo de Naci\u00f3n para capacitaciones.",
-  vivienda: "Presenta un reclamo ante la municipalidad sobre infraestructura b\u00e1sica y consulta programas de mejoramiento habitacional.",
-  prevision: "Accede a talleres gratuitos de educaci\u00f3n financiera del Banco Naci\u00f3n o ANSES.",
-  cultura: "Participa en actividades del centro cultural barrial y sum\u00e1te a redes vecinales locales.",
+const ACCIONES_CORTO: Record<string, string[]> = {
+  salud: [
+    "Programar 1 consulta m\u00e9dica preventiva esta semana.",
+    "Verificar el calendario de vacunaci\u00f3n y completar las pendientes.",
+    "Acercarte al centro de salud m\u00e1s cercano para un chequeo.",
+  ],
+  educacion: [
+    "Consultar en la municipalidad sobre programas de terminalidad educativa.",
+    "Inscribirte en 1 curso o taller gratuito disponible en tu zona.",
+    "Buscar becas disponibles (Progresar, FinEs).",
+  ],
+  trabajo: [
+    "Actualizar tu CV y registrarte en Portal Empleo.",
+    "Inscribirte en la oficina de empleo local.",
+    "Consultar capacitaciones gratuitas disponibles.",
+  ],
+  vivienda: [
+    "Hacer 1 reclamo formal sobre la necesidad m\u00e1s urgente de infraestructura.",
+    "Consultar programas de mejoramiento habitacional en la municipalidad.",
+    "Verificar acceso a servicios b\u00e1sicos (agua, gas, electricidad).",
+  ],
+  prevision: [
+    "Armar un presupuesto mensual simple y registrar gastos por 30 d\u00edas.",
+    "Consultar en ANSES sobre asignaciones y prestaciones disponibles.",
+    "Informarte sobre talleres de educaci\u00f3n financiera.",
+  ],
+  cultura: [
+    "Asistir a 1 actividad comunitaria o cultural este mes.",
+    "Conectarte con redes vecinales o centros culturales barriales.",
+    "Buscar ofertas de deportes gratuitos en tu zona.",
+  ],
 };
 
 const METAS_CORTO: Record<string, string> = {
@@ -76,30 +96,30 @@ const METAS_LARGO: Record<string, string> = {
   cultura: "Ser parte activa de la vida cultural y social del barrio, con redes de apoyo s\u00f3lidas.",
 };
 
-const RECURSOS_MUNICIPALES: Record<string, { nombre: string; url?: string }[]> = {
+const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: string; url?: string }[]> = {
   salud: [
-    { nombre: "Centro de Atenci\u00f3n Primaria de Salud (CAPS) m\u00e1s cercano" },
-    { nombre: "Programa SUMAR (cobertura de salud gratuita)", url: "https://www.argentina.gob.ar/salud/sumar" },
+    { nombre: "CAPS", descripcionCorta: "Centro de Atenci\u00f3n Primaria de Salud m\u00e1s cercano" },
+    { nombre: "Programa SUMAR", descripcionCorta: "Cobertura de salud gratuita", url: "https://www.argentina.gob.ar/salud/sumar" },
   ],
   educacion: [
-    { nombre: "Plan FinEs (Terminalidad educativa)", url: "https://www.argentina.gob.ar/educacion/fines" },
-    { nombre: "Becas Progresar", url: "https://www.argentina.gob.ar/educacion/progresar" },
+    { nombre: "Plan FinEs", descripcionCorta: "Terminalidad educativa", url: "https://www.argentina.gob.ar/educacion/fines" },
+    { nombre: "Becas Progresar", descripcionCorta: "Becas para formaci\u00f3n", url: "https://www.argentina.gob.ar/educacion/progresar" },
   ],
   trabajo: [
-    { nombre: "Portal Empleo (Ministerio de Trabajo)", url: "https://www.portalempleo.gob.ar" },
-    { nombre: "Programa Potenciar Trabajo" },
+    { nombre: "Portal Empleo", descripcionCorta: "Ministerio de Trabajo", url: "https://www.portalempleo.gob.ar" },
+    { nombre: "Potenciar Trabajo", descripcionCorta: "Programa de empleo y capacitaci\u00f3n" },
   ],
   vivienda: [
-    { nombre: "Programa de Mejoramiento Habitacional" },
-    { nombre: "PROMEBA (Mejoramiento de Barrios)", url: "https://www.argentina.gob.ar/habitat/promeba" },
+    { nombre: "Mejoramiento Habitacional", descripcionCorta: "Programa municipal de mejoras" },
+    { nombre: "PROMEBA", descripcionCorta: "Mejoramiento de Barrios", url: "https://www.argentina.gob.ar/habitat/promeba" },
   ],
   prevision: [
-    { nombre: "ANSES - Asignaciones y prestaciones", url: "https://www.anses.gob.ar" },
-    { nombre: "Talleres de Educaci\u00f3n Financiera (Banco Naci\u00f3n)" },
+    { nombre: "ANSES", descripcionCorta: "Asignaciones y prestaciones", url: "https://www.anses.gob.ar" },
+    { nombre: "Educaci\u00f3n Financiera", descripcionCorta: "Talleres del Banco Naci\u00f3n" },
   ],
   cultura: [
-    { nombre: "Puntos de Cultura (Ministerio de Cultura)", url: "https://www.argentina.gob.ar/cultura" },
-    { nombre: "Centros Culturales Barriales" },
+    { nombre: "Puntos de Cultura", descripcionCorta: "Ministerio de Cultura", url: "https://www.argentina.gob.ar/cultura" },
+    { nombre: "Centros Culturales", descripcionCorta: "Espacios barriales de encuentro" },
   ],
 };
 
@@ -127,12 +147,12 @@ export function calcularScores(answers: Record<string, string>): DimensionScore[
   });
 }
 
-export function generatePrioridadesDesdeRespuestas(answers: Record<string, string>): Prioridad[] {
+export function generatePlanDesdeScores(answers: Record<string, string>, topN: number = 5): PlanItem[] {
   const scores = calcularScores(answers);
   const sorted = [...scores].sort((a, b) => a.score - b.score);
-  const top5 = sorted.slice(0, 5);
+  const top = sorted.slice(0, topN);
 
-  return top5.map((s, i) => {
+  return top.map((s, i) => {
     const faltantes = s.total - s.score;
     let cuando: string;
     if (s.color === "rojo") {
@@ -146,37 +166,31 @@ export function generatePrioridadesDesdeRespuestas(answers: Record<string, strin
     return {
       rank: i + 1,
       dimensionId: s.dimensionId,
-      titulo: `Mejorar ${s.dimensionName}`,
-      necesidad: `En ${s.dimensionName} ten\u00e9s ${s.score} de ${s.total} indicadores resueltos (faltan ${faltantes}).`,
-      accion: ACCIONES[s.dimensionId] || "Consulta con tu referente local para recibir orientaci\u00f3n.",
-      cuando,
-      color: s.color,
+      dimensionName: s.dimensionName,
       emoji: s.emoji,
+      nivelColor: s.color,
+      titulo: `Mejorar ${s.dimensionName}`,
+      motivo: `En ${s.dimensionName} ten\u00e9s ${s.score} de ${s.total} indicadores resueltos (faltan ${faltantes}).`,
+      metaCorto: METAS_CORTO[s.dimensionId] || "Definir una acci\u00f3n concreta este mes.",
+      accionesCorto: ACCIONES_CORTO[s.dimensionId] || ["Consultar con tu referente local para recibir orientaci\u00f3n."],
+      metaMediano: METAS_MEDIANO[s.dimensionId] || "Avanzar sostenidamente en los pr\u00f3ximos 1-3 a\u00f1os.",
+      metaLargo: METAS_LARGO[s.dimensionId] || "Alcanzar estabilidad plena en esta dimensi\u00f3n.",
+      recursos: RECURSOS_MUNICIPALES[s.dimensionId] || [],
+      cuando,
     };
   });
 }
 
-export function generateMetasDesdeScores(answers: Record<string, string>): Meta[] {
-  const scores = calcularScores(answers);
-  return scores.map(s => ({
-    dimensionId: s.dimensionId,
-    dimensionName: s.dimensionName,
-    emoji: s.emoji,
-    color: s.color,
-    corto: METAS_CORTO[s.dimensionId] || "Definir una acci\u00f3n concreta este mes.",
-    mediano: METAS_MEDIANO[s.dimensionId] || "Avanzar sostenidamente en los pr\u00f3ximos 1-3 a\u00f1os.",
-    largo: METAS_LARGO[s.dimensionId] || "Alcanzar estabilidad plena en esta dimensi\u00f3n.",
-    recursos: RECURSOS_MUNICIPALES[s.dimensionId] || [],
-  }));
-}
-
 export function generarSello(municipio?: string): Sello {
   const now = new Date();
-  const hash = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const hash = Math.random().toString(36).substring(2, 10).toUpperCase();
+  const nombre = municipio || "RECONQUISTA";
   return {
-    municipio: municipio || "RECONQUISTA TE ESCUCHA",
+    municipio: nombre,
+    texto: `${nombre} TE ESCUCHA`,
+    fechaISO: now.toISOString(),
     fecha: now.toLocaleString("es-AR"),
-    idParticipacion: `KORAI-${hash}-${now.getFullYear()}`,
+    idParticipacion: `KORAI-${hash}`,
   };
 }
 

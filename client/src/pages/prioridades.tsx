@@ -2,31 +2,36 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Clock, AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
-import { generatePrioridadesDesdeRespuestas, type Prioridad, type Sello } from "@/lib/korai-logic";
+import { ArrowLeft, Target, Clock, AlertTriangle, CheckCircle2, ChevronRight, ChevronDown, ExternalLink } from "lucide-react";
+import { generatePlanDesdeScores, type PlanItem, type Sello } from "@/lib/korai-logic";
 
 export default function Prioridades() {
   const [_, setLocation] = useLocation();
-  const [prioridades, setPrioridades] = useState<Prioridad[]>([]);
+  const [plan, setPlan] = useState<PlanItem[]>([]);
   const [sello, setSello] = useState<Sello | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const cached = localStorage.getItem("korai_user_prioridades_v1");
+    const cached = localStorage.getItem("korai_user_plan_v1");
     if (cached) {
-      setPrioridades(JSON.parse(cached));
+      setPlan(JSON.parse(cached));
     } else {
       const answersRaw = localStorage.getItem("korai_user_answers");
       if (answersRaw) {
         const answers = JSON.parse(answersRaw);
-        const generated = generatePrioridadesDesdeRespuestas(answers);
-        setPrioridades(generated);
-        localStorage.setItem("korai_user_prioridades_v1", JSON.stringify(generated));
+        const generated = generatePlanDesdeScores(answers);
+        setPlan(generated);
+        localStorage.setItem("korai_user_plan_v1", JSON.stringify(generated));
       }
     }
 
     const selloRaw = localStorage.getItem("korai_user_sello_v1");
     if (selloRaw) setSello(JSON.parse(selloRaw));
   }, []);
+
+  const toggleExpanded = (dimId: string) => {
+    setExpandedItems(prev => ({ ...prev, [dimId]: !prev[dimId] }));
+  };
 
   const colorBorder = (c: string) =>
     c === "rojo" ? "border-red-500/30" : c === "amarillo" ? "border-yellow-500/30" : "border-green-500/30";
@@ -37,12 +42,12 @@ export default function Prioridades() {
   const colorBadgeBg = (c: string) =>
     c === "rojo" ? "bg-red-500/20" : c === "amarillo" ? "bg-yellow-500/20" : "bg-green-500/20";
 
-  if (prioridades.length === 0) {
+  if (plan.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 space-y-4">
         <AlertTriangle className="w-12 h-12 text-yellow-400" />
         <h2 className="text-xl font-bold text-center" data-testid="text-no-prioridades">Necesitas completar el diagn&oacute;stico primero</h2>
-        <p className="text-muted-foreground text-center text-sm">Completa la encuesta para ver tus prioridades personalizadas.</p>
+        <p className="text-muted-foreground text-center text-sm">Completa la encuesta para ver tu plan personalizado.</p>
         <Button onClick={() => setLocation("/")} data-testid="button-go-home">
           Ir al Inicio
         </Button>
@@ -61,8 +66,8 @@ export default function Prioridades() {
             <Target className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-black" data-testid="text-prioridades-title">Mis Prioridades</h1>
-            <p className="text-xs text-muted-foreground">Basadas en tu diagn&oacute;stico real</p>
+            <h1 className="text-2xl font-black" data-testid="text-prioridades-title">TU PLAN</h1>
+            <p className="text-xs text-muted-foreground">Prioridades y metas basadas en tu diagn&oacute;stico</p>
           </div>
         </div>
       </div>
@@ -77,53 +82,115 @@ export default function Prioridades() {
             <CheckCircle2 className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-black text-primary uppercase tracking-wider" data-testid="text-sello-municipio">{sello.municipio}</div>
+            <div className="text-xs font-black text-primary uppercase tracking-wider" data-testid="text-sello-municipio">{sello.texto || sello.municipio}</div>
             <div className="text-[10px] text-muted-foreground">ID: {sello.idParticipacion} | {sello.fecha}</div>
           </div>
         </motion.div>
       )}
 
       <div className="space-y-4">
-        {prioridades.map((p, i) => (
-          <motion.div
-            key={p.dimensionId}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className={`p-5 rounded-2xl border ${colorBorder(p.color)} ${colorBg(p.color)} space-y-3`}
-            data-testid={`card-prioridad-${p.rank}`}
-          >
-            <div className="flex items-start justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${colorBadgeBg(p.color)} ${colorText(p.color)}`}>
-                  #{p.rank}
-                </div>
-                <div>
-                  <div className="font-bold text-base flex items-center gap-2 flex-wrap">
-                    <span>{p.emoji}</span>
-                    <span>{p.titulo}</span>
+        {plan.map((p, i) => {
+          const isExpanded = !!expandedItems[p.dimensionId];
+          return (
+            <motion.div
+              key={p.dimensionId}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className={`rounded-2xl border ${colorBorder(p.nivelColor)} ${colorBg(p.nivelColor)} overflow-hidden`}
+              data-testid={`card-prioridad-${p.rank}`}
+            >
+              <div className="p-5 space-y-3">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${colorBadgeBg(p.nivelColor)} ${colorText(p.nivelColor)}`}>
+                      #{p.rank}
+                    </div>
+                    <div>
+                      <div className="font-bold text-base flex items-center gap-2 flex-wrap">
+                        <span>{p.emoji}</span>
+                        <span>{p.titulo}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${colorBadgeBg(p.nivelColor)} ${colorText(p.nivelColor)} ${colorBorder(p.nivelColor)}`}>
+                      {p.nivelColor}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className={`w-3 h-3 ${colorText(p.nivelColor)}`} />
+                      <span className={`text-[10px] font-bold ${colorText(p.nivelColor)}`}>{p.cuando}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${colorBadgeBg(p.color)} ${colorText(p.color)} ${colorBorder(p.color)}`}>
-                {p.color}
-              </div>
-            </div>
 
-            <p className="text-sm text-white/70">{p.necesidad}</p>
+                <p className="text-sm text-white/70">{p.motivo}</p>
 
-            <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-2">
-              <div className="flex items-start gap-2">
-                <ChevronRight className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-white/80">{p.accion}</p>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-2">
+                  <div className="text-[10px] font-black uppercase text-green-400 tracking-wider">Meta corto plazo</div>
+                  <p className="text-sm text-white/80">{p.metaCorto}</p>
+                  <div className="space-y-1 pt-1">
+                    {p.accionesCorto.map((a, ai) => (
+                      <div key={ai} className="flex items-start gap-2">
+                        <ChevronRight className="w-3.5 h-3.5 text-primary mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-white/70">{a}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {p.recursos.length > 0 && (
+                  <div className="space-y-1.5">
+                    <div className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Recursos</div>
+                    <div className="flex flex-wrap gap-2">
+                      {p.recursos.map((r, ri) => (
+                        r.url ? (
+                          <a
+                            key={ri}
+                            href={r.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/5"
+                            data-testid={`link-recurso-${p.dimensionId}-${ri}`}
+                          >
+                            <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                            {r.nombre}
+                          </a>
+                        ) : (
+                          <span key={ri} className="inline-flex items-center text-xs text-white/60 bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/5">
+                            {r.nombre}
+                          </span>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => toggleExpanded(p.dimensionId)}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white transition-colors pt-1"
+                  data-testid={`button-expand-${p.dimensionId}`}
+                >
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  {isExpanded ? "Ocultar metas mediano/largo" : "Ver metas mediano/largo plazo"}
+                </button>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className={`w-3.5 h-3.5 ${colorText(p.color)} flex-shrink-0`} />
-                <span className={`text-xs font-bold ${colorText(p.color)}`}>{p.cuando}</span>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+
+              {isExpanded && (
+                <div className="px-5 pb-5 space-y-3 border-t border-white/5 pt-3">
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                    <div className="text-[10px] font-black uppercase text-yellow-400 tracking-wider">Mediano plazo (1-3 a&ntilde;os)</div>
+                    <p className="text-sm text-white/80 mt-1">{p.metaMediano}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                    <div className="text-[10px] font-black uppercase text-primary tracking-wider">Largo plazo (5-10 a&ntilde;os)</div>
+                    <p className="text-sm text-white/80 mt-1">{p.metaLargo}</p>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          );
+        })}
       </div>
 
       <div className="flex gap-3 pt-4 flex-wrap">
@@ -132,7 +199,7 @@ export default function Prioridades() {
           className="flex-1 h-12 bg-gradient-to-r from-primary to-primary/80 font-bold rounded-xl"
           data-testid="button-go-metas"
         >
-          Ver Mis Metas <ChevronRight className="ml-1 w-4 h-4" />
+          Ver por Dimensi&oacute;n <ChevronRight className="ml-1 w-4 h-4" />
         </Button>
         <Button
           variant="outline"

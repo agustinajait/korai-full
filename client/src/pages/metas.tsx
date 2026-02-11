@@ -3,24 +3,54 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, AlertTriangle, ExternalLink, ChevronRight, Clock, Milestone, Trophy } from "lucide-react";
-import { generateMetasDesdeScores, type Meta } from "@/lib/korai-logic";
+import { generatePlanDesdeScores, type PlanItem } from "@/lib/korai-logic";
+
+interface MetaView {
+  dimensionId: string;
+  dimensionName: string;
+  emoji: string;
+  color: "rojo" | "amarillo" | "verde";
+  metaCorto: string;
+  metaMediano: string;
+  metaLargo: string;
+  recursos: { nombre: string; descripcionCorta?: string; url?: string }[];
+}
 
 export default function Metas() {
   const [_, setLocation] = useLocation();
-  const [metas, setMetas] = useState<Meta[]>([]);
+  const [metasView, setMetasView] = useState<MetaView[]>([]);
   const [expandedDim, setExpandedDim] = useState<string | null>(null);
 
   useEffect(() => {
-    const cached = localStorage.getItem("korai_user_metas_v1");
-    if (cached) {
-      setMetas(JSON.parse(cached));
+    const planRaw = localStorage.getItem("korai_user_plan_v1");
+    if (planRaw) {
+      const plan: PlanItem[] = JSON.parse(planRaw);
+      setMetasView(plan.map(p => ({
+        dimensionId: p.dimensionId,
+        dimensionName: p.dimensionName,
+        emoji: p.emoji,
+        color: p.nivelColor,
+        metaCorto: p.metaCorto,
+        metaMediano: p.metaMediano,
+        metaLargo: p.metaLargo,
+        recursos: p.recursos,
+      })));
     } else {
       const answersRaw = localStorage.getItem("korai_user_answers");
       if (answersRaw) {
         const answers = JSON.parse(answersRaw);
-        const generated = generateMetasDesdeScores(answers);
-        setMetas(generated);
-        localStorage.setItem("korai_user_metas_v1", JSON.stringify(generated));
+        const plan = generatePlanDesdeScores(answers);
+        localStorage.setItem("korai_user_plan_v1", JSON.stringify(plan));
+        setMetasView(plan.map(p => ({
+          dimensionId: p.dimensionId,
+          dimensionName: p.dimensionName,
+          emoji: p.emoji,
+          color: p.nivelColor,
+          metaCorto: p.metaCorto,
+          metaMediano: p.metaMediano,
+          metaLargo: p.metaLargo,
+          recursos: p.recursos,
+        })));
       }
     }
   }, []);
@@ -34,7 +64,7 @@ export default function Metas() {
   const colorBadgeBg = (c: string) =>
     c === "rojo" ? "bg-red-500/20" : c === "amarillo" ? "bg-yellow-500/20" : "bg-green-500/20";
 
-  if (metas.length === 0) {
+  if (metasView.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 space-y-4">
         <AlertTriangle className="w-12 h-12 text-yellow-400" />
@@ -50,7 +80,7 @@ export default function Metas() {
   return (
     <div className="min-h-screen pt-6 pb-10 px-4 max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={() => setLocation("/survey")} data-testid="button-back-results">
+        <Button variant="ghost" size="icon" onClick={() => setLocation("/prioridades")} data-testid="button-back-plan">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex items-center gap-3">
@@ -59,13 +89,13 @@ export default function Metas() {
           </div>
           <div>
             <h1 className="text-2xl font-black" data-testid="text-metas-title">Mis Metas</h1>
-            <p className="text-xs text-muted-foreground">Plan de acci&oacute;n personalizado por dimensi&oacute;n</p>
+            <p className="text-xs text-muted-foreground">Vista por dimensi&oacute;n</p>
           </div>
         </div>
       </div>
 
       <div className="space-y-4">
-        {metas.map((m, i) => {
+        {metasView.map((m, i) => {
           const isExpanded = expandedDim === m.dimensionId;
           return (
             <motion.div
@@ -109,7 +139,7 @@ export default function Metas() {
                       </div>
                       <div className="flex-1">
                         <div className="text-[10px] font-black uppercase text-green-400 tracking-wider">Corto plazo</div>
-                        <p className="text-sm text-white/80 mt-1">{m.corto}</p>
+                        <p className="text-sm text-white/80 mt-1">{m.metaCorto}</p>
                       </div>
                     </div>
 
@@ -119,7 +149,7 @@ export default function Metas() {
                       </div>
                       <div className="flex-1">
                         <div className="text-[10px] font-black uppercase text-yellow-400 tracking-wider">Mediano plazo (1-3 a&ntilde;os)</div>
-                        <p className="text-sm text-white/80 mt-1">{m.mediano}</p>
+                        <p className="text-sm text-white/80 mt-1">{m.metaMediano}</p>
                       </div>
                     </div>
 
@@ -129,7 +159,7 @@ export default function Metas() {
                       </div>
                       <div className="flex-1">
                         <div className="text-[10px] font-black uppercase text-primary tracking-wider">Largo plazo (5-10 a&ntilde;os)</div>
-                        <p className="text-sm text-white/80 mt-1">{m.largo}</p>
+                        <p className="text-sm text-white/80 mt-1">{m.metaLargo}</p>
                       </div>
                     </div>
                   </div>
@@ -149,10 +179,12 @@ export default function Metas() {
                                 data-testid={`link-recurso-${m.dimensionId}-${ri}`}
                               >
                                 <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
-                                {r.nombre}
+                                {r.nombre} {r.descripcionCorta && <span className="text-white/40">- {r.descripcionCorta}</span>}
                               </a>
                             ) : (
-                              <span className="text-sm text-white/70 flex-1">{r.nombre}</span>
+                              <span className="text-sm text-white/70 flex-1">
+                                {r.nombre} {r.descripcionCorta && <span className="text-white/40">- {r.descripcionCorta}</span>}
+                              </span>
                             )}
                           </div>
                         ))}
@@ -169,11 +201,10 @@ export default function Metas() {
       <div className="flex gap-3 pt-4 flex-wrap">
         <Button
           onClick={() => setLocation("/prioridades")}
-          variant="outline"
-          className="flex-1 h-12 border-white/10 bg-white/5 font-bold rounded-xl"
-          data-testid="button-go-prioridades"
+          className="flex-1 h-12 bg-gradient-to-r from-primary to-primary/80 font-bold rounded-xl"
+          data-testid="button-go-plan"
         >
-          Ver Prioridades
+          Volver a Tu Plan
         </Button>
         <Button
           variant="outline"

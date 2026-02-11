@@ -32,9 +32,8 @@ Preferred communication style: Simple, everyday language.
 - **Logic**: `client/src/lib/korai-logic.ts` contains score calculation, priority generation, goal generation, sello creation, and DNI hashing
 - **Persistence (localStorage)**:
   - `korai_user_answers` - Raw survey answers
-  - `korai_user_prioridades_v1` - Generated priorities (Top 5)
-  - `korai_user_metas_v1` - Generated goals per dimension
-  - `korai_user_sello_v1` - Participation badge (municipio, fecha, ID)
+  - `korai_user_plan_v1` - Unified plan (Top 5 priorities with metas corto/mediano/largo, acciones, recursos)
+  - `korai_user_sello_v1` - Participation badge (municipio, texto, fecha, ID)
   - `korai_user_dni_hash_v1` - SHA-256 hash of DNI (never stores real DNI)
 - **Reset localStorage**: Clear all keys starting with `korai_user_` to reset user data
 

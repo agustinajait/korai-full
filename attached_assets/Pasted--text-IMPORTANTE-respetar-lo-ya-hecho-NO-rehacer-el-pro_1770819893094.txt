@@ -1,0 +1,112 @@
+```text
+IMPORTANTE (respetar lo ya hecho):
+- NO rehacer el proyecto, NO rediseñar pantallas, NO cambiar el layout ni la estética actual (Tailwind/estilos existentes).
+- Reutilizar el router, navbar y pantallas ya creadas. El objetivo es SOLO completar funcionalidad.
+- Unificar UX para el ciudadano: “Prioridades” + “Mis Metas” deben verse como un único “TU PLAN” (una sola experiencia), sin duplicar lógica.
+
+Contexto:
+Estoy trabajando una demo de Korai en Replit. Ya tengo un HTML base con navegación y un router que incluye pantallas 'prioridades' y 'metas', y funciones tipo renderPrioridades()/renderMetas(), además de cálculo de scores por dimensión.
+Antes te pasé un prompt grande. Este es un ajuste sobre ese prompt: mantener lo anterior, pero UNIFICAR Prioridades+Metas.
+
+Objetivo:
+Implementar el módulo post-diagnóstico “TU PLAN” (gamificado) que incluya:
+1) Top Prioridades (3–5) calculadas desde respuestas reales
+2) Metas y acciones por cada prioridad (corto/mediano/largo, con corto como principal)
+3) Persistencia en localStorage
+4) Sello de participación
+5) DNI opcional con hash (demo)
+
+Tareas (sin tocar el diseño general):
+1) UI / Navegación
+- Mantener los botones existentes en el navbar ("🎯 Prioridades" y "📅 Metas") y el router.
+- La pantalla principal para el ciudadano será renderPrioridades(), pero renombrar internamente el título visible a “TU PLAN” (si ya hay título, solo ajustarlo, sin rediseño).
+- renderMetas() puede quedar como vista secundaria (formato alternativo), pero debe REUTILIZAR los mismos datos generados (no recalcular distinto ni hardcode).
+
+2) Generación REAL (no hardcode) de Prioridades + Metas UNIFICADAS
+- Crear funciones:
+  - computeScoresFromAnswers() (si ya existe calcularScores(), usarla)
+  - generatePlanDesdeScores(scores, answers)
+- Regla de prioridades:
+  - Score por dimensión en escala 0..8 (o equivalente del proyecto).
+  - Ordenar dimensiones de peor a mejor.
+  - Tomar Top 3 a Top 5 como prioridades (configurable, default 5).
+- Para cada prioridad generar un objeto:
+  {
+    dimension,
+    nivelColor: 'ROJO'|'AMARILLO'|'VERDE',
+    titulo: `Mejorar ${dimensionNombre}`,
+    motivo: `En ${dimensionNombre} te faltan X de 8 indicadores resueltos` (o equivalente),
+    metaCorto: texto 1 línea (mínimo viable),
+    accionesCorto: [2 o 3 acciones concretas],
+    metaMediano: texto 1 línea (1–3 años),
+    metaLargo: texto 1 línea (5–10 años),
+    recursos: [ {nombre, descripcionCorta, link} ] (si existe catálogo/config; si no, dejar vacío sin romper UI),
+    cuando: según color:
+      - ROJO: “Próximas 2 semanas”
+      - AMARILLO: “Próximos 60 días”
+      - VERDE: “Sostener durante el año”
+  }
+- Importante: NO usar arrays demo como prioridadesDemo/metasDemo para el contenido final (solo pueden quedar como fallback si no hay respuestas).
+- Guardar plan generado en:
+  state.planGenerado
+  localStorage key: korai_user_plan_v1
+
+3) Render “TU PLAN” (en renderPrioridades)
+- Mostrar:
+  A) Encabezado “TU PLAN”
+  B) Lista de prioridades (Top 3–5) con:
+     - Badge/color semáforo
+     - Título + motivo
+     - “Cuándo” sugerido
+  C) Debajo de cada prioridad:
+     - Meta corto (visible)
+     - Acciones corto (2–3 bullets)
+     - Un acordeón/colapsable simple “Ver metas mediano/largo” (sin librerías) que muestre metaMediano y metaLargo
+     - Sección “Recursos” si hay recursos (links)
+- Mantener clases/estilos existentes. No inventar un nuevo sistema de diseño.
+
+4) renderMetas (vista secundaria)
+- Debe mostrar el MISMO state.planGenerado pero en otro formato:
+  - por dimensión, listar metaCorto/Mediano/Largo
+- No recalcular: solo leer localStorage/state.
+
+5) Sello de participación (al finalizar diagnóstico)
+- Al completar el flujo (cuando ya se muestra el resultado del semáforo / final), generar y guardar:
+  {
+    municipio: nombre configurable ya existente (si no existe, usar “RECONQUISTA” como texto),
+    texto: “RECONQUISTA TE ESCUCHA”,
+    fechaISO: new Date().toISOString(),
+    idParticipacion: hash corto (ej: primeros 8 chars de un SHA-256 de fecha+hashDNI+random)
+  }
+- Mostrar el sello:
+  - en la pantalla final del resultado y/o al inicio de “TU PLAN”.
+- Persistir:
+  localStorage key: korai_user_sello_v1
+  state.sello
+
+6) DNI opcional con hash (demo)
+- Agregar un input opcional de DNI en el paso inicial o perfil (sin cambiar layout, solo incorporar el campo donde corresponda).
+- Guardar solo hash SHA-256 (frontend) en:
+  localStorage key: korai_user_dni_hash_v1
+- No guardar DNI real en demo.
+
+7) Persistencia y prueba
+- En load/init:
+  - si hay korai_user_plan_v1, cargarlo y mostrarlo sin recalcular.
+  - si el usuario re-hace el diagnóstico y cambia respuestas, regenerar y sobrescribir plan.
+- Agregar una nota mínima en README o comentario: cómo resetear (borrar localStorage keys):
+  korai_user_plan_v1, korai_user_sello_v1, korai_user_dni_hash_v1
+
+Criterios de aceptación:
+- Completo el diagnóstico -> veo “TU PLAN” con prioridades+metas generadas desde mis respuestas reales.
+- Si cambio respuestas y re-finalizo -> cambian prioridades y metas.
+- El sello se genera y se muestra.
+- El hash de DNI se guarda si lo ingreso.
+- Refresh mantiene el plan y el sello (localStorage).
+
+Restricciones:
+- NO agregar dependencias pesadas.
+- Mantener estructura actual.
+- Reutilizar funciones existentes (calcularScores/router/navbar).
+- No refactor grande: cambios mínimos y concretos para que funcione.
+```
