@@ -6,6 +6,7 @@ import { ArrowRight, MapPin, Target } from "lucide-react";
 import logoImg from "@assets/logo.png_1770738353179.png";
 import { useState } from "react";
 import { CITIES } from "@/lib/instrument";
+import { hashDNI } from "@/lib/korai-logic";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { Input } from "@/components/ui/input";
 export default function Welcome() {
   const [_, setLocation] = useLocation();
   const [city, setCity] = useState("");
+  const [dni, setDni] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [ageRange, setAgeRange] = useState("");
   const [civilStatus, setCivilStatus] = useState("");
@@ -20,10 +22,15 @@ export default function Welcome() {
   const [hasAdults, setHasAdults] = useState("");
   const [showMore, setShowMore] = useState(false);
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!city) return;
+
+    let dniHash = "";
+    if (dni.trim()) {
+      dniHash = await hashDNI(dni);
+      localStorage.setItem("korai_user_dni_hash_v1", dniHash);
+    }
     
-    // Save context to local storage (simple state persistence)
     localStorage.setItem("korai_context", JSON.stringify({ 
       city, 
       neighborhood,
@@ -32,7 +39,7 @@ export default function Welcome() {
         civilStatus,
         hasChildren,
         hasAdults,
-        dniHash: neighborhood // Reusing neighborhood or adding a temporary field for DNI
+        dniHash
       }
     }));
     setLocation("/survey");
@@ -86,14 +93,26 @@ export default function Welcome() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white/80 font-display">DNI (Hash único para diagnóstico)</Label>
+              <Label className="text-white/80 font-display">DNI (opcional)</Label>
               <Input 
                 placeholder="Ingresa tu DNI" 
                 className="bg-black/20 border-white/10 h-12 text-lg focus:ring-primary/50 placeholder:text-white/20"
+                value={dni}
+                onChange={e => setDni(e.target.value)}
+                data-testid="input-dni"
+              />
+              <p className="text-[10px] text-white/40">Se guarda solo un hash seguro, nunca tu DNI real.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-white/80 font-display">Barrio</Label>
+              <Input 
+                placeholder="Tu barrio (opcional)" 
+                className="bg-black/20 border-white/10 h-12 text-lg focus:ring-primary/50 placeholder:text-white/20"
                 value={neighborhood}
                 onChange={e => setNeighborhood(e.target.value)}
+                data-testid="input-neighborhood"
               />
-              <p className="text-[10px] text-white/40">El DNI se utiliza para asegurar un único diagnóstico por persona.</p>
             </div>
 
             <div className="pt-2">

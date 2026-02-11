@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { INSTRUMENT } from "@/lib/instrument";
 import { useCreateReport } from "@/hooks/use-reports";
 import { queryClient } from "@/lib/queryClient";
-import { Loader2, ArrowRight, CheckCircle2, Trophy, Gift, QrCode } from "lucide-react";
+import { Loader2, ArrowRight, CheckCircle2, Trophy, Gift, QrCode, Target, Calendar } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { generarSello, generatePrioridadesDesdeRespuestas, generateMetasDesdeScores, type Sello } from "@/lib/korai-logic";
 
 export default function Survey() {
   const [_, setLocation] = useLocation();
@@ -22,6 +23,7 @@ export default function Survey() {
   const [showResultsScreen, setShowResultsScreen] = useState(false);
   const [selectedBenefit, setSelectedBenefit] = useState<string | null>(null);
   const [showLevelUp, setShowLevelUp] = useState<{show: boolean, dimension: string}>({show: false, dimension: ""});
+  const [sello, setSello] = useState<Sello | null>(null);
 
   const { mutate: submitReport, isPending } = useCreateReport();
 
@@ -152,6 +154,22 @@ export default function Survey() {
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
+
+        localStorage.setItem("korai_user_answers", JSON.stringify(answers));
+
+        localStorage.removeItem("korai_user_prioridades_v1");
+        localStorage.removeItem("korai_user_metas_v1");
+
+        const prioridades = generatePrioridadesDesdeRespuestas(answers);
+        localStorage.setItem("korai_user_prioridades_v1", JSON.stringify(prioridades));
+
+        const metas = generateMetasDesdeScores(answers);
+        localStorage.setItem("korai_user_metas_v1", JSON.stringify(metas));
+
+        const newSello = generarSello(context.city || undefined);
+        localStorage.setItem("korai_user_sello_v1", JSON.stringify(newSello));
+        setSello(newSello);
+
         setShowResultsScreen(true);
       }
     });
@@ -227,11 +245,13 @@ export default function Survey() {
                   🎖️
                 </motion.div>
                 <div className="space-y-1">
-                  <h3 className="text-2xl font-black text-white tracking-tight italic uppercase">Sello de Distinción</h3>
+                  <h3 className="text-2xl font-black text-white tracking-tight italic uppercase" data-testid="text-sello-title">
+                    {sello?.municipio || "Sello de Distinción"}
+                  </h3>
                   <div className="text-primary font-black text-lg tracking-widest uppercase">Colaborador Comunitario</div>
                 </div>
                 <p className="text-sm text-[#A9B3DA] leading-relaxed max-w-[240px]">
-                  ¡Felicidades! Tu participación activa fortalece la inteligencia colectiva de tu barrio.
+                  {sello ? `ID: ${sello.idParticipacion} | ${sello.fecha}` : "Tu participación activa fortalece la inteligencia colectiva de tu barrio."}
                 </p>
               </div>
             </motion.div>
@@ -311,12 +331,30 @@ export default function Survey() {
               </AnimatePresence>
             </div>
 
-            <Button 
-              onClick={() => setLocation("/dashboard")}
-              className="w-full h-14 bg-white text-black hover:bg-white/90 font-bold rounded-2xl shadow-xl"
-            >
-              Ir al Dashboard Admin
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => setLocation("/prioridades")}
+                className="w-full h-12 font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
+                data-testid="button-go-prioridades"
+              >
+                <Target className="w-5 h-5" /> Mis Prioridades
+              </Button>
+              <Button 
+                onClick={() => setLocation("/metas")}
+                className="w-full h-12 font-bold rounded-xl bg-gradient-to-r from-green-600 to-green-500 shadow-lg shadow-green-500/25 flex items-center justify-center gap-2"
+                data-testid="button-go-metas"
+              >
+                <Calendar className="w-5 h-5" /> Mis Metas
+              </Button>
+              <Button 
+                onClick={() => setLocation("/dashboard")}
+                variant="outline"
+                className="w-full h-12 border-white/10 bg-white/5 font-bold rounded-xl"
+                data-testid="button-go-dashboard"
+              >
+                Ir al Dashboard Admin
+              </Button>
+            </div>
           </aside>
         </div>
       </div>

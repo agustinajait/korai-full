@@ -9,6 +9,8 @@ import Welcome from "@/pages/welcome";
 import Survey from "@/pages/survey";
 import Dashboard from "@/pages/dashboard";
 import AdminLogin from "@/pages/admin-login";
+import Prioridades from "@/pages/prioridades";
+import Metas from "@/pages/metas";
 import { Loader2 } from "lucide-react";
 
 function ProtectedDashboard() {
@@ -46,6 +48,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Welcome} />
       <Route path="/survey" component={Survey} />
+      <Route path="/prioridades" component={Prioridades} />
+      <Route path="/metas" component={Metas} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/dashboard" component={ProtectedDashboard} />
       <Route component={NotFound} />
