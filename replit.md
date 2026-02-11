@@ -22,9 +22,21 @@ Preferred communication style: Simple, everyday language.
 - **Special Effects**: canvas-confetti for celebration effects on survey completion
 
 **Key Pages**:
-- `/` - Welcome page with city/neighborhood selection
+- `/` - Welcome page with city/neighborhood/DNI selection
 - `/survey` - Interactive survey with traffic light responses
+- `/prioridades` - Top 5 priorities generated from real survey scores
+- `/metas` - Short/medium/long-term goals per dimension with resource links
 - `/dashboard` - Analytics visualization of aggregated responses
+
+### Mis Metas & Prioridades Module (Feb 2026)
+- **Logic**: `client/src/lib/korai-logic.ts` contains score calculation, priority generation, goal generation, sello creation, and DNI hashing
+- **Persistence (localStorage)**:
+  - `korai_user_answers` - Raw survey answers
+  - `korai_user_prioridades_v1` - Generated priorities (Top 5)
+  - `korai_user_metas_v1` - Generated goals per dimension
+  - `korai_user_sello_v1` - Participation badge (municipio, fecha, ID)
+  - `korai_user_dni_hash_v1` - SHA-256 hash of DNI (never stores real DNI)
+- **Reset localStorage**: Clear all keys starting with `korai_user_` to reset user data
 
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript
