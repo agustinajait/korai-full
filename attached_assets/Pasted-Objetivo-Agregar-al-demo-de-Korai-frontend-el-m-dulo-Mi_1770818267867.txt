@@ -1,0 +1,68 @@
+Objetivo:
+Agregar al demo de Korai (frontend) el módulo “Mis Metas y Prioridades” post-diagnóstico, tomando como base el diseño/UX y la lógica del archivo HTML adjunto (korai-berazategui-inteligente-admin.html). En ese HTML ya existen pantallas y navegación para "🎯 Prioridades" y "📅 Metas" (navbar y router). Necesito portar/implementar esa funcionalidad en esta demo Replit.
+
+Referencia funcional (del HTML adjunto):
+- El router/switch de pantallas ya contempla: 'prioridades' y 'metas' (renderPrioridades / renderMetas).
+- Hay estructuras demo existentes: prioridadesDemo y metasDemo para ejemplo.
+- Existe calcularScores() por dimensión y total (score por mundo).
+- Navegación en navbar incluye botones Prioridades y Metas.
+
+Tareas:
+1) UI / Navegación
+- Asegurar que el navbar tenga botones: "🎯 Prioridades" y "📅 Metas" que llamen goTo('prioridades') y goTo('metas').
+- Asegurar que el router/switch renderice correctamente renderPrioridades() y renderMetas().
+
+2) Generación REAL (no hardcode) de Prioridades:
+- Reemplazar la dependencia de "prioridadesDemo" por una función generatePrioridadesDesdeRespuestas().
+- Regla: calcular el score por dimensión (0..8). Ordenar dimensiones de peor a mejor. 
+- Construir Top 5 prioridades:
+  - Prioridad #1 y #2: dimensiones más bajas (ROJO o AMARILLO).
+  - Prioridad #3-#5: siguientes dimensiones más bajas.
+- Para cada prioridad generar:
+  - titulo: “Mejorar <NombreDimensión>”
+  - necesidad: explicar en 1 línea (ej: “En <dimensión> te faltan X de 8 indicadores resueltos”).
+  - accion: sugerencia concreta (por defecto) + derivación a recursos/programas locales si están configurados.
+  - cuando: plazo sugerido según gravedad:
+    - ROJO (0-2): “Próximas 2 semanas”
+    - AMARILLO (3-5): “Próximos 60 días”
+    - VERDE (6-8): “Sostener durante el año”
+- Guardar el resultado en state.prioridadesGeneradas y en localStorage (key: korai_user_prioridades_v1) para persistencia.
+
+3) Generación REAL de “Mis Metas” (corto/mediano/largo):
+- Reemplazar dependencia de metasDemo por generateMetasDesdeScores().
+- Para cada dimensión (salud/educacion/trabajo/vivienda/economia/comunidad) generar 3 metas:
+  - corto: 1 acción “mínima viable” vinculada a lo que falta.
+  - mediano: objetivo a 1-3 años.
+  - largo: objetivo a 5-10 años.
+- Insertar debajo (en corto plazo) los “Programas/Recursos” en base a un catálogo configurable por municipio:
+  - Si existe catálogo municipal: mostrar primero recursos municipales, luego nacionales.
+  - Mantener el formato de links como en el HTML adjunto.
+- Guardar en state.metasGeneradas y en localStorage (key: korai_user_metas_v1).
+
+4) “Sello de participación” al finalizar diagnóstico:
+- Al completar el viaje (cuando ya se puede ver Semáforo), generar un “Sello de participación” (badge visual) con:
+  - Texto: “RECONQUISTA TE ESCUCHA” (o un nombre de municipio configurable)
+  - Fecha/hora
+  - ID de participación (puede ser un hash corto)
+- Mostrar el sello en una sección final del flujo (ideal: en Semáforo o al inicio de Prioridades).
+- Guardar el sello en localStorage (korai_user_sello_v1).
+
+5) DNI / Trazabilidad (demo):
+- En el flujo de inicio o perfil, agregar un input opcional de DNI.
+- Guardar DNI de forma segura (DEMO): hashear en frontend (SHA-256) y guardar solo hash en localStorage (korai_user_dni_hash_v1).
+- Mostrar en el dashboard/admin (si existe) la trazabilidad usando ese hash como identificador. (No guardar DNI real en demo.)
+
+6) Criterios de aceptación (lo que tiene que funcionar):
+- Completo el diagnóstico -> puedo entrar a "Prioridades" y "Metas" desde el navbar.
+- Prioridades y Metas se calculan según respuestas reales (si cambio respuestas, cambian).
+- El sello se genera y se muestra.
+- El hash de DNI se guarda si el usuario lo ingresa.
+- Todo persiste (refresh) vía localStorage.
+
+Notas:
+- Mantener la estética Tailwind y el estilo del HTML adjunto.
+- No agregar dependencias pesadas; vanilla JS + Tailwind CDN está OK.
+- Si el proyecto en Replit tiene estructura diferente (React/Next), replicar la misma lógica en componentes, pero respetar estos outputs y persistencia.
+
+Entregable:
+- Cambios implementados en la demo Replit, con una breve nota en README: “Cómo probar Prioridades/Metas + cómo resetear localStorage”.
