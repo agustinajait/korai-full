@@ -8,11 +8,47 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { INSTRUMENT } from "@/lib/instrument";
-import { useCreateReport } from "@/hooks/use-reports";
 import { queryClient } from "@/lib/queryClient";
-import { Loader2, ArrowRight, CheckCircle2, Trophy, Gift, QrCode, Target, Calendar } from "lucide-react";
+import { Loader2, ArrowRight, CheckCircle2, Gift, QrCode, Target, Calendar } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { generarSello, generatePlanDesdeScores, type Sello } from "@/lib/korai-logic";
+
+// ─── Configuración Supabase ───────────────────────────────────────────────────
+const SUPABASE_URL = "https://jgqqkgfppovkbwklctol.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4";
+const CAMPAIGN_ID = "53813f5a-3613-4faf-8ca1-b369e4e908cb";
+
+async function submitToSupabase(payload: {
+  dni: string;
+  answers: Record<string, string>;
+  territorio: { ciudad: string; barrio: string };
+  texto_abierto: string;
+}) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/dsubmit_response`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({
+      campaign_id: CAMPAIGN_ID,
+      dni: payload.dni,
+      answers: payload.answers,
+      territorio: payload.territorio,
+      perfil_contextual: payload.texto_abierto
+        ? JSON.stringify({ comentario: payload.texto_abierto })
+        : null,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error || `Error ${res.status}`);
+  }
+
+  return res.json();
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function Survey() {
   const [_, setLocation] = useLocation();
@@ -24,11 +60,11 @@ export default function Survey() {
   const [selectedBenefit, setSelectedBenefit] = useState<string | null>(null);
   const [showLevelUp, setShowLevelUp] = useState<{show: boolean, dimension: string}>({show: false, dimension: ""});
   const [sello, setSello] = useState<Sello | null>(null);
-
-  const { mutate: submitReport, isPending } = useCreateReport();
+  const [isPending, setIsPending] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const context = JSON.parse(localStorage.getItem("korai_context") || "{}");
-  
+
   // Redirect if no context
   useEffect(() => {
     if (!context.city) setLocation("/");
@@ -43,27 +79,21 @@ export default function Survey() {
     const perDim: Record<string, any> = {};
     INSTRUMENT.dimensions.forEach(d => {
       const dimInds = indicators.filter(i => i.dimension === d.id);
-      const dimAnswers = dimInds.map(i => ({ 
-        id: i.id, 
-        label: i.label, 
-        value: answers[i.id] 
+      const dimAnswers = dimInds.map(i => ({
+        id: i.id,
+        label: i.label,
+        value: answers[i.id]
       }));
-      
+
       const r = dimAnswers.filter(ans => ans.value === 'rojo').length;
       const a = dimAnswers.filter(ans => ans.value === 'amarillo').length;
       const v = dimAnswers.filter(ans => ans.value === 'verde').length;
       const n = dimAnswers.length;
-      
-      // Lógica de severidad: si > 50% es rojo, es crítico.
+
       const color = (r / n >= 0.5) ? 'rojo' : (a / n >= 0.5 || (r+a)/n >= 0.5) ? 'amarillo' : 'verde';
-      
-      // Calcular severidad (0-100)
-      // Representa qué tan cerca está de "empeorar" o el peso del riesgo
       const severity = Math.round(((r * 1 + a * 0.5) / n) * 100);
-      
-      // Encontrar el indicador más problemático para la explicación
       const worstInd = dimAnswers.find(a => a.value === 'rojo') || dimAnswers.find(a => a.value === 'amarillo');
-      
+
       let explanation = "";
       if (color === 'rojo') {
         explanation = `Estado Crítico: El ${Math.round((r/n)*100)}% de los indicadores reporta niveles de riesgo alto, especialmente en "${worstInd?.label || 'acceso básico'}", lo que arrastra la dimensión a Rojo.`;
@@ -80,7 +110,7 @@ export default function Survey() {
     const totalA = Object.values(perDim).reduce((acc, d) => acc + d.a, 0);
     const totalV = Object.values(perDim).reduce((acc, d) => acc + d.v, 0);
     const totalN = Object.values(perDim).reduce((acc, d) => acc + d.n, 0);
-    
+
     const communityColor = (totalR / totalN >= 0.33) ? 'rojo' : (totalA / totalN >= 0.33) ? 'amarillo' : 'verde';
 
     return { perDim, overallColor: communityColor, totalR, totalA, totalV, totalN };
@@ -126,7 +156,7 @@ export default function Survey() {
           colors: ['#7c5cff', '#22c55e', '#f59e0b']
         });
         setShowLevelUp({ show: true, dimension: dimension?.name || "" });
-        
+
         setTimeout(() => {
           setShowLevelUp({ show: false, dimension: "" });
           setCurrentIdx(nextIdx);
@@ -144,32 +174,48 @@ export default function Survey() {
     }
   };
 
-  const handleSubmit = () => {
-    submitReport({
-      city: context.city || "Unknown",
-      neighborhood: context.neighborhood || "",
-      answers,
-      openText: comment,
-      demographics: context.demographics || {}
-    }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
+  // ─── handleSubmit: ahora envía a Supabase ────────────────────────────────────
+  const handleSubmit = async () => {
+    setIsPending(true);
+    setSubmitError(null);
 
-        localStorage.setItem("korai_user_answers", JSON.stringify(answers));
+    try {
+      // Usamos el DNI del contexto si existe, si no generamos uno anónimo
+      const dni = context.dni || `anonimo-${Date.now()}`;
 
-        localStorage.removeItem("korai_user_plan_v1");
+      await submitToSupabase({
+        dni,
+        answers,
+        territorio: {
+          ciudad: context.city || "Desconocida",
+          barrio: context.neighborhood || "",
+        },
+        texto_abierto: comment,
+      });
 
-        const plan = generatePlanDesdeScores(answers);
-        localStorage.setItem("korai_user_plan_v1", JSON.stringify(plan));
+      // Guardamos en localStorage para que prioridades.tsx y metas.tsx los lean
+      localStorage.setItem("korai_user_answers", JSON.stringify(answers));
+      localStorage.removeItem("korai_user_plan_v1");
 
-        const newSello = generarSello(context.city || undefined);
-        localStorage.setItem("korai_user_sello_v1", JSON.stringify(newSello));
-        setSello(newSello);
+      const plan = generatePlanDesdeScores(answers);
+      localStorage.setItem("korai_user_plan_v1", JSON.stringify(plan));
 
-        setShowResultsScreen(true);
-      }
-    });
+      const newSello = generarSello(context.city || undefined);
+      localStorage.setItem("korai_user_sello_v1", JSON.stringify(newSello));
+      setSello(newSello);
+
+      // Invalidar cache del dashboard si existe
+      queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
+
+      setShowResultsScreen(true);
+    } catch (err: any) {
+      console.error("Error al guardar en Supabase:", err);
+      setSubmitError(err?.message || "Error al guardar. Intentá de nuevo.");
+    } finally {
+      setIsPending(false);
+    }
   };
+  // ─────────────────────────────────────────────────────────────────────────────
 
   if (showResultsScreen && results) {
     return (
@@ -197,8 +243,8 @@ export default function Survey() {
                         </div>
                       </div>
                       <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${
-                        s.color === 'rojo' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 
-                        s.color === 'amarillo' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 
+                        s.color === 'rojo' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                        s.color === 'amarillo' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
                         'bg-green-500/20 text-green-400 border-green-500/30'
                       }`}>
                         {s.color}
@@ -223,16 +269,16 @@ export default function Survey() {
           </div>
 
           <aside className="w-full md:w-80 space-y-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
               className="bg-gradient-to-br from-primary/30 via-primary/10 to-transparent border border-primary/40 rounded-[32px] p-8 shadow-[0_20px_50px_rgba(124,92,255,0.3)] relative overflow-hidden group hover:scale-[1.02] transition-transform duration-500"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl -z-10 group-hover:bg-primary/40 transition-colors" />
-              
+
               <div className="flex flex-col items-center text-center space-y-4">
-                <motion.div 
+                <motion.div
                   initial={{ rotate: -15, scale: 0.5 }}
                   animate={{ rotate: 0, scale: 1 }}
                   transition={{ delay: 0.4, type: "spring" }}
@@ -262,22 +308,22 @@ export default function Survey() {
                   <p className="text-xs text-[#A9B3DA]">Selecciona un beneficio local para canjear</p>
                 </div>
               </div>
-              
+
               <div className="grid gap-3">
                 {[
                   { id: 'discount', icon: '🛍️', title: '10% OFF Comercios', desc: 'Válido en tiendas adheridas', color: 'from-blue-500/20' },
                   { id: 'coffee', icon: '☕', title: 'Merienda Especial', desc: 'Café + medialuna de regalo', color: 'from-orange-500/20' },
                   { id: 'raffle', icon: '🎟️', title: 'Sorteo Mensual', desc: 'Participación automática', color: 'from-purple-500/20' }
                 ].map(b => (
-                  <button 
+                  <button
                     key={b.id}
                     onClick={() => {
                       setSelectedBenefit(b.id);
                       playBip('verde');
                     }}
                     className={`w-full text-left p-4 rounded-2xl border transition-all relative overflow-hidden group ${
-                      selectedBenefit === b.id 
-                        ? 'bg-primary/20 border-primary shadow-[0_0_20px_rgba(124,92,255,0.2)]' 
+                      selectedBenefit === b.id
+                        ? 'bg-primary/20 border-primary shadow-[0_0_20px_rgba(124,92,255,0.2)]'
                         : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
@@ -289,7 +335,7 @@ export default function Survey() {
                         <div className="text-[10px] text-[#A9B3DA] font-medium">{b.desc}</div>
                       </div>
                       {selectedBenefit === b.id && (
-                        <motion.div 
+                        <motion.div
                           layoutId="active-check"
                           className="w-6 h-6 rounded-full bg-primary flex items-center justify-center"
                         >
@@ -303,7 +349,7 @@ export default function Survey() {
 
               <AnimatePresence mode="wait">
                 {selectedBenefit && (
-                  <motion.div 
+                  <motion.div
                     key={selectedBenefit}
                     initial={{ opacity: 0, y: 20, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -328,21 +374,21 @@ export default function Survey() {
             </div>
 
             <div className="space-y-3">
-              <Button 
+              <Button
                 onClick={() => setLocation("/prioridades")}
                 className="w-full h-12 font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
                 data-testid="button-go-prioridades"
               >
                 <Target className="w-5 h-5" /> Tu Plan
               </Button>
-              <Button 
+              <Button
                 onClick={() => setLocation("/metas")}
                 className="w-full h-12 font-bold rounded-xl bg-gradient-to-r from-green-600 to-green-500 shadow-lg shadow-green-500/25 flex items-center justify-center gap-2"
                 data-testid="button-go-metas"
               >
                 <Calendar className="w-5 h-5" /> Mis Metas
               </Button>
-              <Button 
+              <Button
                 onClick={() => setLocation("/dashboard")}
                 variant="outline"
                 className="w-full h-12 border-white/10 bg-white/5 font-bold rounded-xl"
@@ -378,10 +424,10 @@ export default function Survey() {
 
       {!showCommentScreen ? (
         <>
-          <ProgressHeader 
-            currentStep={currentIdx + 1} 
-            totalSteps={indicators.length} 
-            currentDimensionId={currentIndicator.dimension} 
+          <ProgressHeader
+            currentStep={currentIdx + 1}
+            totalSteps={indicators.length}
+            currentDimensionId={currentIndicator.dimension}
           />
 
           <motion.div
@@ -404,23 +450,23 @@ export default function Survey() {
             </div>
 
             <div className="grid gap-4 mt-8">
-              <TrafficLightButton 
-                color="verde" 
-                label="Sí / Suficiente" 
+              <TrafficLightButton
+                color="verde"
+                label="Sí / Suficiente"
                 subLabel="Estamos bien en este aspecto"
                 onClick={() => handleAnswer("verde")}
                 selected={answers[currentIndicator.id] === "verde"}
               />
-              <TrafficLightButton 
-                color="amarillo" 
-                label="Parcial / Inestable" 
+              <TrafficLightButton
+                color="amarillo"
+                label="Parcial / Inestable"
                 subLabel="Podría mejorar / A veces sí, a veces no"
                 onClick={() => handleAnswer("amarillo")}
                 selected={answers[currentIndicator.id] === "amarillo"}
               />
-              <TrafficLightButton 
-                color="rojo" 
-                label="No / Insuficiente" 
+              <TrafficLightButton
+                color="rojo"
+                label="No / Insuficiente"
                 subLabel="Tenemos problemas graves aquí"
                 onClick={() => handleAnswer("rojo")}
                 selected={answers[currentIndicator.id] === "rojo"}
@@ -455,9 +501,9 @@ export default function Survey() {
         >
           <div className="text-center space-y-2">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 text-green-400 mb-4">
-              <motion.span 
-                initial={{ rotate: -45, scale: 0 }} 
-                animate={{ rotate: 0, scale: 1 }} 
+              <motion.span
+                initial={{ rotate: -45, scale: 0 }}
+                animate={{ rotate: 0, scale: 1 }}
                 className="text-3xl"
               >
                 🎉
@@ -470,7 +516,7 @@ export default function Survey() {
           </div>
 
           <GlassCard className="p-6">
-            <Textarea 
+            <Textarea
               placeholder="Escribe aquí tus observaciones, reclamos o sugerencias..."
               className="min-h-[150px] bg-black/20 border-white/10 text-lg resize-none focus:ring-primary/50"
               value={comment}
@@ -478,8 +524,14 @@ export default function Survey() {
             />
           </GlassCard>
 
-          <Button 
-            onClick={handleSubmit} 
+          {submitError && (
+            <div className="text-red-400 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              {submitError}
+            </div>
+          )}
+
+          <Button
+            onClick={handleSubmit}
             disabled={isPending}
             className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:to-primary shadow-lg shadow-primary/25"
           >

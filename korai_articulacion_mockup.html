@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KORAI — Articulación Territorial (Mockup)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .k-btn{display:inline-flex;align-items:center;justify-content:center;padding:.55rem 1rem;border-radius:1rem;font-weight:600;border:1px solid rgb(226 232 240);}
+    .k-btn-primary{background:#0f172a;color:#fff;border-color:#0f172a;}
+    .k-btn-ghost{background:#fff;color:#0f172a;}
+    .k-input{width:100%;padding:.55rem .75rem;border-radius:1rem;border:1px solid rgb(226 232 240);background:#fff;outline:none;}
+    .k-card{background:#fff;border:1px solid rgb(226 232 240);border-radius:1.25rem;box-shadow:0 1px 2px rgba(15,23,42,.05);}
+    .k-label{font-size:.8rem;font-weight:600;color:rgb(51 65 85);}
+    .k-navlink{padding:.55rem .75rem;border-radius:1rem;font-size:.9rem;font-weight:600;color:rgb(51 65 85);}
+    .k-navlink:hover{background:rgb(241 245 249);}
+    .k-navlink-active{background:#0f172a;color:#fff;}
+    .k-badge{display:inline-flex;align-items:center;padding:.125rem .5rem;border-radius:.6rem;font-size:.75rem;font-weight:700;border:1px solid transparent;}
+    .b-open{background:rgb(236 253 245);color:rgb(4 120 87);border-color:rgb(209 250 229);}
+    .b-urgent{background:rgb(255 241 242);color:rgb(190 18 60);border-color:rgb(254 205 211);}
+    .b-med{background:rgb(255 251 235);color:rgb(146 64 14);border-color:rgb(254 243 199);}
+    .b-low{background:rgb(239 246 255);color:rgb(3 105 161);border-color:rgb(219 234 254);}
+    .b-closed{background:rgb(241 245 249);color:rgb(71 85 105);border-color:rgb(226 232 240);}
+    .k-modal-backdrop{background:rgba(2,6,23,.55);}
+    .k-table th{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:rgb(100 116 139);font-weight:800;padding:.5rem 0;text-align:left;}
+    .k-table td{padding:.75rem 0;font-size:.9rem;color:rgb(51 65 85);border-top:1px solid rgb(241 245 249);vertical-align:top;}
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<header class="sticky top-0 z-40 bg-white/85 backdrop-blur border-b border-slate-200">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+    <div class="flex items-center gap-2">
+      <div class="w-9 h-9 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-bold">K</div>
+      <div>
+        <div class="text-sm font-semibold leading-tight">KORAI</div>
+        <div class="text-xs text-slate-500 leading-tight">Articulación territorial — mockup</div>
+      </div>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      <select id="roleSelect" class="k-input max-w-[220px]">
+        <option value="municipio">Modo Municipio</option>
+        <option value="oferente">Modo Oferente</option>
+        <option value="publico">Modo Público</option>
+      </select>
+      <button class="k-btn k-btn-ghost" id="helpBtn">Ayuda</button>
+    </div>
+  </div>
+</header>
+
+<div class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
+  <aside class="col-span-12 md:col-span-3">
+    <div class="k-card p-4">
+      <div class="text-xs font-extrabold text-slate-500 uppercase tracking-wide">Navegación</div>
+      <nav class="mt-3 flex flex-col gap-1" id="nav"></nav>
+    </div>
+
+    <div class="k-card p-4 mt-6">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="text-sm font-semibold">Municipio piloto</div>
+          <div class="text-xs text-slate-500" id="tenantLabel">Avellaneda</div>
+        </div>
+        <span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-50 border border-slate-200">MVP</span>
+      </div>
+      <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2">
+          <div class="text-slate-500">Necesidades abiertas</div>
+          <div class="text-lg font-extrabold text-slate-900" id="kpiNeeds">6</div>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-2">
+          <div class="text-slate-500">Propuestas</div>
+          <div class="text-lg font-extrabold text-slate-900" id="kpiProps">14</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="col-span-12 md:col-span-9">
+    <div id="view"></div>
+  </main>
+</div>
+
+<div id="modal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 k-modal-backdrop"></div>
+  <div class="relative max-w-2xl mx-auto mt-20 p-4">
+    <div class="k-card p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <div class="text-lg font-semibold">Ayuda rápida</div>
+          <div class="text-sm text-slate-600 mt-1">Este HTML es una maqueta navegable. No guarda datos. Sirve para visualizar pantallas, flujos y copy.</div>
+        </div>
+        <button class="k-btn k-btn-ghost" onclick="closeModal()">Cerrar</button>
+      </div>
+      <div class="mt-4 text-sm text-slate-700 space-y-2">
+        <div><span class="font-semibold">Modo Municipio:</span> crear necesidades, publicar convocatorias, ver matches y gestionar propuestas.</div>
+        <div><span class="font-semibold">Modo Oferente:</span> completar perfil/capacidad, ver oportunidades y enviar propuestas.</div>
+        <div><span class="font-semibold">Modo Público:</span> explorar convocatorias y necesidades abiertas.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  tenant: "Avellaneda",
+  role: "municipio",
+  needs: [
+    { id:"N-001", title:"Alojamiento de emergencia: 50 camas", category:"Alojamiento", qty:50, unit:"camas", period:"30 noches", budget:9000, urgency:"alta", zone:"Zona Centro", status:"abierta",
+      description:"Se requiere alojamiento temporal para personas en situación de calle. Se valora cercanía a transporte público y disponibilidad inmediata.",
+      requirements:["Factura / monotributo o responsable inscripto","Condiciones de higiene y seguridad","Disponibilidad inmediata"] },
+    { id:"N-002", title:"Viandas diarias: 200 por día", category:"Alimentos", qty:200, unit:"viandas/día", period:"60 días", budget:12000, urgency:"media", zone:"Zona Sur", status:"abierta",
+      description:"Provisión de viandas para comedores barriales. Incluye logística de entrega.",
+      requirements:["Habilitación bromatológica","Logística de entrega","Capacidad sostenida"] },
+    { id:"N-003", title:"Kit escolar: 1.000 unidades", category:"Educación", qty:1000, unit:"kits", period:"Entrega única", budget:6500, urgency:"baja", zone:"Todo el municipio", status:"abierta",
+      description:"Kits escolares para inicio de ciclo lectivo. Se prioriza entrega en 10 días.",
+      requirements:["Entrega en 10 días","Detalle de contenidos por kit"] },
+    { id:"N-004", title:"Traslados para derivaciones médicas", category:"Salud", qty:120, unit:"viajes/mes", period:"3 meses", budget:5400, urgency:"media", zone:"AMBA", status:"abierta",
+      description:"Servicio de traslados para derivaciones programadas. Se requiere coordinación simple y puntualidad.",
+      requirements:["Seguro","Chofer habilitado","Puntualidad"] },
+    { id:"N-005", title:"Refuerzo de equipos: 2 operadores territoriales", category:"Territorio", qty:2, unit:"personas", period:"6 meses", budget:4800, urgency:"alta", zone:"Zonas críticas", status:"abierta",
+      description:"Apoyo para relevamiento, acompañamiento y articulación de recursos en territorio.",
+      requirements:["Experiencia comunitaria","Disponibilidad horaria","Reporte semanal"] },
+    { id:"N-006", title:"Acondicionamiento de comedor escolar", category:"Infraestructura", qty:1, unit:"obra", period:"30 días", budget:8000, urgency:"media", zone:"Escuela Nº 12", status:"abierta",
+      description:"Mejoras básicas: pintura, ventilación, reparación de mesadas y luminarias.",
+      requirements:["Visita técnica","Cronograma de obra","Garantía mínima 6 meses"] },
+  ],
+  tenders: [
+    { id:"C-101", title:"Licitación: provisión de alimentos para comedores", category:"Alimentos", budget:"USD 15.000", closes:"2026-04-18", status:"abierta", docs:"Pliego PDF + Anexos",
+      summary:"Compra de insumos alimentarios para red de comedores. Modalidad: oferta por renglón." },
+    { id:"C-102", title:"Contratación: mantenimiento de escuelas (urgente)", category:"Infraestructura", budget:"USD 20.000", closes:"2026-04-10", status:"abierta", docs:"Pliego PDF",
+      summary:"Mantenimiento y reparaciones menores. Se prioriza capacidad de respuesta en 48hs." },
+    { id:"C-103", title:"Convocatoria: servicios de traslados sanitarios", category:"Salud", budget:"USD 8.000", closes:"2026-04-30", status:"abierta", docs:"Bases y condiciones",
+      summary:"Servicios de traslado programado. Registro de flota y seguros al día." },
+  ],
+  providers: [
+    { id:"P-301", name:"Hotel Libertador (Almagro)", type:"Hotel", categories:["Alojamiento"], zone:"CABA (Almagro)", capacity:{camas:80},
+      price:{unit:"noche", amount:6.5, currency:"USD", note:"precio por cama/noche (aprox.)"}, availability:"Inmediata", verified:true },
+    { id:"P-302", name:"Red Solidaria Sur", type:"OSC", categories:["Alimentos","Territorio"], zone:"Zona Sur", capacity:{"viandas/día":250},
+      price:{unit:"vianda", amount:1.1, currency:"USD"}, availability:"72hs", verified:false },
+    { id:"P-303", name:"Logística Norte SRL", type:"Empresa", categories:["Salud","Logística"], zone:"AMBA", capacity:{"viajes/mes":200},
+      price:{unit:"viaje", amount:10, currency:"USD"}, availability:"48hs", verified:true },
+  ],
+  proposals: [
+    { id:"PR-9001", targetType:"need", targetId:"N-001", providerId:"P-301", amount:9750, note:"Incluye desayuno y limpieza diaria. Disponibilidad inmediata.", status:"recibida" },
+    { id:"PR-9002", targetType:"need", targetId:"N-002", providerId:"P-302", amount:11800, note:"Capacidad 200 viandas/día con logística. Menú rotativo.", status:"preseleccionada" },
+    { id:"PR-9003", targetType:"tender", targetId:"C-101", providerId:"P-302", amount:14900, note:"Oferta por renglón A+B. Entregas semanales.", status:"recibida" },
+  ]
+};
+
+const roleNav = {
+  municipio: [
+    { id:"home", label:"Dashboard", icon:"🏛️" },
+    { id:"needs", label:"Necesidades", icon:"📌" },
+    { id:"need_new", label:"Crear necesidad", icon:"➕" },
+    { id:"matches", label:"Matches", icon:"🔎" },
+    { id:"tenders", label:"Convocatorias", icon:"📄" },
+    { id:"tender_new", label:"Crear convocatoria", icon:"➕" },
+    { id:"proposals", label:"Propuestas", icon:"📥" },
+  ],
+  oferente: [
+    { id:"o_home", label:"Inicio", icon:"🧩" },
+    { id:"provider_profile", label:"Mi perfil", icon:"🪪" },
+    { id:"o_needs", label:"Necesidades abiertas", icon:"📌" },
+    { id:"o_tenders", label:"Convocatorias", icon:"📄" },
+    { id:"o_proposals", label:"Mis propuestas", icon:"📨" },
+  ],
+  publico: [
+    { id:"p_needs", label:"Necesidades", icon:"📌" },
+    { id:"p_tenders", label:"Convocatorias", icon:"📄" },
+    { id:"p_about", label:"¿Qué es Korai?", icon:"ℹ️" },
+  ],
+};
+
+function money(n){ return new Intl.NumberFormat("es-AR",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n); }
+function datePretty(iso){ try { return new Date(iso+"T00:00:00").toLocaleDateString("es-AR"); } catch { return iso; } }
+function urgencyBadge(u){
+  if(u==="alta") return '<span class="k-badge b-urgent">Urgencia alta</span>';
+  if(u==="media") return '<span class="k-badge b-med">Urgencia media</span>';
+  return '<span class="k-badge b-low">Urgencia baja</span>';
+}
+function statusBadge(s){
+  if(s==="abierta") return '<span class="k-badge b-open">Abierta</span>';
+  return '<span class="k-badge b-closed">Cerrada</span>';
+}
+function proposalStatusPill(s){
+  if(s==="preseleccionada") return '<span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800">Preseleccionada</span>';
+  if(s==="asignada") return '<span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">Asignada</span>';
+  if(s==="rechazada") return '<span class="text-xs font-bold px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700">Rechazada</span>';
+  return '<span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-slate-700">Recibida</span>';
+}
+
+function setRole(role){
+  state.role = role;
+  document.getElementById("tenantLabel").textContent = state.tenant;
+  renderNav();
+  navigate(roleNav[role][0].id);
+}
+
+function renderNav(){
+  const nav = document.getElementById("nav");
+  nav.innerHTML = "";
+  roleNav[state.role].forEach(item=>{
+    const a = document.createElement("a");
+    a.href = "#"+item.id;
+    a.className = "k-navlink";
+    a.dataset.route = item.id;
+    a.textContent = item.icon+"  "+item.label;
+    a.onclick = (e)=>{ e.preventDefault(); navigate(item.id); };
+    nav.appendChild(a);
+  });
+  updateNavActive(location.hash.replace("#","") || roleNav[state.role][0].id);
+}
+
+function updateNavActive(route){
+  document.querySelectorAll("#nav a").forEach(a=>{
+    a.classList.remove("k-navlink-active");
+    if(a.dataset.route===route) a.classList.add("k-navlink-active");
+  });
+}
+
+function navigate(route){
+  location.hash = route;
+  renderRoute(route);
+  updateNavActive(route);
+  updateKpis();
+}
+
+function updateKpis(){
+  document.getElementById("kpiNeeds").textContent = state.needs.filter(n=>n.status==="abierta").length;
+  document.getElementById("kpiProps").textContent = state.proposals.length;
+}
+
+window.addEventListener("hashchange", ()=>{
+  const route = location.hash.replace("#","");
+  if(route){ renderRoute(route); updateNavActive(route); }
+});
+
+function toast(msg){
+  const t = document.createElement("div");
+  t.className = "fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-lg text-sm";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2200);
+}
+
+function openModal(){ document.getElementById("modal").classList.remove("hidden"); }
+function closeModal(){ document.getElementById("modal").classList.add("hidden"); }
+
+document.getElementById("helpBtn").onclick = openModal;
+document.getElementById("roleSelect").onchange = (e)=> setRole(e.target.value);
+
+/* Views */
+function municipioDashboard(){
+  const openNeeds = state.needs.filter(n=>n.status==="abierta");
+  const urgent = openNeeds.filter(n=>n.urgency==="alta");
+  return `
+  <section class="space-y-6">
+    <div class="k-card p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-extrabold">Dashboard municipal</h1>
+          <p class="text-slate-600 mt-1">Publicá convocatorias y necesidades, recibí propuestas y acelerá la respuesta territorial.</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="k-btn k-btn-primary" onclick="navigate('need_new')">➕ Crear necesidad</button>
+          <button class="k-btn k-btn-ghost" onclick="navigate('tender_new')">➕ Crear convocatoria</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <div class="text-sm text-slate-600">Necesidades abiertas</div>
+          <div class="text-3xl font-extrabold mt-1">${openNeeds.length}</div>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <div class="text-sm text-slate-600">Urgencia alta</div>
+          <div class="text-3xl font-extrabold mt-1">${urgent.length}</div>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <div class="text-sm text-slate-600">Propuestas recibidas</div>
+          <div class="text-3xl font-extrabold mt-1">${state.proposals.length}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="k-card p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="text-lg font-extrabold">Prioridad operativa</div>
+            <div class="text-sm text-slate-600">Necesidades con urgencia alta para activar hoy.</div>
+          </div>
+          <button class="k-btn k-btn-ghost" onclick="navigate('needs')">Ver todas</button>
+        </div>
+        <div class="mt-4 space-y-3">
+          ${urgent.slice(0,3).map(n=>needRow(n,"Ver matches",`navigate('matches')`)).join("") || `<div class="text-sm text-slate-600">No hay urgencias altas.</div>`}
+        </div>
+      </div>
+
+      <div class="k-card p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="text-lg font-extrabold">Convocatorias activas</div>
+            <div class="text-sm text-slate-600">Publicaciones vigentes para el ecosistema local.</div>
+          </div>
+          <button class="k-btn k-btn-ghost" onclick="navigate('tenders')">Ver todas</button>
+        </div>
+        <div class="mt-4 space-y-3">
+          ${state.tenders.slice(0,3).map(t=>tenderRow(t)).join("")}
+        </div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function needRow(n, ctaText="Ver detalle", ctaJs=null){
+  const fn = ctaJs || `navigate('need_${n.id}')`;
+  return `
+  <div class="flex items-start justify-between gap-4 p-4 bg-white border border-slate-200 rounded-2xl">
+    <div class="min-w-0">
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="font-extrabold truncate">${n.title}</div>
+        ${statusBadge(n.status)}
+        ${urgencyBadge(n.urgency)}
+      </div>
+      <div class="text-sm text-slate-600 mt-1">${n.zone} • ${n.qty} ${n.unit} • ${n.period}</div>
+      <div class="text-sm text-slate-700 mt-1">Presupuesto: <span class="font-extrabold">${money(n.budget)}</span></div>
+    </div>
+    <button class="k-btn k-btn-primary shrink-0" onclick="${fn}">${ctaText}</button>
+  </div>`;
+}
+
+function tenderRow(t){
+  return `
+  <div class="flex items-start justify-between gap-4 p-4 bg-white border border-slate-200 rounded-2xl">
+    <div class="min-w-0">
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="font-extrabold truncate">${t.title}</div>
+        <span class="k-badge b-open">Abierta</span>
+      </div>
+      <div class="text-sm text-slate-600 mt-1">${t.category} • Cierra: ${datePretty(t.closes)} • ${t.budget}</div>
+      <div class="text-sm text-slate-700 mt-1">${t.summary}</div>
+    </div>
+    <button class="k-btn k-btn-ghost shrink-0" onclick="navigate('tender_${t.id}')">Ver detalle</button>
+  </div>`;
+}
+
+function municipioNeedsList(){
+  return `
+  <section class="space-y-4">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-extrabold">Necesidades municipales</h1>
+        <p class="text-slate-600 mt-1">Publicá necesidades operativas/sociales y recibí propuestas del ecosistema.</p>
+      </div>
+      <button class="k-btn k-btn-primary" onclick="navigate('need_new')">➕ Crear necesidad</button>
+    </div>
+
+    <div class="k-card p-4">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div>
+          <div class="k-label">Categoría</div>
+          <select class="k-input" id="filterCat" onchange="renderRoute('needs')">
+            <option value="">Todas</option>
+            ${[...new Set(state.needs.map(n=>n.category))].map(c=>`<option>${c}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <div class="k-label">Urgencia</div>
+          <select class="k-input" id="filterUrg" onchange="renderRoute('needs')">
+            <option value="">Todas</option>
+            <option value="alta">Alta</option>
+            <option value="media">Media</option>
+            <option value="baja">Baja</option>
+          </select>
+        </div>
+        <div>
+          <div class="k-label">Estado</div>
+          <select class="k-input" id="filterStatus" onchange="renderRoute('needs')">
+            <option value="">Todos</option>
+            <option value="abierta">Abierta</option>
+            <option value="cerrada">Cerrada</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <div class="k-label">Buscar</div>
+          <input class="k-input" id="filterText" placeholder="Ej: camas, viandas, escuela…" oninput="renderRoute('needs')" />
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-3">
+      ${filterNeeds().map(n=>needRow(n,"Ver detalle")).join("")}
+    </div>
+  </section>`;
+}
+
+function filterNeeds(){
+  const cat = document.getElementById("filterCat")?.value || "";
+  const urg = document.getElementById("filterUrg")?.value || "";
+  const st = document.getElementById("filterStatus")?.value || "";
+  const q = (document.getElementById("filterText")?.value || "").toLowerCase();
+  return state.needs.filter(n=>{
+    const okCat = !cat || n.category===cat;
+    const okUrg = !urg || n.urgency===urg;
+    const okSt = !st || n.status===st;
+    const okQ = !q || (n.title+n.description+n.category).toLowerCase().includes(q);
+    return okCat && okUrg && okSt && okQ;
+  });
+}
+
+function municipioNeedNew(){
+  return `
+  <section class="space-y-4">
+    <div>
+      <h1 class="text-2xl font-extrabold">Crear necesidad</h1>
+      <p class="text-slate-600 mt-1">Describí una necesidad concreta para que el ecosistema pueda proponer soluciones.</p>
+    </div>
+
+    <div class="k-card p-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <div class="k-label">Título</div>
+          <input class="k-input" placeholder="Ej: Alojamiento de emergencia: 50 camas" />
+        </div>
+        <div>
+          <div class="k-label">Categoría</div>
+          <select class="k-input">
+            <option>Alojamiento</option><option>Alimentos</option><option>Salud</option><option>Educación</option>
+            <option>Infraestructura</option><option>Territorio</option><option>Logística</option><option>Servicios</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-3 gap-3 md:col-span-2">
+          <div><div class="k-label">Cantidad</div><input class="k-input" type="number" placeholder="50" /></div>
+          <div><div class="k-label">Unidad</div><input class="k-input" placeholder="camas / viandas/día / kits" /></div>
+          <div><div class="k-label">Plazo</div><input class="k-input" placeholder="30 noches / 60 días" /></div>
+        </div>
+        <div><div class="k-label">Presupuesto total (USD)</div><input class="k-input" type="number" placeholder="9000" /></div>
+        <div><div class="k-label">Urgencia</div><select class="k-input"><option>Alta</option><option>Media</option><option>Baja</option></select></div>
+        <div><div class="k-label">Zona / alcance</div><input class="k-input" placeholder="Ej: Zona Centro / Escuela Nº 12" /></div>
+        <div><div class="k-label">Fecha límite</div><input class="k-input" type="date" /></div>
+        <div class="md:col-span-2"><div class="k-label">Descripción</div><textarea class="k-input" rows="4" placeholder="Contexto, condiciones, qué se valora, tiempos, etc."></textarea></div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-5">
+        <button class="k-btn k-btn-ghost" onclick="navigate('needs')">Cancelar</button>
+        <button class="k-btn k-btn-primary" onclick="toast('Necesidad publicada (mock).')">Publicar necesidad</button>
+      </div>
+    </div>
+  </section>`;
+}
+
+function municipioMatches(){
+  const blocks = state.needs.map(n=>{
+    const candidates = state.providers
+      .filter(p=>p.categories.includes(n.category))
+      .map(p=>{
+        const cap = p.capacity[n.unit] ?? p.capacity.camas ?? 0;
+        const capScore = Math.min(1, cap / (n.qty||1));
+        const budgetScore = 0.85;
+        const score = Math.round((capScore*0.7 + budgetScore*0.3)*100);
+        return {provider:p, cap, score};
+      }).sort((a,b)=>b.score-a.score);
+    return {need:n, candidates};
+  });
+  return `
+  <section class="space-y-4">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-extrabold">Matches sugeridos</h1>
+        <p class="text-slate-600 mt-1">Korai sugiere actores con capacidad potencial para cubrir cada necesidad.</p>
+      </div>
+      <button class="k-btn k-btn-ghost" onclick="toast('Matches recalculados (mock).')">Recalcular</button>
+    </div>
+
+    <div class="space-y-4">
+      ${blocks.map(b=>`
+        <div class="k-card p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="text-lg font-extrabold truncate">${b.need.title}</div>
+                ${urgencyBadge(b.need.urgency)} ${statusBadge(b.need.status)}
+              </div>
+              <div class="text-sm text-slate-600 mt-1">${b.need.zone} • ${b.need.qty} ${b.need.unit} • ${b.need.period} • Presupuesto: <span class="font-extrabold">${money(b.need.budget)}</span></div>
+            </div>
+            <button class="k-btn k-btn-ghost" onclick="navigate('need_${b.need.id}')">Ver detalle</button>
+          </div>
+
+          <div class="mt-4 overflow-x-auto">
+            <table class="w-full k-table">
+              <thead><tr><th>Proveedor</th><th>Categoría</th><th>Capacidad</th><th>Disponibilidad</th><th>Score</th><th></th></tr></thead>
+              <tbody>
+                ${b.candidates.length ? b.candidates.slice(0,5).map(c=>`
+                  <tr>
+                    <td><div class="font-extrabold text-slate-900">${c.provider.name}</div><div class="text-xs text-slate-500">${c.provider.type} • ${c.provider.zone} ${c.provider.verified?'• ✅ verificado':''}</div></td>
+                    <td>${c.provider.categories.join(", ")}</td>
+                    <td>${c.cap || "—"} (${b.need.unit})</td>
+                    <td>${c.provider.availability}</td>
+                    <td><span class="k-badge ${c.score>=80?'b-open':(c.score>=60?'b-med':'b-low')}">${c.score}/100</span></td>
+                    <td class="text-right"><button class="k-btn k-btn-primary" onclick="toast('Invitación enviada (mock).')">Invitar</button></td>
+                  </tr>`).join("")
+                  : `<tr><td colspan="6" class="py-4 text-slate-600">No hay proveedores compatibles aún.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>`).join("")}
+    </div>
+  </section>`;
+}
+
+function municipioTendersList(){
+  return `
+  <section class="space-y-4">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-extrabold">Convocatorias</h1>
+        <p class="text-slate-600 mt-1">Publicaciones oficiales para proveedores y organizaciones registradas.</p>
+      </div>
+      <button class="k-btn k-btn-primary" onclick="navigate('tender_new')">➕ Crear convocatoria</button>
+    </div>
+
+    <div class="space-y-3">
+      ${state.tenders.map(t=>`
+        <div class="k-card p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="text-lg font-extrabold truncate">${t.title}</div>
+                <span class="k-badge b-open">Abierta</span>
+              </div>
+              <div class="text-sm text-slate-600 mt-1">${t.category} • Cierra: ${datePretty(t.closes)} • ${t.budget}</div>
+              <div class="text-sm text-slate-700 mt-2">${t.summary}</div>
+            </div>
+            <button class="k-btn k-btn-ghost" onclick="navigate('tender_${t.id}')">Ver detalle</button>
+          </div>
+        </div>`).join("")}
+    </div>
+  </section>`;
+}
+
+function municipioTenderNew(){
+  return `
+  <section class="space-y-4">
+    <div>
+      <h1 class="text-2xl font-extrabold">Crear convocatoria</h1>
+      <p class="text-slate-600 mt-1">Publicá una convocatoria oficial (licitación, contratación, concurso, etc.).</p>
+    </div>
+
+    <div class="k-card p-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><div class="k-label">Título</div><input class="k-input" placeholder="Ej: Licitación provisión de alimentos para comedores" /></div>
+        <div><div class="k-label">Categoría</div><select class="k-input"><option>Alimentos</option><option>Infraestructura</option><option>Salud</option><option>Educación</option><option>Logística</option><option>Servicios</option></select></div>
+        <div><div class="k-label">Presupuesto / referencia</div><input class="k-input" placeholder="Ej: USD 15.000 (estimado)" /></div>
+        <div><div class="k-label">Fecha de cierre</div><input class="k-input" type="date" /></div>
+        <div class="md:col-span-2"><div class="k-label">Descripción</div><textarea class="k-input" rows="4" placeholder="Objeto, alcance, modalidad, criterios, etc."></textarea></div>
+        <div class="md:col-span-2"><div class="k-label">Pliego / documentación</div><input class="k-input" placeholder="Link al PDF o subir archivo (mock)" /></div>
+      </div>
+      <div class="flex justify-end gap-2 mt-5">
+        <button class="k-btn k-btn-ghost" onclick="navigate('tenders')">Cancelar</button>
+        <button class="k-btn k-btn-primary" onclick="toast('Convocatoria publicada (mock).')">Publicar convocatoria</button>
+      </div>
+    </div>
+  </section>`;
+}
+
+function municipioProposals(){
+  const rows = state.proposals.map(p=>{
+    const provider = state.providers.find(x=>x.id===p.providerId);
+    const target = p.targetType==="need" ? state.needs.find(n=>n.id===p.targetId) : state.tenders.find(t=>t.id===p.targetId);
+    return { ...p, provider, target };
+  });
+  return `
+  <section class="space-y-4">
+    <div>
+      <h1 class="text-2xl font-extrabold">Propuestas recibidas</h1>
+      <p class="text-slate-600 mt-1">Gestioná el estado de propuestas y mantené trazabilidad.</p>
+    </div>
+
+    <div class="k-card p-4 overflow-x-auto">
+      <table class="w-full k-table">
+        <thead><tr><th>ID</th><th>Origen</th><th>Proveedor</th><th>Monto</th><th>Estado</th></tr></thead>
+        <tbody>
+          ${rows.map(r=>`
+            <tr>
+              <td class="font-extrabold text-slate-900">${r.id}</td>
+              <td><div class="font-extrabold text-slate-900">${r.targetType==="need"?"Necesidad":"Convocatoria"} ${r.targetId}</div><div class="text-xs text-slate-500">${r.target?.title||""}</div></td>
+              <td><div class="font-extrabold text-slate-900">${r.provider?.name||""}</div><div class="text-xs text-slate-500">${r.provider?.type||""}</div></td>
+              <td>${money(r.amount)}</td>
+              <td>${proposalStatusPill(r.status)}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+  </section>`;
+}
+
+function aboutKorai(){
+  return `
+  <section class="space-y-4">
+    <div class="k-card p-6">
+      <h1 class="text-2xl font-extrabold">¿Qué es Korai?</h1>
+      <p class="text-slate-600 mt-2">Korai combina diagnóstico social y articulación territorial: permite que los municipios publiquen convocatorias y necesidades concretas, y que proveedores/organizaciones se registren para cubrirlas con trazabilidad.</p>
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4"><div class="font-extrabold">1) Diagnóstico</div><div class="text-sm text-slate-600 mt-1">Semáforo social + insights por área.</div></div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4"><div class="font-extrabold">2) Plan</div><div class="text-sm text-slate-600 mt-1">Metas y recursos para el vecino.</div></div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4"><div class="font-extrabold">3) Articulación</div><div class="text-sm text-slate-600 mt-1">Convocatorias + necesidades + match.</div></div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function needDetail(n){
+  return `
+  <section class="space-y-4">
+    <div class="k-card p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-2xl font-extrabold truncate">${n.title}</h1>
+            ${urgencyBadge(n.urgency)} ${statusBadge(n.status)}
+          </div>
+          <div class="text-slate-600 mt-1">${n.category} • ${n.zone} • ${n.qty} ${n.unit} • ${n.period}</div>
+          <div class="mt-2 text-slate-700"><span class="font-extrabold">Presupuesto:</span> ${money(n.budget)}</div>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button class="k-btn k-btn-ghost" onclick="history.back()">Volver</button>
+          <button class="k-btn k-btn-primary" onclick="${state.role==='municipio' ? "navigate('matches')" : "toast('Enviar propuesta (mock).')"}">${state.role==='municipio' ? "Ver matches" : "Enviar propuesta"}</button>
+        </div>
+      </div>
+      <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4"><div class="text-xs text-slate-500 font-extrabold uppercase tracking-wide">Detalle</div><div class="text-sm text-slate-700 mt-2">${n.description}</div></div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4"><div class="text-xs text-slate-500 font-extrabold uppercase tracking-wide">Requisitos</div><ul class="mt-2 text-sm text-slate-700 list-disc pl-5 space-y-1">${n.requirements.map(r=>`<li>${r}</li>`).join("")}</ul></div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4"><div class="text-xs text-slate-500 font-extrabold uppercase tracking-wide">Trazabilidad</div><div class="mt-2 text-sm text-slate-700">Estados: publicada → invitaciones → propuestas → asignación → cierre.</div></div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function tenderDetail(t){
+  return `
+  <section class="space-y-4">
+    <div class="k-card p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-2xl font-extrabold truncate">${t.title}</h1>
+            <span class="k-badge b-open">Abierta</span>
+          </div>
+          <div class="text-slate-600 mt-1">${t.category} • Cierra: ${datePretty(t.closes)} • ${t.budget}</div>
+          <div class="text-slate-700 mt-3">${t.summary}</div>
+          <div class="mt-3 text-sm text-slate-600"><span class="font-extrabold text-slate-900">Documentación:</span> ${t.docs}</div>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button class="k-btn k-btn-ghost" onclick="history.back()">Volver</button>
+          <button class="k-btn k-btn-primary" onclick="${state.role==='municipio' ? "navigate('proposals')" : "toast('Postulación enviada (mock).')"}">${state.role==='municipio' ? "Ver postulaciones" : "Postularme"}</button>
+        </div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function oferenteHome(){
+  return `
+  <section class="space-y-6">
+    <div class="k-card p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-extrabold">Portal de oferentes</h1>
+          <p class="text-slate-600 mt-1">Completá tu perfil, recibí oportunidades y enviá propuestas.</p>
+        </div>
+        <button class="k-btn k-btn-primary" onclick="navigate('provider_profile')">Completar perfil</button>
+      </div>
+    </div>
+    ${publicoNeedsList("Ofertar")}
+  </section>`;
+}
+
+function oferenteProfile(){
+  const p = state.providers[0];
+  return `
+  <section class="space-y-4">
+    <div>
+      <h1 class="text-2xl font-extrabold">Mi perfil (oferente)</h1>
+      <p class="text-slate-600 mt-1">Cargá tu capacidad para recibir matches y postularte.</p>
+    </div>
+    <div class="k-card p-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><div class="k-label">Nombre</div><input class="k-input" value="${p.name}" /></div>
+        <div><div class="k-label">Tipo</div><input class="k-input" value="${p.type}" /></div>
+        <div><div class="k-label">Zona</div><input class="k-input" value="${p.zone}" /></div>
+        <div><div class="k-label">Disponibilidad</div><input class="k-input" value="${p.availability}" /></div>
+      </div>
+      <div class="flex justify-end gap-2 mt-5">
+        <button class="k-btn k-btn-ghost" onclick="navigate('o_home')">Volver</button>
+        <button class="k-btn k-btn-primary" onclick="toast('Perfil guardado (mock).')">Guardar</button>
+      </div>
+    </div>
+  </section>`;
+}
+
+function oferenteProposals(){
+  return `
+  <section class="space-y-4">
+    <div><h1 class="text-2xl font-extrabold">Mis propuestas</h1><p class="text-slate-600 mt-1">Seguimiento de propuestas enviadas.</p></div>
+    <div class="k-card p-4 overflow-x-auto">
+      <table class="w-full k-table">
+        <thead><tr><th>ID</th><th>Destino</th><th>Monto</th><th>Estado</th></tr></thead>
+        <tbody>
+          ${state.proposals.filter(p=>p.providerId==="P-301").map(p=>{
+            const target = p.targetType==="need" ? state.needs.find(n=>n.id===p.targetId) : state.tenders.find(t=>t.id===p.targetId);
+            return `<tr><td class="font-extrabold text-slate-900">${p.id}</td><td><div class="font-extrabold text-slate-900">${p.targetType==="need"?"Necesidad":"Convocatoria"} ${p.targetId}</div><div class="text-xs text-slate-500">${target?.title||""}</div></td><td>${money(p.amount)}</td><td>${proposalStatusPill(p.status)}</td></tr>`;
+          }).join("") || `<tr><td colspan="4" class="py-4 text-slate-600">Aún no enviaste propuestas.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  </section>`;
+}
+
+function publicoNeedsList(ctaLabel="Ver detalle"){
+  return `
+  <section class="space-y-4">
+    <div><h1 class="text-2xl font-extrabold">Necesidades abiertas</h1><p class="text-slate-600 mt-1">Oportunidades para resolver necesidades concretas del municipio.</p></div>
+    <div class="space-y-3">
+      ${state.needs.filter(n=>n.status==="abierta").map(n=>`
+        <div class="k-card p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="text-lg font-extrabold truncate">${n.title}</div>
+                ${urgencyBadge(n.urgency)} ${statusBadge(n.status)}
+              </div>
+              <div class="text-sm text-slate-600 mt-1">${n.category} • ${n.zone} • ${n.qty} ${n.unit} • ${n.period}</div>
+              <div class="text-sm text-slate-700 mt-2">Presupuesto: <span class="font-extrabold">${money(n.budget)}</span></div>
+            </div>
+            <button class="k-btn k-btn-primary shrink-0" onclick="navigate('need_${n.id}')">${ctaLabel}</button>
+          </div>
+        </div>`).join("")}
+    </div>
+  </section>`;
+}
+
+function publicoTendersList(){
+  return `
+  <section class="space-y-4">
+    <div><h1 class="text-2xl font-extrabold">Convocatorias</h1><p class="text-slate-600 mt-1">Convocatorias oficiales publicadas por el municipio.</p></div>
+    <div class="space-y-3">
+      ${state.tenders.map(t=>`
+        <div class="k-card p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="text-lg font-extrabold truncate">${t.title}</div>
+                <span class="k-badge b-open">Abierta</span>
+              </div>
+              <div class="text-sm text-slate-600 mt-1">${t.category} • Cierra: ${datePretty(t.closes)} • ${t.budget}</div>
+              <div class="text-sm text-slate-700 mt-2">${t.summary}</div>
+            </div>
+            <button class="k-btn k-btn-primary shrink-0" onclick="navigate('tender_${t.id}')">Ver detalle</button>
+          </div>
+        </div>`).join("")}
+    </div>
+  </section>`;
+}
+
+function renderRoute(route){
+  const view = document.getElementById("view");
+  if(route==="home") return view.innerHTML = municipioDashboard();
+  if(route==="needs") return view.innerHTML = municipioNeedsList();
+  if(route==="need_new") return view.innerHTML = municipioNeedNew();
+  if(route==="matches") return view.innerHTML = municipioMatches();
+  if(route==="tenders") return view.innerHTML = municipioTendersList();
+  if(route==="tender_new") return view.innerHTML = municipioTenderNew();
+  if(route==="proposals") return view.innerHTML = municipioProposals();
+
+  if(route==="o_home") return view.innerHTML = oferenteHome();
+  if(route==="provider_profile") return view.innerHTML = oferenteProfile();
+  if(route==="o_needs") return view.innerHTML = publicoNeedsList("Ofertar");
+  if(route==="o_tenders") return view.innerHTML = publicoTendersList();
+  if(route==="o_proposals") return view.innerHTML = oferenteProposals();
+
+  if(route==="p_needs") return view.innerHTML = publicoNeedsList("Ver detalle");
+  if(route==="p_tenders") return view.innerHTML = publicoTendersList();
+  if(route==="p_about") return view.innerHTML = aboutKorai();
+
+  if(route.startsWith("need_")){
+    const id = route.replace("need_","");
+    const n = state.needs.find(x=>x.id===id);
+    return view.innerHTML = needDetail(n);
+  }
+  if(route.startsWith("tender_")){
+    const id = route.replace("tender_","");
+    const t = state.tenders.find(x=>x.id===id);
+    return view.innerHTML = tenderDetail(t);
+  }
+  view.innerHTML = aboutKorai();
+}
+
+setRole("municipio");
+</script>
+</body>
+</html>

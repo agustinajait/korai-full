@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Korai Dashboard</title>
+  <style>
+    :root {
+      --primary: #7c3aed;
+      --secondary: #ec4899;
+      --accent: #22c55e;
+      --bg: #f8f8fc;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --danger: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #faf7ff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+    }
+
+    .hero, .panel, .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .hero {
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(124, 58, 237, 0.1);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .panel {
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+
+    .field {
+      min-width: 220px;
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 14px;
+      outline: none;
+      background: white;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.10);
+    }
+
+    button {
+      border: none;
+      background: var(--primary);
+      color: white;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      padding: 18px;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .metric-value {
+      font-size: 30px;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--muted);
+    }
+
+    tr:hover {
+      background: rgba(124, 58, 237, 0.03);
+      cursor: pointer;
+    }
+
+    tr.active {
+      background: rgba(124, 58, 237, 0.08);
+    }
+
+    .detail-pre {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+      line-height: 1.5;
+      max-height: 520px;
+      overflow: auto;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .error {
+      background: #fef2f2;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 980px) {
+      .metrics {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <div class="badge">Korai Dashboard</div>
+      <h1>Lectura básica del diagnóstico</h1>
+      <p class="subtitle">
+        Este panel muestra métricas esenciales y respuestas recientes para validar el núcleo operativo del MVP.
+      </p>
+    </div>
+
+    <div class="panel">
+      <div class="error" id="error-box"></div>
+
+      <div class="filters">
+        <div class="field">
+          <label for="campaign-id">Campaign ID</label>
+          <input type="text" id="campaign-id" />
+        </div>
+
+        <div class="field" style="max-width: 140px;">
+          <label for="limit">Cantidad</label>
+          <input type="number" id="limit" min="1" max="100" value="20" />
+        </div>
+
+        <div>
+          <button id="load-btn">Actualizar panel</button>
+        </div>
+      </div>
+
+      <div class="status" id="status-text">Esperando carga…</div>
+    </div>
+
+    <div class="metrics">
+      <div class="card">
+        <div class="metric-label">Total respuestas</div>
+        <div class="metric-value" id="metric-total">0</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Personas únicas</div>
+        <div class="metric-value" id="metric-unique">0</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Baseline</div>
+        <div class="metric-value" id="metric-baseline">0</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Follow up early</div>
+        <div class="metric-value" id="metric-early">0</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Follow up valid</div>
+        <div class="metric-value" id="metric-valid">0</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="panel">
+        <h3 style="margin-top:0;">Últimas respuestas</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Territorio</th>
+                <th>Perfil</th>
+              </tr>
+            </thead>
+            <tbody id="responses-body">
+              <tr>
+                <td colspan="4" class="muted">Sin datos cargados.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 style="margin-top:0;">Detalle del registro</h3>
+        <div id="detail-box" class="detail-pre">Seleccioná una fila para ver el detalle.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://jgqqkgfppovkbwklctol.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4";
+    const DEFAULT_CAMPAIGN_ID = "53813f5a-3613-4faf-8ca1-b369e4e908cb";
+    const DASHBOARD_URL = `${SUPABASE_URL}/functions/v1/get_dashboard_summary`;
+
+    const campaignInput = document.getElementById("campaign-id");
+    const limitInput = document.getElementById("limit");
+    const loadBtn = document.getElementById("load-btn");
+    const errorBox = document.getElementById("error-box");
+    const statusText = document.getElementById("status-text");
+    const responsesBody = document.getElementById("responses-body");
+    const detailBox = document.getElementById("detail-box");
+
+    const metricTotal = document.getElementById("metric-total");
+    const metricUnique = document.getElementById("metric-unique");
+    const metricBaseline = document.getElementById("metric-baseline");
+    const metricEarly = document.getElementById("metric-early");
+    const metricValid = document.getElementById("metric-valid");
+
+    campaignInput.value = DEFAULT_CAMPAIGN_ID;
+
+    let currentResponses = [];
+    let activeId = null;
+
+    function headers() {
+      return {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      };
+    }
+
+    function showError(message) {
+      errorBox.style.display = "block";
+      errorBox.textContent = message;
+    }
+
+    function clearError() {
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
+    }
+
+    function fmtDate(value) {
+      if (!value) return "-";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return value;
+      return d.toLocaleString("es-AR");
+    }
+
+    function safeText(value) {
+      if (value === null || value === undefined || value === "") return "-";
+      if (typeof value === "object") return JSON.stringify(value);
+      return String(value);
+    }
+
+    function renderMetrics(summary = {}) {
+      metricTotal.textContent = summary.total_responses ?? 0;
+      metricUnique.textContent = summary.unique_people ?? 0;
+      metricBaseline.textContent = summary.baseline ?? 0;
+      metricEarly.textContent = summary.follow_up_early ?? 0;
+      metricValid.textContent = summary.follow_up_valid ?? 0;
+    }
+
+    function renderDetail(row) {
+      if (!row) {
+        detailBox.textContent = "Seleccioná una fila para ver el detalle.";
+        return;
+      }
+
+      const detail = {
+        id: row.id,
+        submitted_at: row.submitted_at,
+        diagnostic_type: row.diagnostic_type,
+        territorio: row.territorio,
+        perfil_contextual: row.perfil_contextual,
+        answers: row.answers,
+      };
+
+      detailBox.textContent = JSON.stringify(detail, null, 2);
+    }
+
+    function renderTable(rows = []) {
+      currentResponses = rows;
+
+      if (!rows.length) {
+        responsesBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="muted">No hay respuestas para esta campaña.</td>
+          </tr>
+        `;
+        renderDetail(null);
+        return;
+      }
+
+      responsesBody.innerHTML = rows.map((row) => {
+        const territory = safeText(row.territorio);
+        const profile = safeText(row.perfil_contextual);
+        const isActive = activeId === row.id ? "active" : "";
+
+        return `
+          <tr class="${isActive}" data-id="${row.id}">
+            <td>${fmtDate(row.submitted_at)}</td>
+            <td>${safeText(row.diagnostic_type)}</td>
+            <td>${territory}</td>
+            <td>${profile}</td>
+          </tr>
+        `;
+      }).join("");
+
+      const tableRows = responsesBody.querySelectorAll("tr[data-id]");
+      tableRows.forEach((tr) => {
+        tr.addEventListener("click", () => {
+          activeId = tr.dataset.id;
+          const row = currentResponses.find((item) => item.id === activeId);
+          renderTable(currentResponses);
+          renderDetail(row);
+        });
+      });
+
+      if (!activeId && rows[0]) {
+        activeId = rows[0].id;
+      }
+
+      const selected = currentResponses.find((item) => item.id === activeId) || rows[0];
+      renderDetail(selected);
+      renderTableSelection();
+    }
+
+    function renderTableSelection() {
+      const tableRows = responsesBody.querySelectorAll("tr[data-id]");
+      tableRows.forEach((tr) => {
+        if (tr.dataset.id === activeId) tr.classList.add("active");
+        else tr.classList.remove("active");
+      });
+    }
+
+    async function loadDashboard() {
+      clearError();
+      statusText.textContent = "Cargando panel…";
+      loadBtn.disabled = true;
+
+      try {
+        const campaign_id = campaignInput.value.trim();
+        const limit = Number(limitInput.value || 20);
+
+        if (!campaign_id) {
+          throw new Error("Ingresá un campaign_id.");
+        }
+
+        const response = await fetch(DASHBOARD_URL, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify({ campaign_id, limit }),
+        });
+
+        const text = await response.text();
+        let data = null;
+
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch (e) {
+          throw new Error("La respuesta del dashboard no es JSON válido.");
+        }
+
+        if (!response.ok || !data || data.status !== "ok") {
+          throw new Error(data?.error || data?.details || "No se pudo cargar el panel.");
+        }
+
+        renderMetrics(data.summary || {});
+        activeId = null;
+        renderTable(data.responses || []);
+        statusText.textContent = "Panel actualizado correctamente.";
+      } catch (error) {
+        console.error("[Korai dashboard] error", error);
+        showError(error?.message || "Error cargando dashboard.");
+        statusText.textContent = "Error de carga.";
+      } finally {
+        loadBtn.disabled = false;
+      }
+    }
+
+    loadBtn.addEventListener("click", loadDashboard);
+    loadDashboard();
+  </script>
+</body>
+</html>

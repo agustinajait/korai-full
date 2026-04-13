@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Korai Diagnóstico</title>
+  <style>
+    :root {
+      --primary: #7c3aed;
+      --secondary: #ec4899;
+      --accent: #22c55e;
+      --bg: #f8f8fc;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --danger: #b91c1c;
+      --success: #166534;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #faf7ff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    .hero {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(124, 58, 237, 0.1);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 32px;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .field-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 15px;
+      background: white;
+      color: var(--text);
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+    }
+
+    .question {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+      background: #fff;
+    }
+
+    .question-title {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    .question-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: 0.18s ease;
+      background: white;
+    }
+
+    .option:hover {
+      border-color: var(--primary);
+      background: rgba(124, 58, 237, 0.04);
+    }
+
+    .option input {
+      margin: 0;
+    }
+
+    .option input[type="radio"] {
+      accent-color: var(--primary);
+    }
+
+    .option.is-red {
+      border-color: rgba(185, 28, 28, 0.18);
+      background: rgba(254, 242, 242, 0.85);
+    }
+
+    .option.is-yellow {
+      border-color: rgba(202, 138, 4, 0.18);
+      background: rgba(254, 249, 195, 0.7);
+    }
+
+    .option.is-green {
+      border-color: rgba(22, 101, 52, 0.18);
+      background: rgba(240, 253, 244, 0.95);
+    }
+
+    .option.is-red:hover {
+      border-color: #dc2626;
+    }
+
+    .option.is-yellow:hover {
+      border-color: #ca8a04;
+    }
+
+    .option.is-green:hover {
+      border-color: #16a34a;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      background: var(--primary);
+      color: white;
+      padding: 14px 20px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    button:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .loader {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .error-box,
+    .success-box {
+      display: none;
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .error-box {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: var(--danger);
+    }
+
+    .success-box {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: var(--success);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .required {
+      color: #dc2626;
+      margin-left: 4px;
+    }
+
+    .debug-panel {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 14px;
+      background: #1e1b4b;
+      color: #e0e7ff;
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      max-height: 320px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .debug-panel h3 {
+      margin: 0 0 10px 0;
+      font-size: 13px;
+      font-weight: bold;
+      color: #a5b4fc;
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 20px 14px 50px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .hero,
+      .panel {
+        padding: 18px;
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <div class="badge" id="tenant-badge">Korai</div>
+      <h1 id="hero-title">Cargando diagnóstico...</h1>
+      <p class="subtitle" id="hero-subtitle">
+        Estamos preparando la configuración dinámica.
+      </p>
+      <p class="subtitle" style="margin-top:12px;">
+        Este diagnóstico permite identificar señales prioritarias y ordenar mejor la
+        intervención sobre personas, hogares y territorios.
+      </p>
+    </div>
+
+    <div class="panel">
+      <div id="loader" class="loader">Cargando preguntas...</div>
+      <div id="error-box" class="error-box"></div>
+      <div id="success-box" class="success-box"></div>
+
+      <div class="field-group" id="intro-note" style="margin-bottom: 22px;">
+        <div style="
+          background: rgba(124, 58, 237, 0.06);
+          border: 1px solid rgba(124, 58, 237, 0.14);
+          border-radius: 16px;
+          padding: 14px 16px;
+          font-size: 14px;
+          color: var(--text);
+          line-height: 1.5;
+        ">
+          Completá este diagnóstico en pocos minutos. La información se utiliza para
+          comprender mejor la situación social y orientar decisiones e intervenciones
+          con más precisión.
+        </div>
+      </div>
+
+      <form id="diagnostic-form">
+        <div class="field-group">
+          <label for="dni">DNI<span class="required">*</span></label>
+          <input type="text" id="dni" name="dni" required />
+        </div>
+
+        <div class="field-group">
+          <label for="territorio">Territorio</label>
+          <input
+            type="text"
+            id="territorio"
+            name="territorio"
+            placeholder="Ej: Martínez, Barrio San Jorge, La Plata"
+          />
+        </div>
+
+        <div class="field-group">
+          <label for="perfil_contextual">Perfil contextual</label>
+          <input
+            type="text"
+            id="perfil_contextual"
+            name="perfil_contextual"
+            placeholder="Ej: Hogar con niños, adulto mayor, persona sola"
+          />
+        </div>
+
+        <div id="questions-container"></div>
+
+        <div class="actions">
+          <div class="status" id="form-status">Esperando configuración...</div>
+          <button type="submit" id="submit-btn" disabled>Enviar diagnóstico</button>
+        </div>
+      </form>
+
+      <div class="debug-panel" id="debug-panel" aria-live="polite">
+        <h3>Depuración (fetch / CORS / origen)</h3>
+        <div id="debug-log">Inicializando…</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // CONFIG
+    // =========================
+    const DEMO_MODE = true;
+    const SUPABASE_URL = "https://jgqqkgfppovkbwklctol.supabase.co";
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4";
+    const CAMPAIGN_ID = "53813f5a-3613-4faf-8ca1-b369e4e908cb";
+
+    const GET_CONFIG_URL = `${SUPABASE_URL}/functions/v1/get_campaign_diagnostic_config`;
+    const SUBMIT_URL = `${SUPABASE_URL}/functions/v1/dsubmit_response`;
+
+    // =========================
+    // DOM
+    // =========================
+    const loader = document.getElementById("loader");
+    const errorBox = document.getElementById("error-box");
+    const successBox = document.getElementById("success-box");
+    const heroTitle = document.getElementById("hero-title");
+    const heroSubtitle = document.getElementById("hero-subtitle");
+    const tenantBadge = document.getElementById("tenant-badge");
+    const questionsContainer = document.getElementById("questions-container");
+    const form = document.getElementById("diagnostic-form");
+    const submitBtn = document.getElementById("submit-btn");
+    const formStatus = document.getElementById("form-status");
+    const debugLogEl = document.getElementById("debug-log");
+    const debugPanel = document.getElementById("debug-panel");
+
+    if (DEMO_MODE && debugPanel) {
+      debugPanel.style.display = "none";
+    }
+
+    // =========================
+    // STATE
+    // =========================
+    let configData = null;
+    const debugLines = [];
+
+    // =========================
+    // HELPERS
+    // =========================
+    function dbg(label, value) {
+      const line =
+        typeof value === "string"
+          ? `${label}: ${value}`
+          : `${label}: ${JSON.stringify(value, null, 2)}`;
+
+      debugLines.push(line);
+
+      if (debugLines.length > 80) {
+        debugLines.splice(0, debugLines.length - 80);
+      }
+
+      debugLogEl.textContent = debugLines.join("\n\n---\n\n");
+      console.log(`[Korai test] ${label}`, value);
+    }
+
+    function supabaseFetchHeaders() {
+      return {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      };
+    }
+
+    async function parseResponseBody(response) {
+      const text = await response.text();
+
+      dbg(
+        "response.body.raw_preview",
+        text.length > 2000 ? `${text.slice(0, 2000)}… (truncado)` : text
+      );
+
+      if (!text || !text.trim()) {
+        return { parsed: null, parseError: null };
+      }
+
+      try {
+        return { parsed: JSON.parse(text), parseError: null };
+      } catch (error) {
+        return { parsed: null, parseError: error };
+      }
+    }
+
+    function showError(message) {
+      errorBox.style.display = "block";
+      errorBox.textContent = message;
+    }
+
+    function clearError() {
+      errorBox.style.display = "none";
+      errorBox.textContent = "";
+    }
+
+    function showSuccess(message) {
+      successBox.style.display = "block";
+      successBox.textContent = message;
+    }
+
+    function clearSuccess() {
+      successBox.style.display = "none";
+      successBox.textContent = "";
+    }
+
+    function applyBranding(branding = {}) {
+      if (branding.primary_color) {
+        document.documentElement.style.setProperty("--primary", branding.primary_color);
+      }
+      if (branding.secondary_color) {
+        document.documentElement.style.setProperty("--secondary", branding.secondary_color);
+      }
+      if (branding.accent_color) {
+        document.documentElement.style.setProperty("--accent", branding.accent_color);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderQuestions(questions) {
+      questionsContainer.innerHTML = "";
+
+      if (!Array.isArray(questions) || questions.length === 0) {
+        questionsContainer.innerHTML =
+          '<p class="muted">No hay preguntas activas para esta campaña.</p>';
+        return;
+      }
+
+      const ordered = [...questions].sort(
+        (a, b) => Number(a.question_order || 0) - Number(b.question_order || 0)
+      );
+
+      ordered.forEach((question) => {
+        const wrapper = document.createElement("section");
+        wrapper.className = "question";
+
+        const categoryText = question.category
+          ? `Categoría: ${escapeHtml(question.category)}`
+          : "";
+
+        const dimensionText = question.dimension
+          ? ` · Dimensión: ${escapeHtml(question.dimension)}`
+          : "";
+
+        const meta = `
+          <div class="question-meta">
+            ${categoryText}${dimensionText}
+          </div>
+        `;
+
+        let fieldHTML = "";
+
+        if (question.question_type === "single_choice") {
+          const options = Array.isArray(question.options) ? question.options : [];
+
+          fieldHTML = options
+            .map((option) => {
+              const rawValue = String(option?.value ?? "").toLowerCase();
+              const value = escapeHtml(option?.value ?? "");
+              const label = escapeHtml(option?.label ?? option?.value ?? "");
+
+              let optionClass = "option";
+              if (rawValue.includes("rojo")) optionClass += " is-red";
+              if (rawValue.includes("amarillo")) optionClass += " is-yellow";
+              if (rawValue.includes("verde")) optionClass += " is-green";
+
+              return `
+                <label class="${optionClass}">
+                  <input
+                    type="radio"
+                    name="${escapeHtml(question.question_code)}"
+                    value="${value}"
+                    ${question.is_required ? "required" : ""}
+                  />
+                  <span>${label}</span>
+                </label>
+              `;
+            })
+            .join("");
+        } else if (question.question_type === "textarea") {
+          const placeholder = escapeHtml(question?.metadata?.placeholder || "");
+          fieldHTML = `
+            <textarea
+              name="${escapeHtml(question.question_code)}"
+              rows="4"
+              placeholder="${placeholder}"
+              ${question.is_required ? "required" : ""}
+            ></textarea>
+          `;
+        } else if (question.question_type === "text") {
+          fieldHTML = `
+            <input
+              type="text"
+              name="${escapeHtml(question.question_code)}"
+              ${question.is_required ? "required" : ""}
+            />
+          `;
+        } else {
+          fieldHTML = `<p class="muted">Tipo no soportado: ${escapeHtml(question.question_type)}</p>`;
+        }
+
+        wrapper.innerHTML = `
+          <h3 class="question-title">
+            ${escapeHtml(question.question_order)}. ${escapeHtml(question.question_text)}
+            ${question.is_required ? '<span class="required">*</span>' : ""}
+          </h3>
+          ${meta}
+          ${fieldHTML}
+        `;
+
+        questionsContainer.appendChild(wrapper);
+      });
+    }
+
+    function collectAnswers(questions) {
+      const answers = {};
+
+      for (const question of questions) {
+        if (question.question_type === "single_choice") {
+          const checked = document.querySelector(
+            `input[name="${question.question_code}"]:checked`
+          );
+          answers[question.question_code] = checked ? checked.value : null;
+        } else if (
+          question.question_type === "textarea" ||
+          question.question_type === "text"
+        ) {
+          const input = document.querySelector(`[name="${question.question_code}"]`);
+          answers[question.question_code] = input ? input.value.trim() : null;
+        }
+      }
+
+      return answers;
+    }
+
+    // =========================
+    // LOAD CONFIG
+    // =========================
+    async function loadConfig() {
+      clearError();
+      clearSuccess();
+
+      loader.style.display = "block";
+      formStatus.textContent = "Cargando configuración...";
+      submitBtn.disabled = true;
+
+      dbg("page.href", window.location.href);
+      dbg("page.origin", window.location.origin || "(vacío — posible file://)");
+      dbg("GET_CONFIG_URL", GET_CONFIG_URL);
+      dbg("SUPABASE_ANON_KEY.set", Boolean(SUPABASE_ANON_KEY?.trim()));
+
+      if (!SUPABASE_ANON_KEY || !SUPABASE_ANON_KEY.trim()) {
+        dbg(
+          "aviso",
+          "Sin SUPABASE_ANON_KEY el gateway suele devolver 401; el Dashboard envía la key por vos."
+        );
+      }
+
+      try {
+        const response = await fetch(GET_CONFIG_URL, {
+          method: "POST",
+          headers: supabaseFetchHeaders(),
+          body: JSON.stringify({
+            campaign_id: CAMPAIGN_ID,
+          }),
+        });
+
+        dbg("response.status", response.status);
+        dbg("response.ok", response.ok);
+        dbg("response.type", response.type);
+
+        const corsOrigin = response.headers.get("access-control-allow-origin");
+        dbg(
+          "response.header.Access-Control-Allow-Origin",
+          corsOrigin || "(no presente en respuesta; normal en algunos navegadores)"
+        );
+
+        const { parsed: data, parseError } = await parseResponseBody(response);
+
+        if (parseError) {
+          dbg("json.parse_error", parseError.message);
+          throw new Error(
+            `La respuesta no es JSON válido (${parseError.message}). Revisá anon key y panel de depuración.`
+          );
+        }
+
+        if (!response.ok) {
+          const message =
+            data?.details ||
+            data?.error ||
+            data?.message ||
+            `HTTP ${response.status} ${response.statusText}`;
+
+          dbg("response.not_ok.body", data);
+          throw new Error(message);
+        }
+
+        if (!data || data.status !== "ok") {
+          dbg("payload.status", data?.status);
+          throw new Error(
+            data?.details || data?.error || "No se pudo cargar la configuración"
+          );
+        }
+
+        configData = data;
+
+        const tenantName =
+          data?.tenant?.branding?.tenant_label ||
+          data?.tenant?.name ||
+          "Korai";
+
+        const instrumentName =
+          data?.instrument?.name || "Diagnóstico social gamificado";
+
+        tenantBadge.textContent = tenantName;
+        heroTitle.textContent = tenantName;
+        heroSubtitle.textContent = instrumentName;
+
+        applyBranding(data?.tenant?.branding || {});
+        renderQuestions(data?.questions || []);
+
+        loader.style.display = "none";
+        formStatus.textContent = "Configuración cargada correctamente.";
+        submitBtn.disabled = false;
+
+        dbg("loadConfig", "OK");
+      } catch (error) {
+        console.error("[Korai test] loadConfig error", error);
+        dbg("loadConfig.catch", error?.message || String(error));
+
+        loader.style.display = "none";
+        formStatus.textContent = "Error de carga";
+        showError(error?.message || "Error cargando configuración");
+      }
+    }
+
+    // =========================
+    // SUBMIT
+    // =========================
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      clearError();
+      clearSuccess();
+
+      if (!configData) {
+        showError("Todavía no se cargó la configuración del diagnóstico.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      formStatus.textContent = "Enviando respuesta...";
+
+      dbg("submit.SUBMIT_URL", SUBMIT_URL);
+
+      try {
+        const dniRaw = document.getElementById("dni").value.trim();
+        const dni = dniRaw.replace(/\D/g, "");
+
+        if (dni.length < 7 || dni.length > 8) {
+          showError("Ingresá un DNI válido.");
+          formStatus.textContent = "Error de validación";
+          submitBtn.disabled = false;
+          return;
+        }
+
+        const territorio = document.getElementById("territorio").value.trim();
+        const perfil_contextual = document.getElementById("perfil_contextual").value.trim();
+        const answers = collectAnswers(configData.questions || []);
+
+        const payload = {
+          campaign_id: CAMPAIGN_ID,
+          dni,
+          answers,
+          territorio,
+          perfil_contextual,
+        };
+
+        dbg("submit.payload", payload);
+
+        const response = await fetch(SUBMIT_URL, {
+          method: "POST",
+          headers: supabaseFetchHeaders(),
+          body: JSON.stringify(payload),
+        });
+
+        dbg("submit.response.status", response.status);
+
+        const { parsed: data, parseError } = await parseResponseBody(response);
+
+        if (parseError) {
+          throw new Error(`Respuesta no JSON: ${parseError.message}`);
+        }
+
+        if (!response.ok || !data || data.status !== "ok") {
+          throw new Error(
+            data?.details || data?.error || "No se pudo enviar el diagnóstico"
+          );
+        }
+
+        showSuccess(
+          `Diagnóstico enviado correctamente. Clasificación generada: ${data.diagnostic_type}.`
+        );
+        formStatus.textContent = "Diagnóstico registrado correctamente.";
+        form.reset();
+      } catch (error) {
+        console.error("[Korai test] submit error", error);
+        dbg("submit.catch", error?.message || String(error));
+
+        formStatus.textContent = "Error al enviar";
+        showError(error?.message || "Error enviando diagnóstico");
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    // =========================
+    // INIT
+    // =========================
+    loadConfig();
+  </script>
+</body>
+</html>
