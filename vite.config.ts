@@ -2,6 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const tailwindcss = require("tailwindcss");
+const autoprefixer = require("autoprefixer");
 
 export default defineConfig({
   plugins: [
@@ -27,6 +32,12 @@ export default defineConfig({
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
+  css: {
+    // Inline PostCSS config to avoid loader edge-cases on Vercel.
+    postcss: {
+      plugins: [tailwindcss(), autoprefixer()],
+    },
+  },
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
