@@ -14,30 +14,13 @@ import Metas from "@/pages/metas";
 import { Loader2 } from "lucide-react";
 
 function ProtectedDashboard() {
-  const [authState, setAuthState] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
   const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    fetch("/api/admin/session", { credentials: "include" })
-      .then(r => r.json())
-      .then(data => {
-        setAuthState(data.isAdmin ? "authenticated" : "unauthenticated");
-      })
-      .catch(() => setAuthState("unauthenticated"));
-  }, []);
-
-  useEffect(() => {
-    if (authState === "unauthenticated") {
-      setLocation("/admin");
-    }
-  }, [authState, setLocation]);
-
-  if (authState === "loading" || authState === "unauthenticated") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-      </div>
-    );
+  
+  const isAuth = localStorage.getItem("korai_admin_auth") === "true";
+  
+  if (!isAuth) {
+    setLocation("/admin");
+    return null;
   }
 
   return <Dashboard />;
