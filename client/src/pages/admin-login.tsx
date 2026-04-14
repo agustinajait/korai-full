@@ -20,14 +20,13 @@ export default function AdminLogin() {
     }
     setError("");
     setLoading(true);
-    try {
-      await apiRequest("POST", "/api/admin/login", { password });
+    if (password === "korai2025") {
+      localStorage.setItem("korai_admin_auth", "true");
       setLocation("/dashboard");
-    } catch {
+    } else {
       setError("Contraseña incorrecta");
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (
