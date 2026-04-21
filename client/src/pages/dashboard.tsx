@@ -1,262 +1,326 @@
-import { useState, useMemo } from "react";
-import { useReports } from "@/hooks/use-reports";
+import { useState, useMemo, useEffect } from "react";
 import { INSTRUMENT } from "@/lib/instrument";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, AlertCircle, TrendingUp, Users, MessageSquare } from "lucide-react";
-import { Link } from "wouter";
+import { Loader2, AlertCircle, TrendingUp, Users, MessageSquare, LogOut, MapPin, ExternalLink } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 
-const COLORS = {
-  rojo: "#ef4444",
-  amarillo: "#f59e0b",
-  verde: "#22c55e"
+const SUPABASE_URL = "https://jgqqkgfppovkbwklctol.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4";
+const CAMPAIGN_ID = "53813f5a-3613-4faf-8ca1-b369e4e908cb";
+
+// Programas reales de CABA por dimensión
+const PROGRAMAS_CABA: Record<string, { nombre: string; descripcion: string; url?: string; contacto?: string }[]> = {
+  salud: [
+    { nombre: "CAPS - Centros de Atención Primaria", descripcion: "Atención médica gratuita en tu barrio", url: "https://buenosaires.gob.ar/salud/caps", contacto: "0800-222-5462" },
+    { nombre: "Programa SUMAR", descripcion: "Cobertura de salud gratuita para población sin obra social", url: "https://www.argentina.gob.ar/salud/sumar" },
+  ],
+  educacion: [
+    { nombre: "Plan FinEs", descripcion: "Terminá el secundario gratuitamente", url: "https://www.argentina.gob.ar/educacion/fines" },
+    { nombre: "Becas Progresar", descripcion: "Apoyo económico para seguir estudiando", url: "https://www.argentina.gob.ar/educacion/progresar" },
+    { nombre: "CENS - Centros Educativos Nivel Secundario", descripcion: "Educación secundaria para adultos en CABA", url: "https://buenosaires.gob.ar/educacion" },
+  ],
+  trabajo: [
+    { nombre: "Programa Fomento al Empleo CABA", descripcion: "Subsidios para empresas que contraten mujeres y personas vulnerables", url: "https://buenosaires.gob.ar/gobierno/trabajo/programas-de-fomento-al-empleo" },
+    { nombre: "Portal Empleo", descripcion: "Bolsa de trabajo del Ministerio de Trabajo", url: "https://www.portalempleo.gob.ar" },
+    { nombre: "Oportunai", descripcion: "Creá tu perfil laboral y video CV", url: "https://oportunai.com" },
+  ],
+  vivienda: [
+    { nombre: "Subsidio 690 - Asistencia Habitacional", descripcion: "Apoyo económico para familias en riesgo de desamparo habitacional", contacto: "atencioninmediata@buenosaires.gob.ar", url: "https://buenosaires.gob.ar/desarrollohumanoyhabitat/inclusion-social-y-atencion-inmediata/asistencia-habitacional" },
+    { nombre: "Programa Nuestras Familias", descripcion: "Acompañamiento habitacional para familias vulnerables", contacto: "nuestrasfamilias@buenosaires.gob.ar" },
+    { nombre: "PROMEBA", descripcion: "Mejoramiento de barrios populares", url: "https://www.argentina.gob.ar/habitat/promeba" },
+  ],
+  prevision: [
+    { nombre: "ANSES - Asignaciones y Prestaciones", descripcion: "AUH, jubilaciones y programas de apoyo económico", url: "https://www.anses.gob.ar", contacto: "130" },
+    { nombre: "Potenciar Trabajo", descripcion: "Programa de empleo y capacitación", url: "https://www.argentina.gob.ar/desarrollosocial/potenciartrabajo" },
+    { nombre: "Sedes de Atención Social CABA", descripcion: "Av. Entre Ríos 1492, lunes a viernes 9 a 15hs", contacto: "0800-333-3262" },
+  ],
+  cultura: [
+    { nombre: "Centros Culturales Barriales", descripcion: "Espacios de encuentro y actividades comunitarias gratuitas", url: "https://buenosaires.gob.ar/cultura" },
+    { nombre: "Puntos de Cultura", descripcion: "Red de organizaciones culturales comunitarias", url: "https://www.argentina.gob.ar/cultura" },
+  ],
 };
 
+async function fetchResponses() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/responses?campaign_id=eq.${CAMPAIGN_ID}&order=submitted_at.desc`,
+    {
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      }
+    }
+  );
+  if (!res.ok) throw new Error("Error al cargar datos");
+  return res.json();
+}
+
 export default function Dashboard() {
-  const [cityFilter, setCityFilter] = useState<string>("all");
+  const [, setLocation] = useLocation();
+  const [responses, setResponses] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedDimension, setSelectedDimension] = useState<string | null>(null);
-  const { data: reports, isLoading, error } = useReports({ city: cityFilter === "all" ? undefined : cityFilter });
+  const [barrioFilter, setBarrioFilter] = useState("all");
+
+  useEffect(() => {
+    fetchResponses()
+      .then(data => { setResponses(data); setIsLoading(false); })
+      .catch(e => { setError(e.message); setIsLoading(false); });
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("korai_admin_auth");
+    setLocation("/admin");
+  };
+
+  const barrios = useMemo(() => {
+    const set = new Set<string>();
+    responses.forEach(r => {
+      const b = r.territorio?.barrio;
+      if (b) set.add(b);
+    });
+    return Array.from(set).sort();
+  }, [responses]);
+
+  const filtered = useMemo(() => {
+    if (barrioFilter === "all") return responses;
+    return responses.filter(r => r.territorio?.barrio === barrioFilter);
+  }, [responses, barrioFilter]);
 
   const stats = useMemo(() => {
-    if (!reports) return null;
-    
+    if (!filtered.length) return null;
+
     let rojo = 0, amarillo = 0, verde = 0;
-    const byDim: Record<string, { rojo: number; amarillo: number; verde: number; n: number; indicators: Record<string, { rojo: number; amarillo: number; verde: number }> }> = {};
-    
+    const byDim: Record<string, any> = {};
+
     INSTRUMENT.dimensions.forEach(d => {
-      byDim[d.id] = { rojo: 0, amarillo: 0, verde: 0, n: 0, indicators: {}, color: 'gris', severity: 0, explanation: '' };
-      INSTRUMENT.indicators.filter(i => i.dimension === d.id).forEach(i => {
-        byDim[d.id].indicators[i.id] = { rojo: 0, amarillo: 0, verde: 0 };
-      });
+      byDim[d.id] = { rojo: 0, amarillo: 0, verde: 0, n: 0, color: "verde", severity: 0, explanation: "" };
     });
 
-    const frases: any[] = [];
-    
-    reports.forEach(r => {
+    const comentarios: any[] = [];
+
+    filtered.forEach(r => {
       const answers = r.answers as Record<string, string>;
-      const demo = (r.demographics || {}) as any;
       let rCount = 0, aCount = 0, nCount = 0;
 
       Object.entries(answers).forEach(([key, val]) => {
-        const dimId = key.split('_')[0];
+        const dimId = key.split("_")[0];
         if (byDim[dimId]) {
           byDim[dimId].n++;
-          if (val === 'rojo') byDim[dimId].rojo++;
-          else if (val === 'amarillo') byDim[dimId].amarillo++;
-          else if (val === 'verde') byDim[dimId].verde++;
-
-          if (byDim[dimId].indicators[key]) {
-            if (val === 'rojo') byDim[dimId].indicators[key].rojo++;
-            else if (val === 'amarillo') byDim[dimId].indicators[key].amarillo++;
-            else if (val === 'verde') byDim[dimId].indicators[key].verde++;
-          }
+          if (val === "rojo") byDim[dimId].rojo++;
+          else if (val === "amarillo") byDim[dimId].amarillo++;
+          else if (val === "verde") byDim[dimId].verde++;
         }
         nCount++;
-        if (val === 'rojo') rCount++;
-        else if (val === 'amarillo') aCount++;
+        if (val === "rojo") rCount++;
+        else if (val === "amarillo") aCount++;
       });
 
-      // Lógica de severidad: si > 50% es rojo, es crítico.
-      // Sincronizamos con la lógica de survey.tsx
       Object.keys(byDim).forEach(dimId => {
         const d = byDim[dimId];
         if (d.n > 0) {
-          d.color = (d.rojo / d.n >= 0.5) ? 'rojo' : (d.amarillo / d.n >= 0.5 || (d.rojo + d.amarillo) / d.n >= 0.5) ? 'amarillo' : 'verde';
-          d.severity = Math.round(((d.rojo * 1 + d.amarillo * 0.5) / d.n) * 100);
-          
-          // Generar explicación dinámica similar a survey.tsx
-          if (d.color === 'rojo') {
-            d.explanation = `Estado Crítico: El ${Math.round((d.rojo/d.n)*100)}% reporta riesgo alto, impactando la estabilidad del área.`;
-          } else if (d.color === 'amarillo') {
-            d.explanation = `Riesgo Moderado: Se detectan alertas en un ${Math.round(((d.rojo+d.amarillo)/d.n)*100)}%. Requiere atención preventiva.`;
-          } else {
-            d.explanation = `Estado Óptimo: La dimensión se mantiene saludable con un ${Math.round((d.verde/d.n)*100)}% de respuestas positivas.`;
-          }
+          d.color = (d.rojo / d.n >= 0.5) ? "rojo" : ((d.rojo + d.amarillo) / d.n >= 0.5) ? "amarillo" : "verde";
+          d.severity = Math.round(((d.rojo + d.amarillo * 0.5) / d.n) * 100);
+          if (d.color === "rojo") d.explanation = `El ${Math.round((d.rojo / d.n) * 100)}% de los diagnósticos reporta nivel crítico.`;
+          else if (d.color === "amarillo") d.explanation = `El ${Math.round(((d.rojo + d.amarillo) / d.n) * 100)}% requiere atención preventiva.`;
+          else d.explanation = `El ${Math.round((d.verde / d.n) * 100)}% de los diagnósticos muestra situación positiva.`;
         }
       });
 
-      let overallColor = 'verde';
       if (nCount > 0) {
-        if (rCount / nCount >= 0.33) {
-          rojo++;
-          overallColor = 'rojo';
-        } else if (aCount / nCount >= 0.33) {
-          amarillo++;
-          overallColor = 'amarillo';
-        } else {
-          verde++;
-        }
+        if (rCount / nCount >= 0.33) rojo++;
+        else if (aCount / nCount >= 0.33) amarillo++;
+        else verde++;
       }
 
-      if (r.openText) {
-        frases.push({
-          text: r.openText,
-          city: r.city,
-          color: overallColor,
-          timestamp: r.createdAt,
-          demo: demo
+      if (r.texto_abierto) {
+        comentarios.push({
+          text: r.texto_abierto,
+          barrio: r.territorio?.barrio || "Sin barrio",
+          submitted_at: r.submitted_at,
         });
       }
     });
 
-    // Identificar el área más crítica (mayor severidad)
-    let mostCriticalDimId = null;
-    let maxSeverity = -1;
-    Object.keys(byDim).forEach(dimId => {
-      const d = byDim[dimId];
-      if (d.severity > maxSeverity) {
-        maxSeverity = d.severity;
-        mostCriticalDimId = dimId;
-      }
-    });
+    // Dimensión más crítica
+    let mostCritical = Object.entries(byDim).sort((a, b) => b[1].severity - a[1].severity)[0]?.[0];
+    const total = filtered.length;
 
-    const total = reports.length;
     return {
       total,
-      dist: { 
-        rojo: total ? rojo / total : 0, 
-        amarillo: total ? amarillo / total : 0, 
-        verde: total ? verde / total : 0 
+      dist: {
+        rojo: total ? rojo / total : 0,
+        amarillo: total ? amarillo / total : 0,
+        verde: total ? verde / total : 0,
       },
       byDim,
-      mostCriticalDimId,
-      frases: frases.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      mostCritical,
+      comentarios: comentarios.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()),
     };
-  }, [reports]);
+  }, [filtered]);
+
+  // Dimensiones más críticas para mostrar programas
+  const topCriticalDims = useMemo(() => {
+    if (!stats) return [];
+    return Object.entries(stats.byDim)
+      .filter(([, d]: any) => d.color === "rojo" || d.color === "amarillo")
+      .sort((a: any, b: any) => b[1].severity - a[1].severity)
+      .slice(0, 2)
+      .map(([id]) => id);
+  }, [stats]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#070A13]">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <div className="text-center space-y-4">
+          <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
+          <p className="text-white/50 text-sm">Cargando datos del territorio...</p>
+        </div>
       </div>
     );
   }
 
-  if (error || !stats) {
+  if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-[#070A13]">
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Error al cargar datos</h2>
+        <h2 className="text-2xl font-bold mb-2 text-white">Error al cargar datos</h2>
+        <p className="text-white/50 text-sm mb-4">{error}</p>
         <Link href="/" className="text-primary hover:underline">Volver al inicio</Link>
       </div>
     );
   }
 
+  if (!stats) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-[#070A13]">
+        <Users className="w-12 h-12 text-white/20 mb-4" />
+        <h2 className="text-xl font-bold text-white/50">Sin datos aún</h2>
+        <p className="text-white/30 text-sm mt-2">Los diagnósticos aparecerán aquí en tiempo real.</p>
+      </div>
+    );
+  }
+
+  const overallColor = stats.dist.rojo >= 0.33 ? "rojo" : stats.dist.amarillo >= 0.33 ? "amarillo" : "verde";
+  const overallBg = overallColor === "rojo" ? "bg-red-500/10 border-red-500/30" : overallColor === "amarillo" ? "bg-yellow-500/10 border-yellow-500/30" : "bg-green-500/10 border-green-500/30";
+  const overallDot = overallColor === "rojo" ? "bg-red-500" : overallColor === "amarillo" ? "bg-yellow-500" : "bg-green-500";
+
   return (
-    <div className="min-h-screen bg-[#070A13] text-[#EEF2FF] font-sans selection:bg-primary/30">
-      {/* Background Gradients */}
+    <div className="min-h-screen bg-[#070A13] text-[#EEF2FF] font-sans">
+      {/* Background */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[1100px] h-[700px] bg-[#7c5cff]/20 rounded-full blur-[120px]" />
-        <div className="absolute top-0 right-[-10%] w-[900px] h-[600px] bg-[#22c55e]/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[20%] w-[900px] h-[600px] bg-[#f59e0b]/10 rounded-full blur-[100px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[1100px] h-[700px] bg-[#7c5cff]/15 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[20%] w-[900px] h-[600px] bg-[#f59e0b]/8 rounded-full blur-[100px]" />
       </div>
 
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
-        {/* Header Navigation */}
-        <div className="flex items-center justify-between gap-4 mb-8">
+
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#7c5cff] to-[#3b82f6] text-white flex items-center justify-center font-black text-2xl shadow-lg shadow-primary/20">K</div>
-            <div className="hidden sm:block">
-              <div className="text-xl font-black leading-tight">Korai v1</div>
-              <div className="text-xs text-[#A9B3DA]">Semáforo + colaboración gamificada</div>
+            <div>
+              <div className="text-xl font-black leading-tight">KORAI Dashboard</div>
+              <div className="text-xs text-[#A9B3DA]">Panel institucional · Ciudad de Buenos Aires</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/">
-              <Button variant="ghost" className="text-[#EEF2FF] hover:bg-white/10">Ciudadano</Button>
+              <Button variant="ghost" className="text-[#EEF2FF] hover:bg-white/10 text-sm">Diagnóstico ciudadano</Button>
             </Link>
-            <Link href="/dashboard">
-              <Button className="bg-[#7c5cff] hover:bg-[#7c5cff]/90 text-white border-none shadow-lg shadow-primary/20">Dashboard</Button>
-            </Link>
+            <Button variant="ghost" onClick={handleLogout} className="text-white/40 hover:text-white hover:bg-white/10">
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Filtro por barrio */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <MapPin className="w-4 h-4 text-primary" />
+          <span className="text-xs text-white/50 uppercase font-bold tracking-wider">Filtrar por barrio:</span>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setBarrioFilter("all")}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === "all" ? "bg-primary text-white" : "bg-white/5 text-white/50 hover:bg-white/10"}`}
+            >
+              Todos ({responses.length})
+            </button>
+            {barrios.map(b => (
+              <button
+                key={b}
+                onClick={() => setBarrioFilter(b)}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === b ? "bg-primary text-white" : "bg-white/5 text-white/50 hover:bg-white/10"}`}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Estado general */}
+        <div className={`p-8 rounded-[40px] border relative overflow-hidden ${overallBg}`}>
+          <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-2xl animate-pulse ${overallDot}`}>
+              <div className="text-white font-black text-lg">CABA</div>
+            </div>
+            <div className="text-center md:text-left">
+              <h2 className="text-2xl font-black uppercase tracking-tighter">Estado General del Territorio</h2>
+              <p className="text-[#A9B3DA] text-sm mt-1">
+                Basado en <span className="font-black text-white">{stats.total}</span> diagnósticos individuales · {barrioFilter === "all" ? "Ciudad de Buenos Aires" : `Barrio ${barrioFilter}`}
+              </p>
+            </div>
+            <div className="md:ml-auto flex gap-6 text-center">
+              <div>
+                <div className="text-2xl font-black text-red-400">{Math.round(stats.dist.rojo * 100)}%</div>
+                <div className="text-[10px] text-white/50 uppercase">Crítico</div>
+              </div>
+              <div>
+                <div className="text-2xl font-black text-yellow-400">{Math.round(stats.dist.amarillo * 100)}%</div>
+                <div className="text-[10px] text-white/50 uppercase">Alerta</div>
+              </div>
+              <div>
+                <div className="text-2xl font-black text-green-400">{Math.round(stats.dist.verde * 100)}%</div>
+                <div className="text-[10px] text-white/50 uppercase">Estable</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Barra de distribución */}
+          <div className="mt-6 flex h-3 w-full rounded-full overflow-hidden bg-white/10">
+            <div style={{ width: `${stats.dist.verde * 100}%` }} className="bg-[#22c55e] transition-all duration-1000" />
+            <div style={{ width: `${stats.dist.amarillo * 100}%` }} className="bg-[#f59e0b] transition-all duration-1000" />
+            <div style={{ width: `${stats.dist.rojo * 100}%` }} className="bg-[#ef4444] transition-all duration-1000" />
           </div>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-6">
-          {/* Dashboard del Municipio: Visualización Territorial */}
+
+          {/* Dimensiones */}
           <div className="lg:col-span-8 space-y-6">
-            {/* Estado General de la Comunidad por Geolocalización */}
-            <div className={`p-8 rounded-[40px] border relative overflow-hidden transition-colors duration-1000 ${
-              stats.dist.rojo >= 0.33 ? 'bg-red-500/10 border-red-500/30' : 
-              stats.dist.amarillo >= 0.33 ? 'bg-yellow-500/10 border-yellow-500/30' : 
-              'bg-green-500/10 border-green-500/30'
-            }`}>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 blur-[100px] opacity-20 rounded-full" 
-                   style={{ backgroundColor: stats.dist.rojo >= 0.33 ? '#ef4444' : stats.dist.amarillo >= 0.33 ? '#f59e0b' : '#22c55e' }} />
-              
-              <div className="relative z-10 flex flex-col items-center text-center space-y-4">
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-2xl animate-pulse ${
-                  stats.dist.rojo >= 0.33 ? 'bg-red-500 text-white' : 
-                  stats.dist.amarillo >= 0.33 ? 'bg-yellow-500 text-black' : 
-                  'bg-green-500 text-white'
-                }`}>
-                  <div className="text-2xl font-black">{cityFilter === 'all' ? 'GEO' : cityFilter.substring(0,3).toUpperCase()}</div>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black uppercase tracking-tighter">Estado General de la Comunidad</h2>
-                  <p className="text-[#A9B3DA] text-sm font-bold">
-                    Lectura territorial basada en {stats.total} diagnósticos colectivos
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid sm:grid-cols-3 gap-4">
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
-                <div className="text-[#A9B3DA] text-xs font-bold uppercase tracking-wider mb-1">Participación</div>
-                <div className="text-4xl font-black">{stats.total}</div>
-                <div className="text-xs text-green-400 mt-2 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" /> +12% vs mes anterior
-                </div>
-              </div>
-              <div className="sm:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
-                <div className="text-[#A9B3DA] text-xs font-bold uppercase tracking-wider mb-2">Distribución Global</div>
-                <div className="flex h-4 w-full rounded-full overflow-hidden bg-white/10 border border-white/5">
-                  <div style={{ width: `${stats.dist.verde * 100}%` }} className="bg-[#22c55e] transition-all duration-1000" />
-                  <div style={{ width: `${stats.dist.amarillo * 100}%` }} className="bg-[#f59e0b] transition-all duration-1000" />
-                  <div style={{ width: `${stats.dist.rojo * 100}%` }} className="bg-[#ef4444] transition-all duration-1000" />
-                </div>
-                <div className="grid grid-cols-3 mt-4 text-[10px] font-bold uppercase tracking-tighter sm:tracking-normal">
-                  <div className="text-[#22c55e]">Verde {Math.round(stats.dist.verde * 100)}%</div>
-                  <div className="text-[#f59e0b] text-center">Amarillo {Math.round(stats.dist.amarillo * 100)}%</div>
-                  <div className="text-[#ef4444] text-right">Rojo {Math.round(stats.dist.rojo * 100)}%</div>
-                </div>
-              </div>
-            </div>
-
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-              <div className="p-6 border-b border-white/10 flex items-center justify-between">
-                <h3 className="text-xl font-black">Lectura Colectiva</h3>
-                <Select value={cityFilter} onValueChange={setCityFilter}>
-                  <SelectTrigger className="w-[180px] bg-white/5 border-white/10 text-xs h-9">
-                    <SelectValue placeholder="Ciudad" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#0B1430] border-white/10 text-white">
-                    <SelectItem value="all">Todas las ciudades</SelectItem>
-                    <SelectItem value="Berazategui">Berazategui</SelectItem>
-                    <SelectItem value="Quilmes">Quilmes</SelectItem>
-                    <SelectItem value="Florencio Varela">Florencio Varela</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="p-6 border-b border-white/10">
+                <h3 className="text-xl font-black">Diagnóstico por Dimensión</h3>
+                <p className="text-xs text-white/40 mt-1">Hacé clic en una dimensión para ver los programas disponibles</p>
               </div>
               <div className="p-6 grid sm:grid-cols-2 gap-4">
                 {INSTRUMENT.dimensions.map(d => {
-                  const s = (stats?.byDim?.[d.id] || { rojo: 0, amarillo: 0, verde: 0, n: 0, indicators: {}, color: 'verde', severity: 0, explanation: '' }) as any;
+                  const s = stats.byDim[d.id] || { rojo: 0, amarillo: 0, verde: 0, n: 0, color: "verde", severity: 0, explanation: "" };
                   const isSelected = selectedDimension === d.id;
-                  const isMostCritical = stats?.mostCriticalDimId === d.id && s.severity > 0;
-                  
+                  const isCritical = stats.mostCritical === d.id && s.severity > 0;
+
                   return (
-                    <div 
-                      key={d.id} 
+                    <div
+                      key={d.id}
                       onClick={() => setSelectedDimension(isSelected ? null : d.id)}
-                      className={`p-6 rounded-3xl bg-white/5 border transition-all cursor-pointer space-y-4 relative ${
-                        isSelected ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20' : 
-                        isMostCritical ? 'border-red-500/50 bg-red-500/5 shadow-[0_0_20px_rgba(239,68,68,0.1)]' :
-                        'border-white/5 hover:bg-white/10'
+                      className={`p-5 rounded-3xl border transition-all cursor-pointer space-y-3 relative ${
+                        isSelected ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20" :
+                        isCritical ? "border-red-500/50 bg-red-500/5" :
+                        "border-white/5 bg-white/5 hover:bg-white/10"
                       }`}
                     >
-                      {isMostCritical && (
-                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg z-10 animate-bounce">
-                          ÁREA MÁS CRÍTICA
+                      {isCritical && (
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-bounce">
+                          ÁREA CRÍTICA
                         </div>
                       )}
                       <div className="flex items-center justify-between">
@@ -268,51 +332,48 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${
-                          s.color === 'rojo' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 
-                          s.color === 'amarillo' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 
-                          'bg-green-500/20 text-green-400 border-green-500/30'
+                          s.color === "rojo" ? "bg-red-500/20 text-red-400 border-red-500/30" :
+                          s.color === "amarillo" ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
+                          "bg-green-500/20 text-green-400 border-green-500/30"
                         }`}>
                           {s.color}
                         </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-[9px] font-bold uppercase text-[#A9B3DA]">
-                          <span>Nivel de Riesgo</span>
-                          <span>{s.severity}%</span>
-                        </div>
-                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                          <div 
-                            style={{ width: `${s.severity}%` }}
-                            className={`h-full rounded-full transition-all duration-1000 ${
-                              s.color === 'rojo' ? 'bg-red-500' : s.color === 'amarillo' ? 'bg-yellow-500' : 'bg-green-500'
-                            }`}
-                          />
-                        </div>
+                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          style={{ width: `${s.severity}%` }}
+                          className={`h-full rounded-full transition-all duration-1000 ${
+                            s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"
+                          }`}
+                        />
                       </div>
 
-                      <div className="pt-1">
-                        <p className="text-[11px] leading-relaxed text-white/70 italic bg-white/5 p-3 rounded-xl border border-white/5">
-                          "{s.explanation || `Análisis en proceso para el área de ${d.name}.`}"
-                        </p>
-                      </div>
-                      
-                      {isSelected && (
-                        <div className="mt-4 pt-4 border-t border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2">
-                          {INSTRUMENT.indicators.filter(i => i.dimension === d.id).map(ind => {
-                            const indStats = s.indicators?.[ind.id] || { rojo: 0, amarillo: 0, verde: 0 };
-                            const indTotal = indStats.rojo + indStats.amarillo + indStats.verde || 1;
-                            return (
-                              <div key={ind.id} className="space-y-1">
-                                <div className="text-[10px] text-[#A9B3DA] leading-tight">{ind.label}</div>
-                                <div className="flex h-1 w-full rounded-full overflow-hidden bg-white/5">
-                                  <div style={{ width: `${(indStats.verde / indTotal) * 100}%` }} className="bg-[#22c55e]" />
-                                  <div style={{ width: `${(indStats.amarillo / indTotal) * 100}%` }} className="bg-[#f59e0b]" />
-                                  <div style={{ width: `${(indStats.rojo / indTotal) * 100}%` }} className="bg-[#ef4444]" />
-                                </div>
+                      <p className="text-[11px] text-white/60 italic">{s.explanation}</p>
+
+                      {/* Programas disponibles al hacer clic */}
+                      {isSelected && PROGRAMAS_CABA[d.id] && (
+                        <div className="mt-3 pt-3 border-t border-white/10 space-y-2 animate-in fade-in slide-in-from-top-2">
+                          <div className="text-[10px] font-black text-primary uppercase tracking-wider mb-2">
+                            Programas disponibles en CABA
+                          </div>
+                          {PROGRAMAS_CABA[d.id].map((p, i) => (
+                            <div key={i} className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1">
+                              <div className="font-bold text-xs text-white">{p.nombre}</div>
+                              <div className="text-[10px] text-white/50">{p.descripcion}</div>
+                              <div className="flex gap-3 mt-1">
+                                {p.url && (
+                                  <a href={p.url} target="_blank" rel="noopener noreferrer"
+                                    className="text-[10px] text-primary flex items-center gap-1 hover:underline">
+                                    <ExternalLink className="w-3 h-3" /> Ver programa
+                                  </a>
+                                )}
+                                {p.contacto && (
+                                  <span className="text-[10px] text-white/40">{p.contacto}</span>
+                                )}
                               </div>
-                            );
-                          })}
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -320,76 +381,97 @@ export default function Dashboard() {
                 })}
               </div>
             </div>
+
+            {/* Programas recomendados para las áreas más críticas */}
+            {topCriticalDims.length > 0 && (
+              <div className="bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/20 rounded-3xl p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-400" />
+                  <h3 className="text-lg font-black">Intervención prioritaria recomendada</h3>
+                </div>
+                <p className="text-sm text-white/50">Basado en los datos del territorio, estos son los programas más urgentes para atender:</p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {topCriticalDims.flatMap(dimId =>
+                    (PROGRAMAS_CABA[dimId] || []).slice(0, 2).map((p, i) => {
+                      const dim = INSTRUMENT.dimensions.find(d => d.id === dimId);
+                      return (
+                        <div key={`${dimId}-${i}`} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{dim?.emoji}</span>
+                            <div className="text-[10px] text-white/40 uppercase font-bold">{dim?.name}</div>
+                          </div>
+                          <div className="font-bold text-sm text-white">{p.nombre}</div>
+                          <div className="text-[10px] text-white/50">{p.descripcion}</div>
+                          {p.url && (
+                            <a href={p.url} target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] text-primary flex items-center gap-1 hover:underline mt-1">
+                              <ExternalLink className="w-3 h-3" /> Acceder al programa
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Right Column: Feedback & Topics */}
+          {/* Columna derecha */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
-              <h3 className="text-lg font-black mb-4 flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-primary" /> Últimos aportes
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                <div className="text-[#A9B3DA] text-[10px] font-bold uppercase mb-1">Diagnósticos</div>
+                <div className="text-3xl font-black text-white">{stats.total}</div>
+                <div className="text-[10px] text-green-400 mt-1 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" /> En tiempo real
+                </div>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                <div className="text-[#A9B3DA] text-[10px] font-bold uppercase mb-1">Barrios</div>
+                <div className="text-3xl font-black text-white">{barrios.length}</div>
+                <div className="text-[10px] text-white/40 mt-1">con datos</div>
+              </div>
+            </div>
+
+            {/* Comentarios */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl">
+              <h3 className="text-base font-black mb-4 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-primary" /> Voces del territorio
               </h3>
-              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                {stats.frases.length > 0 ? stats.frases.map((f, i) => (
-                  <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5 relative group">
-                    <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-full ${
-                      f.color === 'rojo' ? 'bg-[#ef4444]' : f.color === 'amarillo' ? 'bg-[#f59e0b]' : 'bg-[#22c55e]'
-                    }`} />
-                    <div className="text-xs text-[#A9B3DA] mb-2 flex justify-between items-start">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-white/80">{f.city}</span>
-                        {f.demo && (
-                          <div className="flex flex-col text-[10px] opacity-60">
-                            <span>{f.demo.ageRange || 'N/A'} · {f.demo.civilStatus || 'N/A'}</span>
-                            <span className="text-primary/70 font-mono mt-1">ID: {f.demo.dniHash ? `HASH_${f.demo.dniHash.substring(0,4)}...` : 'N/A'}</span>
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-[9px] opacity-40 uppercase tracking-tighter">
-                        {new Date(f.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                {stats.comentarios.length > 0 ? stats.comentarios.map((c: any, i: number) => (
+                  <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="w-3 h-3 text-primary" />
+                      <span className="text-[10px] font-bold text-white/60">{c.barrio}</span>
+                      <span className="text-[9px] text-white/30 ml-auto">
+                        {new Date(c.submitted_at).toLocaleDateString("es-AR")}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mb-2">
-                       <div className="px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase">
-                         Usuario Diagnosticado
-                       </div>
-                       <div className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 text-[9px] font-black uppercase flex items-center gap-1">
-                         <span>🏆</span> Colaborador Comunitario
-                       </div>
-                    </div>
-                    <p className="text-sm italic leading-relaxed text-white/90">"{f.text}"</p>
-                    <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-2 gap-2">
-                       <div className="flex items-center gap-1.5 text-[9px] text-[#A9B3DA]">
-                         <span className="w-1.5 h-1.5 rounded-full bg-green-400" /> Acceso a red de beneficios
-                       </div>
-                       <div className="flex items-center gap-1.5 text-[9px] text-[#A9B3DA]">
-                         <span className="w-1.5 h-1.5 rounded-full bg-blue-400" /> Prioridad en programas
-                       </div>
-                    </div>
+                    <p className="text-xs italic text-white/80 leading-relaxed">"{c.text}"</p>
                   </div>
                 )) : (
-                  <div className="text-center py-8 text-[#A9B3DA] text-sm">No hay comentarios aún.</div>
+                  <p className="text-xs text-white/30 text-center py-4">No hay comentarios aún.</p>
                 )}
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-[#7c5cff]/20 to-transparent backdrop-blur-xl border border-[#7c5cff]/30 rounded-3xl p-6 shadow-2xl">
-              <h3 className="text-lg font-black mb-2">Participación Cívica</h3>
-              <p className="text-sm text-[#A9B3DA] mb-4">Tu diagnóstico individual se suma a la inteligencia territorial de Korai.</p>
+            {/* CTA institucional */}
+            <div className="bg-gradient-to-br from-[#7c5cff]/20 to-transparent border border-[#7c5cff]/30 rounded-3xl p-5">
+              <h3 className="text-base font-black mb-1">Sumar más territorio</h3>
+              <p className="text-xs text-[#A9B3DA] mb-4">Cada diagnóstico individual enriquece la inteligencia territorial de KORAI.</p>
               <Link href="/">
-                <Button className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-12">
-                  Sumar mi aporte
+                <Button className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-11 text-sm">
+                  Ir al diagnóstico ciudadano
                 </Button>
               </Link>
             </div>
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-      `}</style>
     </div>
   );
 }
