@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Heart, Briefcase, Home, BookOpen, Shield, Users, Phone, MessageCircle } from "lucide-react";
-import logoImg from "@assets/korai-logo.png";
+import logoImg from "@assets/logo.png_1770738353179.png";
 import { useState } from "react";
 import { hashDNI } from "@/lib/korai-logic";
 import { Label } from "@/components/ui/label";
