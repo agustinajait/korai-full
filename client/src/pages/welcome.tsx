@@ -41,6 +41,9 @@ export default function Welcome() {
   const [telefono, setTelefono] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [ageRange, setAgeRange] = useState("");
+  const [civilStatus, setCivilStatus] = useState("");
+  const [hasChildren, setHasChildren] = useState("");
+  const [hasAdults, setHasAdults] = useState("");
   const [showMore, setShowMore] = useState(false);
   const [returningDni, setReturningDni] = useState("");
   const [loadingReturn, setLoadingReturn] = useState(false);
@@ -60,7 +63,7 @@ export default function Welcome() {
       apellido: apellido.trim(),
       dni: dni.trim() || `usuario-${Date.now()}`,
       telefono: telefono.trim(),
-      demographics: { ageRange, dniHash, nombre: nombre.trim(), apellido: apellido.trim() }
+      demographics: { ageRange, civilStatus, hasChildren, hasAdults, dniHash, nombre: nombre.trim(), apellido: apellido.trim() }
     }));
     setLocation("/survey");
   };
@@ -310,21 +313,62 @@ export default function Welcome() {
                 onClick={() => setShowMore(!showMore)}
                 className="text-xs font-bold text-primary/70 hover:text-primary transition-colors uppercase tracking-wider"
               >
-                {showMore ? "− Ocultar datos opcionales" : "+ Datos opcionales (edad)"}
+                {showMore ? "− Ocultar datos opcionales" : "+ Datos opcionales"}
               </button>
               {showMore && (
-                <div className="mt-3">
-                  <Label className="text-[10px] text-white/50 uppercase">Edad</Label>
-                  <Select onValueChange={setAgeRange}>
-                    <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm mt-1">
-                      <SelectValue placeholder="Rango de edad..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-white/10 text-white">
-                      {['18-29', '30-39', '40-49', '50-59', '60+'].map(x => (
-                        <SelectItem key={x} value={x}>{x}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-3 mt-3 animate-in fade-in slide-in-from-top-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-white/50 uppercase">Edad</Label>
+                    <Select onValueChange={setAgeRange}>
+                      <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                        <SelectValue placeholder="Rango..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-white/10 text-white">
+                        {['18-29', '30-39', '40-49', '50-59', '60+'].map(x => (
+                          <SelectItem key={x} value={x}>{x}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-white/50 uppercase">Estado Civil</Label>
+                    <Select onValueChange={setCivilStatus}>
+                      <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-white/10 text-white">
+                        {['Soltero/a', 'Casado/a', 'Conviviente', 'Separado/a', 'Viudo/a', 'Prefiero no decir'].map(x => (
+                          <SelectItem key={x} value={x}>{x}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-white/50 uppercase">Hijos a cargo</Label>
+                    <Select onValueChange={setHasChildren}>
+                      <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                        <SelectValue placeholder="..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-white/10 text-white">
+                        <SelectItem value="No">No</SelectItem>
+                        <SelectItem value="Sí">Sí</SelectItem>
+                        <SelectItem value="Prefiero no decir">Prefiero no decir</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-white/50 uppercase">Adultos a cargo</Label>
+                    <Select onValueChange={setHasAdults}>
+                      <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                        <SelectValue placeholder="..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-white/10 text-white">
+                        <SelectItem value="No">No</SelectItem>
+                        <SelectItem value="Sí">Sí</SelectItem>
+                        <SelectItem value="Prefiero no decir">Prefiero no decir</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
             </div>
@@ -344,6 +388,13 @@ export default function Welcome() {
 
           <button onClick={() => setMode("landing")} className="w-full text-xs text-white/30 hover:text-white/50 transition-colors py-2">
             ← Volver
+          </button>
+
+          <button
+            onClick={() => { localStorage.clear(); setMode("landing"); }}
+            className="w-full text-xs text-red-400/50 hover:text-red-400 transition-colors py-1"
+          >
+            Salir y borrar datos
           </button>
         </motion.div>
       </div>

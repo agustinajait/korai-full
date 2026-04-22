@@ -396,6 +396,13 @@ export default function Survey() {
               >
                 Ir al Dashboard Admin
               </Button>
+              <Button
+                onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
+                variant="outline"
+                className="w-full h-12 border-red-500/20 bg-red-500/5 text-red-400 font-bold rounded-xl hover:bg-red-500/10"
+              >
+                Salir
+              </Button>
             </div>
           </aside>
         </div>
