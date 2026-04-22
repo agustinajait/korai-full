@@ -2,14 +2,81 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Clock, AlertTriangle, CheckCircle2, ChevronRight, ChevronDown, ExternalLink } from "lucide-react";
+import { ArrowLeft, Target, Clock, AlertTriangle, CheckCircle2, ChevronRight, ChevronDown, ExternalLink, MessageCircle } from "lucide-react";
 import { generatePlanDesdeScores, type PlanItem, type Sello } from "@/lib/korai-logic";
+
+// Programas reales de CABA por dimensión para el mensaje de WhatsApp
+const PROGRAMAS_WA: Record<string, { nombre: string; detalle: string }[]> = {
+  salud: [
+    { nombre: "CAPS (Centro de Salud gratuito)", detalle: "0800-222-5462 · buenosaires.gob.ar/salud/caps" },
+    { nombre: "Programa SUMAR", detalle: "Cobertura gratuita · argentina.gob.ar/salud/sumar" },
+  ],
+  educacion: [
+    { nombre: "Plan FinEs", detalle: "Terminá el secundario gratis · argentina.gob.ar/educacion/fines" },
+    { nombre: "Becas Progresar", detalle: "Apoyo económico para estudiar · argentina.gob.ar/educacion/progresar" },
+  ],
+  trabajo: [
+    { nombre: "Portal Empleo", detalle: "Bolsa de trabajo · portalempleo.gob.ar" },
+    { nombre: "Fomento al Empleo CABA", detalle: "Subsidios para empleadores · buenosaires.gob.ar/trabajo" },
+  ],
+  vivienda: [
+    { nombre: "Subsidio Habitacional 690", detalle: "Para familias en riesgo · atencioninmediata@buenosaires.gob.ar" },
+    { nombre: "Programa Nuestras Familias", detalle: "Acompañamiento habitacional · nuestrasfamilias@buenosaires.gob.ar" },
+  ],
+  prevision: [
+    { nombre: "ANSES", detalle: "AUH y prestaciones · anses.gob.ar · Tel: 130" },
+    { nombre: "Potenciar Trabajo", detalle: "Empleo y capacitación · argentina.gob.ar/desarrollosocial" },
+  ],
+  cultura: [
+    { nombre: "Centros Culturales Barriales", detalle: "Actividades gratuitas · buenosaires.gob.ar/cultura" },
+  ],
+};
+
+const DIM_NOMBRES: Record<string, string> = {
+  salud: "Salud",
+  educacion: "Educación",
+  trabajo: "Trabajo",
+  vivienda: "Vivienda",
+  prevision: "Previsión",
+  cultura: "Cultura",
+};
+
+function generarMensajeWhatsApp(plan: PlanItem[]): string {
+  const criticas = plan.filter(p => p.nivelColor === "rojo" || p.nivelColor === "amarillo").slice(0, 3);
+
+  let msg = "🌱 *Mi diagnóstico KORAI*\n\n";
+  msg += "Completé mi diagnóstico de bienestar comunitario. Estas son mis áreas prioritarias:\n\n";
+
+  criticas.forEach((p, i) => {
+    msg += `${i + 1}. ${p.emoji} *${p.dimensionName}* — ${p.nivelColor === "rojo" ? "🔴 Crítico" : "🟡 Alerta"}\n`;
+    msg += `   ${p.metaCorto}\n\n`;
+  });
+
+  msg += "📋 *Recursos disponibles para mí en CABA:*\n\n";
+
+  criticas.forEach(p => {
+    const programas = PROGRAMAS_WA[p.dimensionId];
+    if (programas) {
+      msg += `${p.emoji} *${DIM_NOMBRES[p.dimensionId]}*\n`;
+      programas.forEach(prog => {
+        msg += `• ${prog.nombre}\n  ${prog.detalle}\n`;
+      });
+      msg += "\n";
+    }
+  });
+
+  msg += "---\n";
+  msg += "🔗 Hacé tu diagnóstico en: korai-full.vercel.app";
+
+  return msg;
+}
 
 export default function Prioridades() {
   const [_, setLocation] = useLocation();
   const [plan, setPlan] = useState<PlanItem[]>([]);
   const [sello, setSello] = useState<Sello | null>(null);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [showWhatsAppBanner, setShowWhatsAppBanner] = useState(false);
 
   useEffect(() => {
     const cached = localStorage.getItem("korai_user_plan_v1");
@@ -27,7 +94,17 @@ export default function Prioridades() {
 
     const selloRaw = localStorage.getItem("korai_user_sello_v1");
     if (selloRaw) setSello(JSON.parse(selloRaw));
+
+    // Mostrar banner de WhatsApp después de 1.5 segundos
+    const timer = setTimeout(() => setShowWhatsAppBanner(true), 1500);
+    return () => clearTimeout(timer);
   }, []);
+
+  const handleWhatsApp = () => {
+    const mensaje = generarMensajeWhatsApp(plan);
+    const encoded = encodeURIComponent(mensaje);
+    window.open(`https://wa.me/?text=${encoded}`, "_blank");
+  };
 
   const toggleExpanded = (dimId: string) => {
     setExpandedItems(prev => ({ ...prev, [dimId]: !prev[dimId] }));
@@ -46,8 +123,8 @@ export default function Prioridades() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 space-y-4">
         <AlertTriangle className="w-12 h-12 text-yellow-400" />
-        <h2 className="text-xl font-bold text-center" data-testid="text-no-prioridades">Necesitas completar el diagn&oacute;stico primero</h2>
-        <p className="text-muted-foreground text-center text-sm">Completa la encuesta para ver tu plan personalizado.</p>
+        <h2 className="text-xl font-bold text-center" data-testid="text-no-prioridades">Necesitás completar el diagnóstico primero</h2>
+        <p className="text-muted-foreground text-center text-sm">Completá la encuesta para ver tu plan personalizado.</p>
         <Button onClick={() => setLocation("/")} data-testid="button-go-home">
           Ir al Inicio
         </Button>
@@ -57,6 +134,8 @@ export default function Prioridades() {
 
   return (
     <div className="min-h-screen pt-6 pb-10 px-4 max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500">
+
+      {/* Header */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" onClick={() => setLocation("/survey")} data-testid="button-back-results">
           <ArrowLeft className="w-5 h-5" />
@@ -67,11 +146,12 @@ export default function Prioridades() {
           </div>
           <div>
             <h1 className="text-2xl font-black" data-testid="text-prioridades-title">TU PLAN</h1>
-            <p className="text-xs text-muted-foreground">Prioridades y metas basadas en tu diagn&oacute;stico</p>
+            <p className="text-xs text-muted-foreground">Prioridades y metas basadas en tu diagnóstico</p>
           </div>
         </div>
       </div>
 
+      {/* Sello */}
       {sello && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -82,12 +162,39 @@ export default function Prioridades() {
             <CheckCircle2 className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-black text-primary uppercase tracking-wider" data-testid="text-sello-municipio">{sello.texto || sello.municipio}</div>
+            <div className="text-xs font-black text-primary uppercase tracking-wider">{sello.texto || sello.municipio}</div>
             <div className="text-[10px] text-muted-foreground">ID: {sello.idParticipacion} | {sello.fecha}</div>
           </div>
         </motion.div>
       )}
 
+      {/* Banner WhatsApp */}
+      {showWhatsAppBanner && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="p-5 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/30 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+        >
+          <div className="flex items-center gap-3 flex-1">
+            <div className="w-10 h-10 rounded-full bg-[#25D366]/20 flex items-center justify-center flex-shrink-0">
+              <MessageCircle className="w-5 h-5 text-[#25D366]" />
+            </div>
+            <div>
+              <div className="font-bold text-sm text-white">Recibí tu plan por WhatsApp</div>
+              <div className="text-xs text-white/50">Con los recursos y programas disponibles para vos en CABA</div>
+            </div>
+          </div>
+          <Button
+            onClick={handleWhatsApp}
+            className="bg-[#25D366] hover:bg-[#20c45a] text-white font-bold rounded-xl h-11 px-5 flex-shrink-0 w-full sm:w-auto"
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            Enviar a mi WhatsApp
+          </Button>
+        </motion.div>
+      )}
+
+      {/* Plan items */}
       <div className="space-y-4">
         {plan.map((p, i) => {
           const isExpanded = !!expandedItems[p.dimensionId];
@@ -179,11 +286,11 @@ export default function Prioridades() {
               {isExpanded && (
                 <div className="px-5 pb-5 space-y-3 border-t border-white/5 pt-3">
                   <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                    <div className="text-[10px] font-black uppercase text-yellow-400 tracking-wider">Mediano plazo (1-3 a&ntilde;os)</div>
+                    <div className="text-[10px] font-black uppercase text-yellow-400 tracking-wider">Mediano plazo (1-3 años)</div>
                     <p className="text-sm text-white/80 mt-1">{p.metaMediano}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                    <div className="text-[10px] font-black uppercase text-primary tracking-wider">Largo plazo (5-10 a&ntilde;os)</div>
+                    <div className="text-[10px] font-black uppercase text-primary tracking-wider">Largo plazo (5-10 años)</div>
                     <p className="text-sm text-white/80 mt-1">{p.metaLargo}</p>
                   </div>
                 </div>
@@ -193,23 +300,32 @@ export default function Prioridades() {
         })}
       </div>
 
+      {/* Botones finales */}
       <div className="flex gap-3 pt-4 flex-wrap">
+        <Button
+          onClick={handleWhatsApp}
+          className="flex-1 h-12 bg-[#25D366] hover:bg-[#20c45a] text-white font-bold rounded-xl"
+        >
+          <MessageCircle className="w-4 h-4 mr-2" />
+          Recibir por WhatsApp
+        </Button>
         <Button
           onClick={() => setLocation("/metas")}
           className="flex-1 h-12 bg-gradient-to-r from-primary to-primary/80 font-bold rounded-xl"
           data-testid="button-go-metas"
         >
-          Ver por Dimensi&oacute;n <ChevronRight className="ml-1 w-4 h-4" />
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => setLocation("/")}
-          className="h-12 border-white/10 bg-white/5"
-          data-testid="button-go-inicio"
-        >
-          Inicio
+          Ver mis Metas <ChevronRight className="ml-1 w-4 h-4" />
         </Button>
       </div>
+
+      <Button
+        variant="outline"
+        onClick={() => setLocation("/")}
+        className="w-full h-11 border-white/10 bg-white/5"
+        data-testid="button-go-inicio"
+      >
+        Inicio
+      </Button>
     </div>
   );
 }
