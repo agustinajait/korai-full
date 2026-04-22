@@ -318,14 +318,23 @@ export default function Prioridades() {
         </Button>
       </div>
 
-      <Button
-        variant="outline"
-        onClick={() => setLocation("/")}
-        className="w-full h-11 border-white/10 bg-white/5"
-        data-testid="button-go-inicio"
-      >
-        Inicio
-      </Button>
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          onClick={() => setLocation("/")}
+          className="flex-1 h-11 border-white/10 bg-white/5"
+          data-testid="button-go-inicio"
+        >
+          Inicio
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
+          className="flex-1 h-11 border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10"
+        >
+          Salir
+        </Button>
+      </div>
     </div>
   );
 }

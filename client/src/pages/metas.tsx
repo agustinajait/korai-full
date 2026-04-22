@@ -214,6 +214,13 @@ export default function Metas() {
         >
           Inicio
         </Button>
+        <Button
+          variant="outline"
+          onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
+          className="w-full h-11 border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10"
+        >
+          Salir
+        </Button>
       </div>
     </div>
   );
