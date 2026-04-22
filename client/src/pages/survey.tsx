@@ -9,9 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { INSTRUMENT } from "@/lib/instrument";
 import { queryClient } from "@/lib/queryClient";
-import { Loader2, ArrowRight, CheckCircle2, Gift, QrCode, Target, Calendar } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
-import { generarSello, generatePlanDesdeScores, type Sello } from "@/lib/korai-logic";
+import { Loader2, ArrowRight, Target } from "lucide-react";
+import { generatePlanDesdeScores } from "@/lib/korai-logic";
 
 // ─── Configuración Supabase ───────────────────────────────────────────────────
 const SUPABASE_URL = "https://jgqqkgfppovkbwklctol.supabase.co";
@@ -60,9 +59,8 @@ export default function Survey() {
   const [comment, setComment] = useState("");
   const [showCommentScreen, setShowCommentScreen] = useState(false);
   const [showResultsScreen, setShowResultsScreen] = useState(hasSavedAnswers);
-  const [selectedBenefit, setSelectedBenefit] = useState<string | null>(null);
   const [showLevelUp, setShowLevelUp] = useState<{show: boolean, dimension: string}>({show: false, dimension: ""});
-  const [sello, setSello] = useState<Sello | null>(() => { try { const s = localStorage.getItem("korai_user_sello_v1"); return s ? JSON.parse(s) : null; } catch { return null; } });
+
   const [isPending, setIsPending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -203,10 +201,6 @@ export default function Survey() {
       const plan = generatePlanDesdeScores(answers);
       localStorage.setItem("korai_user_plan_v1", JSON.stringify(plan));
 
-      const newSello = generarSello(context.city || undefined);
-      localStorage.setItem("korai_user_sello_v1", JSON.stringify(newSello));
-      setSello(newSello);
-
       // Invalidar cache del dashboard si existe
       queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
 
@@ -272,110 +266,6 @@ export default function Survey() {
           </div>
 
           <aside className="w-full md:w-80 space-y-6">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-              className="bg-gradient-to-br from-primary/30 via-primary/10 to-transparent border border-primary/40 rounded-[32px] p-8 shadow-[0_20px_50px_rgba(124,92,255,0.3)] relative overflow-hidden group hover:scale-[1.02] transition-transform duration-500"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl -z-10 group-hover:bg-primary/40 transition-colors" />
-
-              <div className="flex flex-col items-center text-center space-y-4">
-                <motion.div
-                  initial={{ rotate: -15, scale: 0.5 }}
-                  animate={{ rotate: 0, scale: 1 }}
-                  transition={{ delay: 0.4, type: "spring" }}
-                  className="w-24 h-24 rounded-[30%] bg-gradient-to-tr from-yellow-400 to-orange-500 flex items-center justify-center text-5xl shadow-[0_10px_30px_rgba(245,158,11,0.4)] border-4 border-white/20"
-                >
-                  🎖️
-                </motion.div>
-                <div className="space-y-1">
-                  <h3 className="text-2xl font-black text-white tracking-tight italic uppercase" data-testid="text-sello-title">
-                    {sello?.texto || sello?.municipio || "Sello de Distinción"}
-                  </h3>
-                  <div className="text-primary font-black text-lg tracking-widest uppercase">Colaborador Comunitario</div>
-                </div>
-                <p className="text-sm text-[#A9B3DA] leading-relaxed max-w-[240px]">
-                  {sello ? `ID: ${sello.idParticipacion} | ${sello.fecha}` : "Tu participación activa fortalece la inteligencia colectiva de tu barrio."}
-                </p>
-              </div>
-            </motion.div>
-
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-8 shadow-2xl space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-primary/20">
-                  <Gift className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black">Tu Recompensa</h3>
-                  <p className="text-xs text-[#A9B3DA]">Selecciona un beneficio local para canjear</p>
-                </div>
-              </div>
-
-              <div className="grid gap-3">
-                {[
-                  { id: 'discount', icon: '🛍️', title: '10% OFF Comercios', desc: 'Válido en tiendas adheridas', color: 'from-blue-500/20' },
-                  { id: 'coffee', icon: '☕', title: 'Merienda Especial', desc: 'Café + medialuna de regalo', color: 'from-orange-500/20' },
-                  { id: 'raffle', icon: '🎟️', title: 'Sorteo Mensual', desc: 'Participación automática', color: 'from-purple-500/20' }
-                ].map(b => (
-                  <button
-                    key={b.id}
-                    onClick={() => {
-                      setSelectedBenefit(b.id);
-                      playBip('verde');
-                    }}
-                    className={`w-full text-left p-4 rounded-2xl border transition-all relative overflow-hidden group ${
-                      selectedBenefit === b.id
-                        ? 'bg-primary/20 border-primary shadow-[0_0_20px_rgba(124,92,255,0.2)]'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                    }`}
-                  >
-                    <div className={`absolute inset-0 bg-gradient-to-r ${b.color} to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
-                    <div className="relative flex items-center gap-4">
-                      <span className="text-3xl group-hover:scale-110 transition-transform">{b.icon}</span>
-                      <div className="flex-1">
-                        <div className="font-black text-sm uppercase tracking-tight">{b.title}</div>
-                        <div className="text-[10px] text-[#A9B3DA] font-medium">{b.desc}</div>
-                      </div>
-                      {selectedBenefit === b.id && (
-                        <motion.div
-                          layoutId="active-check"
-                          className="w-6 h-6 rounded-full bg-primary flex items-center justify-center"
-                        >
-                          <CheckCircle2 className="w-4 h-4 text-white" />
-                        </motion.div>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <AnimatePresence mode="wait">
-                {selectedBenefit && (
-                  <motion.div
-                    key={selectedBenefit}
-                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="mt-8 pt-8 border-t border-white/10 text-center space-y-4"
-                  >
-                    <div className="relative inline-block">
-                      <div className="absolute -inset-4 bg-primary/20 blur-2xl rounded-full animate-pulse" />
-                      <div className="bg-white p-6 rounded-3xl relative shadow-2xl">
-                        <QRCodeSVG value={`KORAI-REWARD-${selectedBenefit}-${Date.now()}`} size={160} level="H" />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-xs font-black text-primary uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                        <QrCode className="w-4 h-4" /> Código de Canje Activo
-                      </div>
-                      <p className="text-[10px] text-[#A9B3DA] font-medium">Presenta este código en el comercio seleccionado</p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
             <div className="space-y-3">
               <Button
                 onClick={() => setLocation("/prioridades")}
@@ -383,21 +273,6 @@ export default function Survey() {
                 data-testid="button-go-prioridades"
               >
                 <Target className="w-5 h-5" /> Tu Plan
-              </Button>
-              <Button
-                onClick={() => setLocation("/metas")}
-                className="w-full h-12 font-bold rounded-xl bg-gradient-to-r from-green-600 to-green-500 shadow-lg shadow-green-500/25 flex items-center justify-center gap-2"
-                data-testid="button-go-metas"
-              >
-                <Calendar className="w-5 h-5" /> Mis Metas
-              </Button>
-              <Button
-                onClick={() => setLocation("/dashboard")}
-                variant="outline"
-                className="w-full h-12 border-white/10 bg-white/5 font-bold rounded-xl"
-                data-testid="button-go-dashboard"
-              >
-                Ir al Dashboard Admin
               </Button>
               <Button
                 onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
