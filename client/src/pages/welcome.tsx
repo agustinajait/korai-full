@@ -2,8 +2,8 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, MapPin, Target, Heart, Briefcase, Home, BookOpen, Shield, Users } from "lucide-react";
-import logoImg from "@assets/logo.png_1770738353179.png";
+import { ArrowRight, Heart, Briefcase, Home, BookOpen, Shield, Users, Phone, MessageCircle } from "lucide-react";
+import logoImg from "@assets/korai-logo.png";
 import { useState } from "react";
 import { hashDNI } from "@/lib/korai-logic";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,7 @@ const BARRIOS_CABA = [
   "Villa del Parque", "Villa Devoto", "Villa General Mitre", "Villa Gorriti",
   "Villa Lugano", "Villa Luro", "Villa Ortúzar", "Villa Pueyrredón",
   "Villa Real", "Villa Riachuelo", "Villa Santa Rita", "Villa Soldati",
-  "Villa Urquiza", "Villa del Parque"
+  "Villa Urquiza"
 ];
 
 const AREAS = [
@@ -35,13 +35,15 @@ const AREAS = [
 
 export default function Welcome() {
   const [_, setLocation] = useLocation();
-  const [city, setCity] = useState("Buenos Aires");
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [city] = useState("Buenos Aires");
   const [dni, setDni] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [ageRange, setAgeRange] = useState("");
   const [civilStatus, setCivilStatus] = useState("");
   const [hasChildren, setHasChildren] = useState("");
-  const [hasAdults, setHasAdults] = useState("");
   const [showMore, setShowMore] = useState(false);
   const [mode, setMode] = useState<"new" | "returning">("new");
   const [returningDni, setReturningDni] = useState("");
@@ -49,8 +51,6 @@ export default function Welcome() {
   const [returnError, setReturnError] = useState("");
 
   const handleStart = async () => {
-    if (!city) return;
-
     let dniHash = "";
     if (dni.trim()) {
       dniHash = await hashDNI(dni);
@@ -61,13 +61,17 @@ export default function Welcome() {
     localStorage.setItem("korai_context", JSON.stringify({
       city,
       neighborhood,
-      dni: dni.trim() || `anonimo-${Date.now()}`,
+      nombre: nombre.trim(),
+      apellido: apellido.trim(),
+      dni: dni.trim() || `usuario-${Date.now()}`,
+      telefono: telefono.trim(),
       demographics: {
         ageRange,
         civilStatus,
         hasChildren,
-        hasAdults,
-        dniHash
+        dniHash,
+        nombre: nombre.trim(),
+        apellido: apellido.trim(),
       }
     }));
     setLocation("/survey");
@@ -127,12 +131,17 @@ export default function Welcome() {
     setLoadingReturn(false);
   };
 
+  const handleUrgente = () => {
+    const msg = encodeURIComponent("Hola, necesito ayuda urgente. Vengo de KORAI.");
+    window.open(`https://wa.me/?text=${msg}`, "_blank");
+  };
+
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {/* Background blobs */}
+      {/* Background */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-green-500/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[100px]" />
       </div>
 
       <motion.div
@@ -147,22 +156,25 @@ export default function Welcome() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, type: "spring" }}
-            className="mb-4"
           >
-            <img src={logoImg} alt="KORAI" className="w-24 h-24 object-contain mx-auto drop-shadow-[0_0_30px_rgba(168,85,247,0.4)]" />
+            <img
+              src={logoImg}
+              alt="KORAI"
+              className="w-24 h-24 object-contain mx-auto drop-shadow-[0_0_30px_rgba(0,200,255,0.4)]"
+            />
           </motion.div>
           <h1 className="text-5xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/70">
             KORAI
           </h1>
-          <p className="text-lg text-white/70 font-medium">
+          <p className="text-base text-white/70 font-medium">
             Tu asistente de bienestar comunitario
           </p>
-          <p className="text-sm text-white/50 leading-relaxed max-w-sm mx-auto">
-            En pocos minutos vas a conocer tu situación en las 6 áreas clave de tu vida y recibir orientación concreta sobre recursos y programas disponibles para vos.
+          <p className="text-sm text-white/45 leading-relaxed max-w-sm mx-auto">
+            Contanos cómo estás en 6 áreas clave de tu vida y recibí orientación concreta sobre recursos y programas disponibles para vos en tu barrio.
           </p>
         </div>
 
-        {/* Areas preview */}
+        {/* Areas */}
         <div className="grid grid-cols-3 gap-2">
           {AREAS.map(({ icon: Icon, label, color, bg }) => (
             <div key={label} className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/5 border border-white/5">
@@ -198,121 +210,138 @@ export default function Welcome() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
             >
-              <GlassCard className="p-6 space-y-5 border-t border-white/10 shadow-2xl shadow-black/50">
-                <div className="space-y-4">
-                  {/* Ciudad - prefilled Buenos Aires */}
-                  <div className="space-y-2">
-                    <Label className="text-white/80 font-display text-sm">Ciudad</Label>
-                    <div className="h-12 bg-black/20 border border-white/10 rounded-lg flex items-center px-4 text-white/70">
-                      Buenos Aires
-                    </div>
-                  </div>
+              <GlassCard className="p-6 space-y-4 border-t border-white/10 shadow-2xl shadow-black/50">
 
-                  {/* Barrio */}
-                  <div className="space-y-2">
-                    <Label className="text-white/80 font-display text-sm">Barrio</Label>
-                    <Select onValueChange={setNeighborhood}>
-                      <SelectTrigger className="bg-black/20 border-white/10 h-12 text-base focus:ring-primary/50">
-                        <SelectValue placeholder="Seleccioná tu barrio" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-white/10 text-white max-h-60">
-                        {BARRIOS_CABA.map(b => (
-                          <SelectItem key={b} value={b}>{b}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* DNI */}
-                  <div className="space-y-2">
-                    <Label className="text-white/80 font-display text-sm">DNI</Label>
+                {/* Nombre y Apellido */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-white/80 text-sm">Nombre</Label>
                     <Input
-                      placeholder="Ingresá tu DNI"
-                      className="bg-black/20 border-white/10 h-12 text-base focus:ring-primary/50 placeholder:text-white/20"
-                      value={dni}
-                      onChange={e => setDni(e.target.value)}
-                      data-testid="input-dni"
+                      placeholder="Tu nombre"
+                      className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
+                      value={nombre}
+                      onChange={e => setNombre(e.target.value)}
                     />
-                    <p className="text-[10px] text-white/30">Se guarda solo un hash seguro, nunca tu DNI real. Necesario para ver tu diagnóstico después.</p>
                   </div>
-
-                  {/* Más opciones */}
-                  <div className="pt-1">
-                    <button
-                      onClick={() => setShowMore(!showMore)}
-                      className="text-xs font-bold text-primary/80 hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-wider"
-                    >
-                      {showMore ? "Ocultar opciones" : "+ Datos opcionales"}
-                    </button>
-
-                    {showMore && (
-                      <div className="grid grid-cols-2 gap-4 mt-4 animate-in fade-in slide-in-from-top-2">
-                        <div className="space-y-1">
-                          <Label className="text-[10px] text-white/50 uppercase">Edad</Label>
-                          <Select onValueChange={setAgeRange}>
-                            <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
-                              <SelectValue placeholder="Rango..." />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border-white/10 text-white">
-                              {['18-29', '30-39', '40-49', '50-59', '60+'].map(x => (
-                                <SelectItem key={x} value={x}>{x}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-[10px] text-white/50 uppercase">Estado Civil</Label>
-                          <Select onValueChange={setCivilStatus}>
-                            <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
-                              <SelectValue placeholder="Seleccionar..." />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border-white/10 text-white">
-                              {['Soltero/a', 'Casado/a', 'Conviviente', 'Separado/a', 'Viudo/a', 'Prefiero no decir'].map(x => (
-                                <SelectItem key={x} value={x}>{x}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-[10px] text-white/50 uppercase">Hijos a cargo</Label>
-                          <Select onValueChange={setHasChildren}>
-                            <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
-                              <SelectValue placeholder="..." />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border-white/10 text-white">
-                              <SelectItem value="No">No</SelectItem>
-                              <SelectItem value="Sí">Sí</SelectItem>
-                              <SelectItem value="No decir">No decir</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-[10px] text-white/50 uppercase">Adultos a cargo</Label>
-                          <Select onValueChange={setHasAdults}>
-                            <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
-                              <SelectValue placeholder="..." />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border-white/10 text-white">
-                              <SelectItem value="No">No</SelectItem>
-                              <SelectItem value="Sí">Sí</SelectItem>
-                              <SelectItem value="No decir">No decir</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    )}
+                  <div className="space-y-1.5">
+                    <Label className="text-white/80 text-sm">Apellido</Label>
+                    <Input
+                      placeholder="Tu apellido"
+                      className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
+                      value={apellido}
+                      onChange={e => setApellido(e.target.value)}
+                    />
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleStart}
-                  className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:to-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/25"
-                >
-                  Comenzar mi diagnóstico <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
+                {/* DNI */}
+                <div className="space-y-1.5">
+                  <Label className="text-white/80 text-sm">DNI</Label>
+                  <Input
+                    placeholder="Ingresá tu DNI"
+                    className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
+                    value={dni}
+                    onChange={e => setDni(e.target.value)}
+                    data-testid="input-dni"
+                  />
+                  <p className="text-[10px] text-white/30">Tu DNI se guarda encriptado. Lo necesitás para volver a ver tu diagnóstico.</p>
+                </div>
 
-                <p className="text-xs text-center text-white/30 leading-relaxed">
-                  Tu participación es anónima y ayuda a mejorar tu comunidad.
+                {/* Barrio */}
+                <div className="space-y-1.5">
+                  <Label className="text-white/80 text-sm">Barrio</Label>
+                  <Select onValueChange={setNeighborhood}>
+                    <SelectTrigger className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50">
+                      <SelectValue placeholder="Seleccioná tu barrio" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-white/10 text-white max-h-60">
+                      {BARRIOS_CABA.map(b => (
+                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Teléfono */}
+                <div className="space-y-1.5">
+                  <Label className="text-white/80 text-sm flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5" /> Teléfono WhatsApp
+                  </Label>
+                  <Input
+                    placeholder="Ej: 1155556666"
+                    className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
+                    value={telefono}
+                    onChange={e => setTelefono(e.target.value)}
+                  />
+                  <p className="text-[10px] text-white/30">Para enviarte recursos y seguimiento por WhatsApp.</p>
+                </div>
+
+                {/* Más opciones */}
+                <div>
+                  <button
+                    onClick={() => setShowMore(!showMore)}
+                    className="text-xs font-bold text-primary/70 hover:text-primary transition-colors uppercase tracking-wider"
+                  >
+                    {showMore ? "− Ocultar datos opcionales" : "+ Datos opcionales"}
+                  </button>
+
+                  {showMore && (
+                    <div className="grid grid-cols-2 gap-3 mt-3 animate-in fade-in slide-in-from-top-2">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-white/50 uppercase">Edad</Label>
+                        <Select onValueChange={setAgeRange}>
+                          <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                            <SelectValue placeholder="Rango..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-white/10 text-white">
+                            {['18-29', '30-39', '40-49', '50-59', '60+'].map(x => (
+                              <SelectItem key={x} value={x}>{x}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-white/50 uppercase">Estado Civil</Label>
+                        <Select onValueChange={setCivilStatus}>
+                          <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                            <SelectValue placeholder="Seleccionar..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-white/10 text-white">
+                            {['Soltero/a', 'Casado/a', 'Conviviente', 'Separado/a', 'Viudo/a', 'Prefiero no decir'].map(x => (
+                              <SelectItem key={x} value={x}>{x}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1 col-span-2">
+                        <Label className="text-[10px] text-white/50 uppercase">Hijos a cargo</Label>
+                        <Select onValueChange={setHasChildren}>
+                          <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
+                            <SelectValue placeholder="..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-white/10 text-white">
+                            <SelectItem value="No">No</SelectItem>
+                            <SelectItem value="Sí">Sí</SelectItem>
+                            <SelectItem value="Prefiero no decir">Prefiero no decir</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Botón principal */}
+                <div className="pt-2">
+                  <Button
+                    onClick={handleStart}
+                    className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:to-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/25"
+                  >
+                    Comenzar mi diagnóstico <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </div>
+
+                <p className="text-xs text-center text-white/25 leading-relaxed">
+                  Tu participación es confidencial y ayuda a mejorar tu comunidad.
                 </p>
               </GlassCard>
             </motion.div>
@@ -329,8 +358,8 @@ export default function Welcome() {
                   <p className="text-sm text-white/50">Ingresá tu DNI para acceder a tu plan personalizado</p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-white/80 font-display text-sm">DNI</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-white/80 text-sm">DNI</Label>
                   <Input
                     placeholder="Ingresá tu DNI"
                     className="bg-black/20 border-white/10 h-12 text-base focus:ring-primary/50 placeholder:text-white/20"
@@ -358,9 +387,18 @@ export default function Welcome() {
           )}
         </AnimatePresence>
 
+        {/* Botón ayuda urgente */}
+        <button
+          onClick={handleUrgente}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm font-bold hover:bg-red-500/20 transition-all"
+        >
+          <MessageCircle className="w-4 h-4" />
+          Necesito ayuda urgente
+        </button>
+
         {/* Dashboard link */}
         <Link href="/dashboard">
-          <Button variant="outline" className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-sm">
+          <Button variant="outline" className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-sm text-white/50">
             Ver Dashboard Institucional
           </Button>
         </Link>
