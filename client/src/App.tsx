@@ -11,6 +11,7 @@ import Dashboard from "@/pages/dashboard";
 import AdminLogin from "@/pages/admin-login";
 import Prioridades from "@/pages/prioridades";
 import Metas from "@/pages/metas";
+import Landing from "@/pages/landing";
 import { Loader2 } from "lucide-react";
 
 function ProtectedDashboard() {
@@ -29,7 +30,8 @@ function ProtectedDashboard() {
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Welcome} />
+      <Route path="/" component={Landing} />
+      <Route path="/welcome" component={Welcome} />
       <Route path="/survey" component={Survey} />
       <Route path="/prioridades" component={Prioridades} />
       <Route path="/metas" component={Metas} />
