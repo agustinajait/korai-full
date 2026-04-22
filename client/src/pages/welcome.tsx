@@ -1,9 +1,8 @@
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Heart, Briefcase, Home, BookOpen, Shield, Users, Phone, MessageCircle } from "lucide-react";
-import logoImg from "@assets/logo.png_1770738353179.png";
+import { ArrowRight, Heart, Briefcase, Home, BookOpen, Shield, Users, Phone, Sparkles, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { hashDNI } from "@/lib/korai-logic";
 import { Label } from "@/components/ui/label";
@@ -11,54 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 
 const BARRIOS_CABA = [
-  "Agronomía",
-  "Almagro",
-  "Balvanera",
-  "Barracas",
-  "Belgrano",
-  "Boedo",
-  "Caballito",
-  "Chacarita",
-  "Coghlan",
-  "Colegiales",
-  "Constitución",
-  "Flores",
-  "Floresta",
-  "La Boca",
-  "La Paternal",
-  "Liniers",
-  "Mataderos",
-  "Monte Castro",
-  "Monserrat",
-  "Nueva Pompeya",
-  "Núñez",
-  "Palermo",
-  "Parque Avellaneda",
-  "Parque Chacabuco",
-  "Parque Chas",
-  "Parque Patricios",
-  "Puerto Madero",
-  "Recoleta",
-  "Retiro",
-  "Saavedra",
-  "San Cristóbal",
-  "San Nicolás",
-  "San Telmo",
-  "Vélez Sarsfield",
-  "Versalles",
-  "Villa Crespo",
-  "Villa del Parque",
-  "Villa Devoto",
-  "Villa General Mitre",
-  "Villa Lugano",
-  "Villa Luro",
-  "Villa Ortúzar",
-  "Villa Pueyrredón",
-  "Villa Real",
-  "Villa Riachuelo",
-  "Villa Santa Rita",
-  "Villa Soldati",
-  "Villa Urquiza",
+  "Agronomía", "Almagro", "Balvanera", "Barracas", "Belgrano", "Boedo",
+  "Caballito", "Chacarita", "Coghlan", "Colegiales", "Constitución",
+  "Flores", "Floresta", "La Boca", "La Paternal", "Liniers", "Mataderos",
+  "Monte Castro", "Montserrat", "Nueva Pompeya", "Núñez", "Palermo",
+  "Parque Avellaneda", "Parque Chacabuco", "Parque Chas", "Parque Patricios",
+  "Puerto Madero", "Recoleta", "Retiro", "Saavedra", "San Cristóbal",
+  "San Nicolás", "San Telmo", "Tribunales", "Versalles", "Villa Crespo",
+  "Villa del Parque", "Villa Devoto", "Villa General Mitre", "Villa Gorriti",
+  "Villa Lugano", "Villa Luro", "Villa Ortúzar", "Villa Pueyrredón",
+  "Villa Real", "Villa Riachuelo", "Villa Santa Rita", "Villa Soldati",
+  "Villa Urquiza"
 ];
 
 const AREAS = [
@@ -72,17 +34,14 @@ const AREAS = [
 
 export default function Welcome() {
   const [_, setLocation] = useLocation();
+  const [mode, setMode] = useState<"landing" | "form" | "returning">("landing");
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
-  const [city] = useState("Buenos Aires");
   const [dni, setDni] = useState("");
   const [telefono, setTelefono] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [ageRange, setAgeRange] = useState("");
-  const [civilStatus, setCivilStatus] = useState("");
-  const [hasChildren, setHasChildren] = useState("");
   const [showMore, setShowMore] = useState(false);
-  const [mode, setMode] = useState<"new" | "returning">("new");
   const [returningDni, setReturningDni] = useState("");
   const [loadingReturn, setLoadingReturn] = useState(false);
   const [returnError, setReturnError] = useState("");
@@ -94,351 +53,343 @@ export default function Welcome() {
       localStorage.setItem("korai_user_dni_hash_v1", dniHash);
       localStorage.setItem("korai_user_dni", dni.trim());
     }
-
     localStorage.setItem("korai_context", JSON.stringify({
-      city,
+      city: "Buenos Aires",
       neighborhood,
       nombre: nombre.trim(),
       apellido: apellido.trim(),
       dni: dni.trim() || `usuario-${Date.now()}`,
       telefono: telefono.trim(),
-      demographics: {
-        ageRange,
-        civilStatus,
-        hasChildren,
-        dniHash,
-        nombre: nombre.trim(),
-        apellido: apellido.trim(),
-      }
+      demographics: { ageRange, dniHash, nombre: nombre.trim(), apellido: apellido.trim() }
     }));
     setLocation("/survey");
   };
 
   const handleReturning = async () => {
-    if (!returningDni.trim()) {
-      setReturnError("Ingresá tu DNI para ver tu diagnóstico.");
-      return;
-    }
+    if (!returningDni.trim()) { setReturnError("Ingresá tu DNI."); return; }
     setLoadingReturn(true);
     setReturnError("");
-
     try {
       const hash = await hashDNI(returningDni);
       const SUPABASE_URL = "https://jgqqkgfppovkbwklctol.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4";
-
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/responses?dni_hash=eq.${hash}&order=submitted_at.desc&limit=1`,
-        {
-          headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-          }
-        }
+        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
       );
-
       const data = await res.json();
-
       if (!data || data.length === 0) {
-        setReturnError("No encontramos un diagnóstico con ese DNI. ¿Querés hacer uno nuevo?");
+        setReturnError("No encontramos un diagnóstico con ese DNI.");
         setLoadingReturn(false);
         return;
       }
-
       const response = data[0];
       localStorage.setItem("korai_user_answers", JSON.stringify(response.answers));
       localStorage.setItem("korai_user_dni", returningDni.trim());
-      localStorage.setItem("korai_user_dni_hash_v1", hash);
       localStorage.setItem("korai_context", JSON.stringify({
         city: response.territorio?.ciudad || "Buenos Aires",
         neighborhood: response.territorio?.barrio || "",
         dni: returningDni.trim(),
       }));
-
       const { generatePlanDesdeScores, generarSello } = await import("@/lib/korai-logic");
       const plan = generatePlanDesdeScores(response.answers);
       localStorage.setItem("korai_user_plan_v1", JSON.stringify(plan));
-      const sello = generarSello(response.territorio?.ciudad);
-      localStorage.setItem("korai_user_sello_v1", JSON.stringify(sello));
-
+      localStorage.setItem("korai_user_sello_v1", JSON.stringify(generarSello(response.territorio?.ciudad)));
       setLocation("/prioridades");
     } catch (e) {
-      setReturnError("Error al buscar tu diagnóstico. Intentá de nuevo.");
+      setReturnError("Error al buscar tu diagnóstico.");
     }
     setLoadingReturn(false);
   };
 
-  const handleUrgente = () => {
-    const msg = encodeURIComponent("Hola, necesito ayuda urgente. Vengo de KORAI.");
-    window.open(`https://wa.me/?text=${msg}`, "_blank");
-  };
+  // PANTALLA 1: Landing con ilustración
+  if (mode === "landing") {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 relative overflow-hidden bg-[#070A13]">
+        <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
+          <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary/15 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[100px]" />
+        </div>
 
-  return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[100px]" />
-      </div>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="w-full max-w-sm flex flex-col items-center text-center space-y-7"
+        >
+          {/* Logo texto */}
+          <div className="space-y-1">
+            <div className="text-5xl font-black text-white tracking-tight">KORAI</div>
+            <p className="text-white/50 text-sm">Tu asistente de bienestar comunitario</p>
+          </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md space-y-6"
-      >
-        {/* Header */}
-        <div className="text-center space-y-3">
+          {/* Ilustración SVG */}
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, type: "spring" }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="w-full bg-gradient-to-b from-primary/20 to-primary/5 border border-primary/20 rounded-[32px] p-8 overflow-hidden relative"
           >
-            <img
-              src={logoImg}
-              alt="KORAI"
-              className="w-24 h-24 object-contain mx-auto drop-shadow-[0_0_30px_rgba(0,200,255,0.4)]"
-            />
+            <div className="absolute top-4 right-4 w-20 h-20 bg-primary/10 rounded-full blur-xl" />
+            <div className="absolute bottom-4 left-4 w-16 h-16 bg-cyan-500/10 rounded-full blur-xl" />
+            <svg viewBox="0 0 200 170" className="w-full max-w-[220px] mx-auto" fill="none">
+              <ellipse cx="100" cy="140" rx="70" ry="12" fill="rgba(124,92,255,0.08)" />
+              <ellipse cx="100" cy="105" rx="28" ry="35" fill="rgba(124,92,255,0.25)" />
+              <circle cx="100" cy="62" r="22" fill="rgba(255,220,190,0.9)" />
+              <ellipse cx="100" cy="49" rx="22" ry="14" fill="rgba(80,50,120,0.8)" />
+              <ellipse cx="78" cy="62" rx="8" ry="16" fill="rgba(80,50,120,0.8)" />
+              <ellipse cx="122" cy="62" rx="8" ry="16" fill="rgba(80,50,120,0.8)" />
+              <path d="M92 64 Q96 61 100 64" stroke="rgba(80,50,120,0.6)" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M100 64 Q104 61 108 64" stroke="rgba(80,50,120,0.6)" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M94 70 Q100 75 106 70" stroke="rgba(200,100,100,0.7)" strokeWidth="1.5" strokeLinecap="round" />
+              <ellipse cx="85" cy="108" rx="10" ry="8" fill="rgba(255,220,190,0.9)" />
+              <ellipse cx="115" cy="108" rx="10" ry="8" fill="rgba(255,220,190,0.9)" />
+              <path d="M96 105 C96 102 92 99 92 103 C92 107 100 112 100 112 C100 112 108 107 108 103 C108 99 104 102 104 105 C104 102 100 99 100 102 C100 99 96 102 96 105Z" fill="rgba(124,92,255,0.8)" />
+              <path d="M30 128 Q20 108 35 98 Q45 88 40 108" fill="rgba(34,197,94,0.3)" />
+              <path d="M42 133 Q35 116 48 108 Q55 100 52 118" fill="rgba(34,197,94,0.25)" />
+              <path d="M170 128 Q180 108 165 98 Q155 88 160 108" fill="rgba(34,197,94,0.3)" />
+              <path d="M158 133 Q165 116 152 108 Q145 100 148 118" fill="rgba(34,197,94,0.25)" />
+              <circle cx="55" cy="50" r="14" fill="rgba(124,92,255,0.15)" />
+              <path d="M51 49 C51 47 49 45 49 48 C49 51 55 54 55 54 C55 54 61 51 61 48 C61 45 59 47 59 49 C59 47 55 44 55 47 C55 44 51 47 51 49Z" fill="rgba(124,92,255,0.6)" />
+              <circle cx="148" cy="45" r="14" fill="rgba(0,200,200,0.15)" />
+              <circle cx="148" cy="41" r="5" fill="rgba(0,200,200,0.5)" />
+              <ellipse cx="148" cy="53" rx="7" ry="6" fill="rgba(0,200,200,0.4)" />
+            </svg>
           </motion.div>
-          <h1 className="text-5xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/70">
-            KORAI
-          </h1>
-          <p className="text-base text-white/70 font-medium">
-            Tu asistente de bienestar comunitario
-          </p>
-          <p className="text-sm text-white/45 leading-relaxed max-w-sm mx-auto">
-            Contanos cómo estás en 6 áreas clave de tu vida y recibí orientación concreta sobre recursos y programas disponibles para vos en tu barrio.
-          </p>
-        </div>
 
-        {/* Areas */}
-        <div className="grid grid-cols-3 gap-2">
-          {AREAS.map(({ icon: Icon, label, color, bg }) => (
-            <div key={label} className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/5 border border-white/5">
-              <div className={`p-2 rounded-full ${bg}`}>
-                <Icon className={`w-4 h-4 ${color}`} />
-              </div>
-              <span className="text-[10px] text-white/60 font-medium">{label}</span>
-            </div>
-          ))}
-        </div>
+          {/* Texto empático */}
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-white leading-tight">
+              En pocos minutos vamos a entender mejor tu situación.
+            </h2>
+            <p className="text-white/55 text-sm leading-relaxed">
+              Te acompañamos a identificar qué es lo que realmente te importa resolver, y te conectamos con los recursos concretos disponibles para vos hoy.
+            </p>
+          </div>
 
-        {/* Mode toggle */}
-        <div className="flex gap-2 p-1 bg-white/5 rounded-xl border border-white/10">
-          <button
-            onClick={() => setMode("new")}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${mode === "new" ? "bg-primary text-white shadow-lg" : "text-white/50 hover:text-white"}`}
-          >
-            Nuevo diagnóstico
-          </button>
-          <button
-            onClick={() => setMode("returning")}
-            className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${mode === "returning" ? "bg-primary text-white shadow-lg" : "text-white/50 hover:text-white"}`}
-          >
-            Ver mi diagnóstico
-          </button>
-        </div>
+          {/* 3 mensajes */}
+          <div className="space-y-2.5 w-full text-left">
+            {[
+              { icon: Sparkles, text: "Estás a punto de comenzar.", color: "text-primary" },
+              { icon: CheckCircle, text: "No hay respuestas correctas o incorrectas.", color: "text-cyan-400" },
+              { icon: Heart, text: "Contanos cómo estás, así podemos ayudarte de verdad.", color: "text-pink-400" },
+            ].map(({ icon: Icon, text, color }, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + i * 0.1 }}
+                className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5"
+              >
+                <Icon className={`w-4 h-4 flex-shrink-0 ${color}`} />
+                <p className="text-sm text-white/80 font-medium">{text}</p>
+              </motion.div>
+            ))}
+          </div>
 
-        <AnimatePresence mode="wait">
-          {mode === "new" ? (
-            <motion.div
-              key="new"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+          {/* Botones */}
+          <div className="w-full space-y-3">
+            <Button
+              onClick={() => setMode("form")}
+              className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/25"
             >
-              <GlassCard className="p-6 space-y-4 border-t border-white/10 shadow-2xl shadow-black/50">
+              Comenzar diagnóstico <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+            <button
+              onClick={() => setMode("returning")}
+              className="w-full py-3 text-sm text-white/40 hover:text-white/70 transition-colors"
+            >
+              Ya hice mi diagnóstico → Ver mis resultados
+            </button>
+            <p className="text-xs text-white/20 text-center">🔒 Tu información es confidencial y está protegida</p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
-                {/* Nombre y Apellido */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-white/80 text-sm">Nombre</Label>
-                    <Input
-                      placeholder="Tu nombre"
-                      className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
-                      value={nombre}
-                      onChange={e => setNombre(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-white/80 text-sm">Apellido</Label>
-                    <Input
-                      placeholder="Tu apellido"
-                      className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
-                      value={apellido}
-                      onChange={e => setApellido(e.target.value)}
-                    />
-                  </div>
+  // PANTALLA 2: Formulario
+  if (mode === "form") {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
+          <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[100px]" />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md space-y-5"
+        >
+          <div className="text-center space-y-1">
+            <h1 className="text-3xl font-black text-white">Antes de comenzar</h1>
+            <p className="text-white/50 text-sm">Estos datos nos permiten acompañarte mejor y hacer seguimiento de tu situación.</p>
+          </div>
+
+          {/* 6 áreas */}
+          <div className="grid grid-cols-3 gap-2">
+            {AREAS.map(({ icon: Icon, label, color, bg }) => (
+              <div key={label} className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/5 border border-white/5">
+                <div className={`p-2 rounded-full ${bg}`}>
+                  <Icon className={`w-4 h-4 ${color}`} />
                 </div>
+                <span className="text-[10px] text-white/60 font-medium">{label}</span>
+              </div>
+            ))}
+          </div>
 
-                {/* DNI */}
-                <div className="space-y-1.5">
-                  <Label className="text-white/80 text-sm">DNI</Label>
-                  <Input
-                    placeholder="Ingresá tu DNI"
-                    className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
-                    value={dni}
-                    onChange={e => setDni(e.target.value)}
-                    data-testid="input-dni"
-                  />
-                  <p className="text-[10px] text-white/30">Tu DNI se guarda encriptado. Lo necesitás para volver a ver tu diagnóstico.</p>
-                </div>
+          <GlassCard className="p-6 space-y-4 border-t border-white/10 shadow-2xl shadow-black/50">
+            {/* Nombre y Apellido */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-white/80 text-sm">Nombre</Label>
+                <Input
+                  placeholder="Tu nombre"
+                  className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
+                  value={nombre}
+                  onChange={e => setNombre(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-white/80 text-sm">Apellido</Label>
+                <Input
+                  placeholder="Tu apellido"
+                  className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
+                  value={apellido}
+                  onChange={e => setApellido(e.target.value)}
+                />
+              </div>
+            </div>
 
-                {/* Barrio */}
-                <div className="space-y-1.5">
-                  <Label className="text-white/80 text-sm">Barrio</Label>
-                  <Select onValueChange={setNeighborhood}>
-                    <SelectTrigger className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50">
-                      <SelectValue placeholder="Seleccioná tu barrio" />
+            {/* DNI */}
+            <div className="space-y-1.5">
+              <Label className="text-white/80 text-sm">DNI</Label>
+              <Input
+                placeholder="Ingresá tu DNI"
+                className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
+                value={dni}
+                onChange={e => setDni(e.target.value)}
+                data-testid="input-dni"
+              />
+              <p className="text-[10px] text-white/30">Tu DNI se guarda encriptado. Lo necesitás para volver a ver tu diagnóstico.</p>
+            </div>
+
+            {/* Barrio */}
+            <div className="space-y-1.5">
+              <Label className="text-white/80 text-sm">Barrio</Label>
+              <Select onValueChange={setNeighborhood}>
+                <SelectTrigger className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50">
+                  <SelectValue placeholder="Seleccioná tu barrio" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-white/10 text-white max-h-60">
+                  {BARRIOS_CABA.map(b => (
+                    <SelectItem key={b} value={b}>{b}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Teléfono */}
+            <div className="space-y-1.5">
+              <Label className="text-white/80 text-sm flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5" /> Teléfono WhatsApp
+              </Label>
+              <Input
+                placeholder="Ej: 1155556666"
+                className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
+                value={telefono}
+                onChange={e => setTelefono(e.target.value)}
+              />
+              <p className="text-[10px] text-white/30">Para enviarte recursos y seguimiento por WhatsApp.</p>
+            </div>
+
+            {/* Más opciones */}
+            <div>
+              <button
+                onClick={() => setShowMore(!showMore)}
+                className="text-xs font-bold text-primary/70 hover:text-primary transition-colors uppercase tracking-wider"
+              >
+                {showMore ? "− Ocultar datos opcionales" : "+ Datos opcionales (edad)"}
+              </button>
+              {showMore && (
+                <div className="mt-3">
+                  <Label className="text-[10px] text-white/50 uppercase">Edad</Label>
+                  <Select onValueChange={setAgeRange}>
+                    <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm mt-1">
+                      <SelectValue placeholder="Rango de edad..." />
                     </SelectTrigger>
-                    <SelectContent className="bg-card border-white/10 text-white max-h-60">
-                      {BARRIOS_CABA.map(b => (
-                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                    <SelectContent className="bg-card border-white/10 text-white">
+                      {['18-29', '30-39', '40-49', '50-59', '60+'].map(x => (
+                        <SelectItem key={x} value={x}>{x}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+              )}
+            </div>
 
-                {/* Teléfono */}
-                <div className="space-y-1.5">
-                  <Label className="text-white/80 text-sm flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5" /> Teléfono WhatsApp
-                  </Label>
-                  <Input
-                    placeholder="Ej: 1155556666"
-                    className="bg-black/20 border-white/10 h-11 text-sm focus:ring-primary/50 placeholder:text-white/20"
-                    value={telefono}
-                    onChange={e => setTelefono(e.target.value)}
-                  />
-                  <p className="text-[10px] text-white/30">Para enviarte recursos y seguimiento por WhatsApp.</p>
-                </div>
+            {/* Botón */}
+            <div className="pt-2">
+              <Button
+                onClick={handleStart}
+                className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:to-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/25"
+              >
+                Comenzar mi diagnóstico <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </div>
 
-                {/* Más opciones */}
-                <div>
-                  <button
-                    onClick={() => setShowMore(!showMore)}
-                    className="text-xs font-bold text-primary/70 hover:text-primary transition-colors uppercase tracking-wider"
-                  >
-                    {showMore ? "− Ocultar datos opcionales" : "+ Datos opcionales"}
-                  </button>
+            <p className="text-xs text-center text-white/25">Tu participación es confidencial y ayuda a mejorar tu comunidad.</p>
+          </GlassCard>
 
-                  {showMore && (
-                    <div className="grid grid-cols-2 gap-3 mt-3 animate-in fade-in slide-in-from-top-2">
-                      <div className="space-y-1">
-                        <Label className="text-[10px] text-white/50 uppercase">Edad</Label>
-                        <Select onValueChange={setAgeRange}>
-                          <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
-                            <SelectValue placeholder="Rango..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card border-white/10 text-white">
-                            {['18-29', '30-39', '40-49', '50-59', '60+'].map(x => (
-                              <SelectItem key={x} value={x}>{x}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] text-white/50 uppercase">Estado Civil</Label>
-                        <Select onValueChange={setCivilStatus}>
-                          <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
-                            <SelectValue placeholder="Seleccionar..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card border-white/10 text-white">
-                            {['Soltero/a', 'Casado/a', 'Conviviente', 'Separado/a', 'Viudo/a', 'Prefiero no decir'].map(x => (
-                              <SelectItem key={x} value={x}>{x}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1 col-span-2">
-                        <Label className="text-[10px] text-white/50 uppercase">Hijos a cargo</Label>
-                        <Select onValueChange={setHasChildren}>
-                          <SelectTrigger className="bg-black/20 border-white/10 h-10 text-sm">
-                            <SelectValue placeholder="..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card border-white/10 text-white">
-                            <SelectItem value="No">No</SelectItem>
-                            <SelectItem value="Sí">Sí</SelectItem>
-                            <SelectItem value="Prefiero no decir">Prefiero no decir</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
-                </div>
+          <button onClick={() => setMode("landing")} className="w-full text-xs text-white/30 hover:text-white/50 transition-colors py-2">
+            ← Volver
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
-                {/* Botón principal */}
-                <div className="pt-2">
-                  <Button
-                    onClick={handleStart}
-                    className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:to-primary hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary/25"
-                  >
-                    Comenzar mi diagnóstico <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </div>
+  // PANTALLA 3: Ver diagnóstico anterior
+  return (
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] animate-pulse" />
+      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-sm space-y-5"
+      >
+        <div className="text-center space-y-1">
+          <h1 className="text-3xl font-black text-white">Ver mi diagnóstico</h1>
+          <p className="text-white/50 text-sm">Ingresá tu DNI para acceder a tu plan personalizado</p>
+        </div>
 
-                <p className="text-xs text-center text-white/25 leading-relaxed">
-                  Tu participación es confidencial y ayuda a mejorar tu comunidad.
-                </p>
-              </GlassCard>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="returning"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <GlassCard className="p-6 space-y-5 border-t border-white/10 shadow-2xl shadow-black/50">
-                <div className="text-center space-y-1">
-                  <h3 className="text-lg font-bold text-white">Ver mi diagnóstico anterior</h3>
-                  <p className="text-sm text-white/50">Ingresá tu DNI para acceder a tu plan personalizado</p>
-                </div>
+        <GlassCard className="p-6 space-y-4 border-t border-white/10 shadow-2xl">
+          <div className="space-y-1.5">
+            <Label className="text-white/80 text-sm">DNI</Label>
+            <Input
+              placeholder="Ingresá tu DNI"
+              className="bg-black/20 border-white/10 h-12 text-base focus:ring-primary/50 placeholder:text-white/20"
+              value={returningDni}
+              onChange={e => { setReturningDni(e.target.value); setReturnError(""); }}
+            />
+            {returnError && <p className="text-xs text-red-400">{returnError}</p>}
+          </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-white/80 text-sm">DNI</Label>
-                  <Input
-                    placeholder="Ingresá tu DNI"
-                    className="bg-black/20 border-white/10 h-12 text-base focus:ring-primary/50 placeholder:text-white/20"
-                    value={returningDni}
-                    onChange={e => { setReturningDni(e.target.value); setReturnError(""); }}
-                  />
-                  {returnError && (
-                    <p className="text-xs text-red-400">{returnError}</p>
-                  )}
-                </div>
-
-                <Button
-                  onClick={handleReturning}
-                  disabled={loadingReturn}
-                  className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:to-primary transition-all shadow-lg shadow-primary/25"
-                >
-                  {loadingReturn ? "Buscando..." : "Ver mi diagnóstico"} <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-
-                <p className="text-xs text-center text-white/30">
-                  Si no hiciste un diagnóstico antes, seleccioná "Nuevo diagnóstico"
-                </p>
-              </GlassCard>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Botón ayuda urgente */}
-        <button
-          onClick={handleUrgente}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm font-bold hover:bg-red-500/20 transition-all"
-        >
-          <MessageCircle className="w-4 h-4" />
-          Necesito ayuda urgente
-        </button>
-
-        {/* Dashboard link */}
-        <Link href="/dashboard">
-          <Button variant="outline" className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 text-sm text-white/50">
-            Ver Dashboard Institucional
+          <Button
+            onClick={handleReturning}
+            disabled={loadingReturn}
+            className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 transition-all shadow-lg shadow-primary/25"
+          >
+            {loadingReturn ? "Buscando..." : "Ver mi diagnóstico"} <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
-        </Link>
+        </GlassCard>
+
+        <button onClick={() => setMode("landing")} className="w-full text-xs text-white/30 hover:text-white/50 transition-colors py-2">
+          ← Volver
+        </button>
       </motion.div>
     </div>
   );
