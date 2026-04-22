@@ -8,6 +8,7 @@ import { hashDNI } from "@/lib/korai-logic";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import oraiMujer from "@/lib/oraiMujer";
 
 const BARRIOS_CABA = [
   "Agronomía", "Almagro", "Balvanera", "Barracas", "Belgrano", "Boedo",
@@ -126,38 +127,18 @@ export default function Welcome() {
             <p className="text-white/50 text-sm">Tu asistente de bienestar comunitario</p>
           </div>
 
-          {/* Ilustración SVG */}
+          {/* Ilustración real */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
-            className="w-full bg-gradient-to-b from-primary/20 to-primary/5 border border-primary/20 rounded-[32px] p-8 overflow-hidden relative"
+            className="w-full flex items-center justify-center"
           >
-            <div className="absolute top-4 right-4 w-20 h-20 bg-primary/10 rounded-full blur-xl" />
-            <div className="absolute bottom-4 left-4 w-16 h-16 bg-cyan-500/10 rounded-full blur-xl" />
-            <svg viewBox="0 0 200 170" className="w-full max-w-[220px] mx-auto" fill="none">
-              <ellipse cx="100" cy="140" rx="70" ry="12" fill="rgba(124,92,255,0.08)" />
-              <ellipse cx="100" cy="105" rx="28" ry="35" fill="rgba(124,92,255,0.25)" />
-              <circle cx="100" cy="62" r="22" fill="rgba(255,220,190,0.9)" />
-              <ellipse cx="100" cy="49" rx="22" ry="14" fill="rgba(80,50,120,0.8)" />
-              <ellipse cx="78" cy="62" rx="8" ry="16" fill="rgba(80,50,120,0.8)" />
-              <ellipse cx="122" cy="62" rx="8" ry="16" fill="rgba(80,50,120,0.8)" />
-              <path d="M92 64 Q96 61 100 64" stroke="rgba(80,50,120,0.6)" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M100 64 Q104 61 108 64" stroke="rgba(80,50,120,0.6)" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M94 70 Q100 75 106 70" stroke="rgba(200,100,100,0.7)" strokeWidth="1.5" strokeLinecap="round" />
-              <ellipse cx="85" cy="108" rx="10" ry="8" fill="rgba(255,220,190,0.9)" />
-              <ellipse cx="115" cy="108" rx="10" ry="8" fill="rgba(255,220,190,0.9)" />
-              <path d="M96 105 C96 102 92 99 92 103 C92 107 100 112 100 112 C100 112 108 107 108 103 C108 99 104 102 104 105 C104 102 100 99 100 102 C100 99 96 102 96 105Z" fill="rgba(124,92,255,0.8)" />
-              <path d="M30 128 Q20 108 35 98 Q45 88 40 108" fill="rgba(34,197,94,0.3)" />
-              <path d="M42 133 Q35 116 48 108 Q55 100 52 118" fill="rgba(34,197,94,0.25)" />
-              <path d="M170 128 Q180 108 165 98 Q155 88 160 108" fill="rgba(34,197,94,0.3)" />
-              <path d="M158 133 Q165 116 152 108 Q145 100 148 118" fill="rgba(34,197,94,0.25)" />
-              <circle cx="55" cy="50" r="14" fill="rgba(124,92,255,0.15)" />
-              <path d="M51 49 C51 47 49 45 49 48 C49 51 55 54 55 54 C55 54 61 51 61 48 C61 45 59 47 59 49 C59 47 55 44 55 47 C55 44 51 47 51 49Z" fill="rgba(124,92,255,0.6)" />
-              <circle cx="148" cy="45" r="14" fill="rgba(0,200,200,0.15)" />
-              <circle cx="148" cy="41" r="5" fill="rgba(0,200,200,0.5)" />
-              <ellipse cx="148" cy="53" rx="7" ry="6" fill="rgba(0,200,200,0.4)" />
-            </svg>
+            <img
+              src={oraiMujer}
+              alt="KORAI ilustración"
+              className="w-64 h-64 object-contain drop-shadow-[0_0_40px_rgba(124,92,255,0.4)]"
+            />
           </motion.div>
 
           {/* Texto empático */}
