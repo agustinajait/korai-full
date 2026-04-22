@@ -137,7 +137,7 @@ export default function Welcome() {
             <img
               src={oraiMujer}
               alt="KORAI ilustración"
-              className="w-64 h-64 object-contain drop-shadow-[0_0_40px_rgba(124,92,255,0.4)]"
+              className="w-64 h-64 object-contain drop-shadow-[0_0_40px_rgba(124,92,255,0.4)] mix-blend-screen"
             />
           </motion.div>
 
