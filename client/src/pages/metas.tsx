@@ -208,8 +208,15 @@ export default function Metas() {
         </Button>
         <Button
           variant="outline"
+          onClick={() => setLocation("/survey")}
+          className="flex-1 h-12 border-white/10 bg-white/5"
+        >
+          Ver mi diagnóstico
+        </Button>
+        <Button
+          variant="outline"
           onClick={() => setLocation("/")}
-          className="h-12 border-white/10 bg-white/5"
+          className="flex-1 h-12 border-white/10 bg-white/5"
           data-testid="button-go-inicio"
         >
           Inicio

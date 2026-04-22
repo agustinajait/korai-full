@@ -321,6 +321,13 @@ export default function Prioridades() {
       <div className="flex gap-3">
         <Button
           variant="outline"
+          onClick={() => setLocation("/survey")}
+          className="flex-1 h-11 border-white/10 bg-white/5"
+        >
+          Ver mi diagnóstico
+        </Button>
+        <Button
+          variant="outline"
           onClick={() => setLocation("/")}
           className="flex-1 h-11 border-white/10 bg-white/5"
           data-testid="button-go-inicio"

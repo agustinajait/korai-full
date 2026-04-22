@@ -52,22 +52,25 @@ async function submitToSupabase(payload: {
 
 export default function Survey() {
   const [_, setLocation] = useLocation();
+  const savedAnswers = (() => { try { const a = localStorage.getItem("korai_user_answers"); return a ? JSON.parse(a) : {}; } catch { return {}; } })();
+  const hasSavedAnswers = Object.keys(savedAnswers).length > 0;
+
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>(savedAnswers);
   const [comment, setComment] = useState("");
   const [showCommentScreen, setShowCommentScreen] = useState(false);
-  const [showResultsScreen, setShowResultsScreen] = useState(false);
+  const [showResultsScreen, setShowResultsScreen] = useState(hasSavedAnswers);
   const [selectedBenefit, setSelectedBenefit] = useState<string | null>(null);
   const [showLevelUp, setShowLevelUp] = useState<{show: boolean, dimension: string}>({show: false, dimension: ""});
-  const [sello, setSello] = useState<Sello | null>(null);
+  const [sello, setSello] = useState<Sello | null>(() => { try { const s = localStorage.getItem("korai_user_sello_v1"); return s ? JSON.parse(s) : null; } catch { return null; } });
   const [isPending, setIsPending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const context = JSON.parse(localStorage.getItem("korai_context") || "{}");
 
-  // Redirect if no context
+  // Redirect if no context AND no saved answers
   useEffect(() => {
-    if (!context.city) setLocation("/");
+    if (!context.city && !hasSavedAnswers) setLocation("/");
   }, [context, setLocation]);
 
   const indicators = INSTRUMENT.indicators;
