@@ -132,7 +132,7 @@ export default function Welcome() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="w-60 h-60 object-contain drop-shadow-[0_0_30px_rgba(124,92,255,0.25)]"
+            className="w-72 h-72 object-contain drop-shadow-[0_0_30px_rgba(124,92,255,0.25)]"
           />
 
           {/* Título */}
