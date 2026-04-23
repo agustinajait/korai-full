@@ -9,6 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import oraiMujer from "@/lib/oraiMujer";
+import koraiLogo from "@/lib/koraiLogo";
+
+// Inyectar Montserrat si no está cargada
+if (typeof document !== "undefined" && !document.getElementById("montserrat-font")) {
+  const link = document.createElement("link");
+  link.id = "montserrat-font";
+  link.rel = "stylesheet";
+  link.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap";
+  document.head.appendChild(link);
+}
 
 const BARRIOS_CABA = [
   "Agronomía", "Almagro", "Balvanera", "Barracas", "Belgrano", "Boedo",
@@ -116,16 +126,7 @@ export default function Welcome() {
           transition={{ duration: 0.6 }}
           className="w-full max-w-sm flex flex-col items-center text-center gap-3"
         >
-          {/* Logo — compacto, horizontal */}
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow shadow-purple-300/50">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <div className="text-2xl font-black text-[#2D1B69] tracking-tight">KORAI</div>
-          </div>
-          <p className="text-[#7B6BAE] text-xs -mt-1">Tu asistente de bienestar comunitario</p>
-
-          {/* Ilustración — más chica */}
+          {/* Ilustración orai mujer */}
           <motion.img
             src={oraiMujer}
             alt="KORAI ilustración"
@@ -135,9 +136,16 @@ export default function Welcome() {
             className="w-72 h-72 object-contain drop-shadow-[0_0_30px_rgba(124,92,255,0.25)]"
           />
 
+          {/* Logo + texto — debajo de la imagen */}
+          <div className="flex items-center gap-2 mt-2">
+            <img src={koraiLogo} alt="KORAI logo" className="w-9 h-9 object-contain" />
+            <div style={{fontFamily: "'Montserrat', sans-serif"}} className="text-2xl font-black text-[#2D1B69] tracking-tight">KORAI</div>
+          </div>
+          <p style={{fontFamily: "'Montserrat', sans-serif"}} className="text-[#7B6BAE] text-xs -mt-1">Tu asistente de bienestar comunitario</p>
+
           {/* Título */}
-          <div>
-            <h2 className="text-xl font-black text-[#2D1B69] leading-tight">
+          <div className="mt-1">
+            <h2 style={{fontFamily: "'Montserrat', sans-serif"}} className="text-xl font-black text-[#2D1B69] leading-tight">
               Estás a punto de comenzar.
             </h2>
             <Heart className="w-3.5 h-3.5 text-purple-400 mx-auto mt-1" />
