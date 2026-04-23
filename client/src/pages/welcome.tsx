@@ -109,49 +109,42 @@ export default function Welcome() {
   // PANTALLA 1: Landing con ilustración
   if (mode === "landing") {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 relative overflow-hidden bg-[#F0EEFF]">
-
+      <div className="min-h-screen w-full flex flex-col items-center justify-center px-5 py-4 relative overflow-hidden bg-[#F0EEFF]">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="w-full max-w-sm flex flex-col items-center text-center space-y-6"
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-sm flex flex-col items-center text-center gap-3"
         >
-          {/* Logo con ícono */}
-          <div className="flex flex-col items-center space-y-2">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-300/50">
-              <Sparkles className="w-8 h-8 text-white" />
+          {/* Logo — compacto, horizontal */}
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow shadow-purple-300/50">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <div className="text-4xl font-black text-[#2D1B69] tracking-tight">KORAI</div>
-            <p className="text-[#7B6BAE] text-sm">Tu asistente de bienestar comunitario</p>
+            <div className="text-2xl font-black text-[#2D1B69] tracking-tight">KORAI</div>
           </div>
+          <p className="text-[#7B6BAE] text-xs -mt-1">Tu asistente de bienestar comunitario</p>
 
-          {/* Ilustración */}
-          <motion.div
+          {/* Ilustración — más chica */}
+          <motion.img
+            src={oraiMujer}
+            alt="KORAI ilustración"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="w-full flex items-center justify-center"
-          >
-            <img
-              src={oraiMujer}
-              alt="KORAI ilustración"
-              className="w-80 h-80 object-contain drop-shadow-[0_0_40px_rgba(124,92,255,0.3)]"
-            />
-          </motion.div>
+            transition={{ delay: 0.2 }}
+            className="w-52 h-52 object-contain drop-shadow-[0_0_30px_rgba(124,92,255,0.25)]"
+          />
 
           {/* Título */}
-          <div className="space-y-1">
-            <h2 className="text-2xl font-black text-[#2D1B69] leading-tight">
+          <div>
+            <h2 className="text-xl font-black text-[#2D1B69] leading-tight">
               Estás a punto de comenzar.
             </h2>
-            <div className="flex justify-center">
-              <Heart className="w-4 h-4 text-purple-400 mt-1" />
-            </div>
+            <Heart className="w-3.5 h-3.5 text-purple-400 mx-auto mt-1" />
           </div>
 
-          {/* 2 mensajes */}
-          <div className="space-y-3 w-full">
+          {/* 2 mensajes — más compactos */}
+          <div className="space-y-2 w-full">
             {[
               { icon: CheckCircle, text: "No hay respuestas correctas o incorrectas." },
               { icon: Heart, text: "Contanos cómo estás." },
@@ -160,35 +153,35 @@ export default function Welcome() {
                 key={i}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + i * 0.1 }}
-                className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 border border-purple-100"
+                transition={{ delay: 0.3 + i * 0.1 }}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/70 border border-purple-100"
               >
-                <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-4 h-4 text-purple-500" />
+                <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-3.5 h-3.5 text-purple-500" />
                 </div>
-                <p className="text-sm text-[#2D1B69] font-medium text-left">{text}</p>
+                <p className="text-xs text-[#2D1B69] font-medium text-left">{text}</p>
               </motion.div>
             ))}
           </div>
 
-          {/* Botón principal */}
-          <div className="w-full space-y-3">
+          {/* Botones */}
+          <div className="w-full space-y-2 pt-1">
             <Button
               onClick={() => setMode("form")}
-              className="w-full h-14 text-lg font-bold rounded-2xl bg-[#5B21B6] hover:bg-[#4C1D95] active:scale-[0.98] transition-all shadow-lg shadow-purple-400/40 flex items-center justify-center gap-3"
+              className="w-full h-12 text-base font-bold rounded-2xl bg-[#5B21B6] hover:bg-[#4C1D95] active:scale-[0.98] transition-all shadow-lg shadow-purple-400/40 flex items-center justify-center gap-2"
             >
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                <ArrowRight className="w-4 h-4" />
+              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                <ArrowRight className="w-3.5 h-3.5" />
               </div>
               Comenzar diagnóstico
             </Button>
             <button
               onClick={() => setMode("returning")}
-              className="w-full py-2 text-sm text-[#7B6BAE] hover:text-[#2D1B69] transition-colors"
+              className="w-full py-1.5 text-xs text-[#7B6BAE] hover:text-[#2D1B69] transition-colors"
             >
               Ya hice mi diagnóstico → Ver mis resultados
             </button>
-            <p className="text-xs text-[#9D8EC4] text-center">🔒 Tu información es confidencial · Te va a llevar menos de 3 minutos</p>
+            <p className="text-[10px] text-[#9D8EC4] text-center">🔒 Tu información es confidencial · Menos de 3 minutos</p>
           </div>
         </motion.div>
       </div>
