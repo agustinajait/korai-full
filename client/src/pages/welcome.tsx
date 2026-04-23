@@ -126,6 +126,15 @@ export default function Welcome() {
           transition={{ duration: 0.6 }}
           className="w-full max-w-sm flex flex-col items-center text-center gap-3"
         >
+          {/* Logo + nombre — arriba, centrado */}
+          <div className="flex flex-col items-center gap-1 pt-2">
+            <div className="flex items-center gap-2">
+              <img src={koraiLogo} alt="KORAI logo" className="w-8 h-8 object-contain" />
+              <span style={{fontFamily: "'Montserrat', sans-serif"}} className="text-2xl font-black text-[#2D1B69] tracking-tight">KORAI</span>
+            </div>
+            <p style={{fontFamily: "'Montserrat', sans-serif"}} className="text-[#7B6BAE] text-xs">Tu asistente de bienestar comunitario</p>
+          </div>
+
           {/* Ilustración orai mujer */}
           <motion.img
             src={oraiMujer}
@@ -135,13 +144,6 @@ export default function Welcome() {
             transition={{ delay: 0.2 }}
             className="w-72 h-72 object-contain drop-shadow-[0_0_30px_rgba(124,92,255,0.25)]"
           />
-
-          {/* Logo + texto — debajo de la imagen */}
-          <div className="flex items-center gap-2 mt-2">
-            <img src={koraiLogo} alt="KORAI logo" className="w-9 h-9 object-contain" />
-            <div style={{fontFamily: "'Montserrat', sans-serif"}} className="text-2xl font-black text-[#2D1B69] tracking-tight">KORAI</div>
-          </div>
-          <p style={{fontFamily: "'Montserrat', sans-serif"}} className="text-[#7B6BAE] text-xs -mt-1">Tu asistente de bienestar comunitario</p>
 
           {/* Título */}
           <div className="mt-1">
