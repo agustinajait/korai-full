@@ -156,12 +156,21 @@ serve(async (req) => {
     const campaign_id = body?.campaign_id;
     const dni = body?.dni;
     const answers = body?.answers;
-    const territorio =
-      typeof body?.territorio === "string" ? body.territorio : null;
+    const territorioRaw = body?.territorio;
+    let territorio: unknown = null;
+    if (territorioRaw !== null && territorioRaw !== undefined) {
+      if (typeof territorioRaw === "string") {
+        try { territorio = JSON.parse(territorioRaw); } catch { territorio = territorioRaw; }
+      } else if (typeof territorioRaw === "object") {
+        territorio = territorioRaw;
+      }
+    }
     const perfil_contextual =
-      typeof body?.perfil_contextual === "string"
+      body?.perfil_contextual == null
+        ? null
+        : typeof body.perfil_contextual === "string"
         ? body.perfil_contextual
-        : null;
+        : JSON.stringify(body.perfil_contextual);
 
     if (
       !campaign_id ||
