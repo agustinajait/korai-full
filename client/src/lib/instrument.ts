@@ -15,83 +15,108 @@ export interface Indicator {
   id: IndicatorId;
   dimension: DimensionId;
   label: string;
-  invert?: boolean; // if true, green/red logic is swapped (e.g. "Do you have debt?")
+  invert?: boolean;
 }
 
 export const INSTRUMENT = {
   dimensions: [
-    { id: "salud", name: "Salud", emoji: "🩺", description: "Bienestar físico y acceso a servicios" },
-    { id: "educacion", name: "Educación", "emoji": "📚", description: "Acceso al conocimiento y formación" },
-    { id: "trabajo", name: "Trabajo", "emoji": "💼", description: "Empleo, ingresos y seguridad social" },
-    { id: "vivienda", name: "Vivienda", "emoji": "🏠", description: "Calidad del hogar y servicios básicos" },
-    { id: "prevision", name: "Previsión", "emoji": "🧾", description: "Capacidad de ahorro y futuro" },
-    { id: "cultura", name: "Cultura", "emoji": "🤝", description: "Vida social y recreación" }
+    { id: "empleo",    name: "Empleo",          emoji: "💼", description: "Trabajo, ingresos y condiciones laborales" },
+    { id: "educacion", name: "Educación",        emoji: "📚", description: "Trayectoria educativa y formación" },
+    { id: "salud",     name: "Salud",            emoji: "🩺", description: "Bienestar físico y acceso a servicios" },
+    { id: "vivienda",  name: "Vivienda",         emoji: "🏠", description: "Situación habitacional y servicios básicos" },
+    { id: "ingresos",  name: "Ingresos",         emoji: "🧾", description: "Situación económica y programas de apoyo" },
+    { id: "red",       name: "Red / Vínculos",   emoji: "🤝", description: "Redes de apoyo y participación comunitaria" },
   ] as Dimension[],
-  
-  indicators: [
-    // SALUD (8)
-    { id: "salud_01", dimension: "salud", label: "Nos alimentamos bien todos los días" },
-    { id: "salud_02", dimension: "salud", label: "Tenemos acceso rápido a atención médica" },
-    { id: "salud_03", dimension: "salud", label: "Contamos con medicamentos cuando los necesitamos" },
-    { id: "salud_04", dimension: "salud", label: "Realizamos controles preventivos anuales" },
-    { id: "salud_05", dimension: "salud", label: "Tenemos acceso a salud mental/apoyo psicológico" },
-    { id: "salud_06", dimension: "salud", label: "Contamos con vacunación al día" },
-    { id: "salud_07", dimension: "salud", label: "No hay contaminación ambiental cerca de casa" },
-    { id: "salud_08", dimension: "salud", label: "Tenemos espacios verdes para actividad física" },
-    
-    // EDUCACION (8)
-    { id: "educacion_01", dimension: "educacion", label: "Los niños/jóvenes asisten a la escuela regularmente" },
-    { id: "educacion_02", dimension: "educacion", label: "Tenemos acceso a internet para estudiar/aprender" },
-    { id: "educacion_03", dimension: "educacion", label: "Los adultos tienen primaria/secundaria completa" },
-    { id: "educacion_04", dimension: "educacion", label: "Contamos con lugar tranquilo para estudiar" },
-    { id: "educacion_05", dimension: "educacion", label: "Accedemos a libros y material educativo" },
-    { id: "educacion_06", dimension: "educacion", label: "Hay jardines de infantes cerca de casa" },
-    { id: "educacion_07", dimension: "educacion", label: "Los jóvenes tienen acceso a formación técnica/universitaria" },
-    { id: "educacion_08", dimension: "educacion", label: "Participamos en talleres o cursos de oficio" },
 
-    // TRABAJO (8)
-    { id: "trabajo_01", dimension: "trabajo", label: "Tenemos ingresos estables mes a mes" },
-    { id: "trabajo_02", dimension: "trabajo", label: "Trabajamos en condiciones seguras y dignas" },
-    { id: "trabajo_03", dimension: "trabajo", label: "El ingreso nos alcanza para cubrir gastos básicos" },
-    { id: "trabajo_04", dimension: "trabajo", label: "Tenemos aportes jubilatorios y obra social" },
-    { id: "trabajo_05", dimension: "trabajo", label: "El tiempo de viaje al trabajo es razonable" },
-    { id: "trabajo_06", dimension: "trabajo", label: "No sufrimos discriminación en el ámbito laboral" },
-    { id: "trabajo_07", dimension: "trabajo", label: "Tenemos herramientas necesarias para trabajar" },
-    { id: "trabajo_08", dimension: "trabajo", label: "Accedemos a capacitaciones para mejorar el empleo" },
+  indicators: [
+    // EMPLEO (8)
+    { id: "empleo_01", dimension: "empleo", label: "Tengo ingresos estables mes a mes" },
+    { id: "empleo_02", dimension: "empleo", label: "Trabajo en condiciones seguras y dignas" },
+    { id: "empleo_03", dimension: "empleo", label: "Mi ingreso me alcanza para cubrir los gastos básicos" },
+    { id: "empleo_04", dimension: "empleo", label: "Tengo aportes jubilatorios y obra social" },
+    { id: "empleo_05", dimension: "empleo", label: "El tiempo que tardo en llegar al trabajo es razonable" },
+    { id: "empleo_06", dimension: "empleo", label: "No sufro discriminación en el ámbito laboral" },
+    { id: "empleo_07", dimension: "empleo", label: "Tengo las herramientas necesarias para trabajar" },
+    { id: "empleo_08", dimension: "empleo", label: "Accedo a capacitaciones para mejorar mi empleo" },
+
+    // EDUCACION (8)
+    { id: "educacion_01", dimension: "educacion", label: "Completé el secundario" },
+    { id: "educacion_02", dimension: "educacion", label: "Tengo acceso a internet para estudiar o capacitarme" },
+    { id: "educacion_03", dimension: "educacion", label: "Los chicos de mi casa asisten a la escuela regularmente" },
+    { id: "educacion_04", dimension: "educacion", label: "Cuento con un lugar tranquilo para estudiar en casa" },
+    { id: "educacion_05", dimension: "educacion", label: "Tengo acceso a libros y material educativo" },
+    { id: "educacion_06", dimension: "educacion", label: "Me interesa capacitarme en algún oficio o actividad" },
+    { id: "educacion_07", dimension: "educacion", label: "Tengo disponibilidad para estudiar o capacitarme" },
+    { id: "educacion_08", dimension: "educacion", label: "Participo o me interesa participar en talleres o cursos" },
+
+    // SALUD (8)
+    { id: "salud_01", dimension: "salud", label: "Me alimento bien todos los días" },
+    { id: "salud_02", dimension: "salud", label: "Tengo acceso rápido a atención médica cuando la necesito" },
+    { id: "salud_03", dimension: "salud", label: "Cuento con los medicamentos que necesito" },
+    { id: "salud_04", dimension: "salud", label: "Realizo controles preventivos de salud" },
+    { id: "salud_05", dimension: "salud", label: "Tengo acceso a apoyo en salud mental si lo necesito" },
+    { id: "salud_06", dimension: "salud", label: "Tengo mis vacunas al día" },
+    { id: "salud_07", dimension: "salud", label: "Tengo cobertura médica (obra social, PAMI u otra)" },
+    { id: "salud_08", dimension: "salud", label: "Puedo acercarme a un centro de salud si lo necesito" },
 
     // VIVIENDA (8)
-    { id: "vivienda_01", dimension: "vivienda", label: "Nuestra casa es segura (techos, paredes)" },
-    { id: "vivienda_02", dimension: "vivienda", label: "Tenemos agua potable y saneamiento" },
-    { id: "vivienda_03", dimension: "vivienda", label: "Nos sentimos seguros en nuestro barrio" },
-    { id: "vivienda_04", dimension: "vivienda", label: "Contamos con recolección de residuos regular" },
-    { id: "vivienda_05", dimension: "vivienda", label: "Hay iluminación pública en nuestra calle" },
-    { id: "vivienda_06", dimension: "vivienda", label: "La vivienda tiene ventilación y luz natural" },
-    { id: "vivienda_07", dimension: "vivienda", label: "No hay hacinamiento (suficientes cuartos)" },
-    { id: "vivienda_08", dimension: "vivienda", label: "Tenemos acceso a gas de red o seguro" },
+    { id: "vivienda_01", dimension: "vivienda", label: "Mi casa es segura (techo, paredes, piso)" },
+    { id: "vivienda_02", dimension: "vivienda", label: "Tengo agua potable y saneamiento en mi hogar" },
+    { id: "vivienda_03", dimension: "vivienda", label: "Me siento seguro/a en mi barrio" },
+    { id: "vivienda_04", dimension: "vivienda", label: "Tengo acceso regular a recolección de residuos" },
+    { id: "vivienda_05", dimension: "vivienda", label: "Hay iluminación pública en mi calle" },
+    { id: "vivienda_06", dimension: "vivienda", label: "Mi vivienda tiene buena ventilación y luz natural" },
+    { id: "vivienda_07", dimension: "vivienda", label: "No hay hacinamiento en mi hogar" },
+    { id: "vivienda_08", dimension: "vivienda", label: "No estoy en riesgo de perder mi vivienda" },
 
-    // PREVISION (8)
-    { id: "prevision_01", dimension: "prevision", label: "Podemos afrontar un gasto inesperado" },
-    { id: "prevision_02", dimension: "prevision", label: "Tenemos ahorros para el futuro" },
-    { id: "prevision_03", dimension: "prevision", label: "Contamos con seguros de vida o accidentes" },
-    { id: "prevision_04", dimension: "prevision", label: "Podemos planificar gastos a 6 meses" },
-    { id: "prevision_05", dimension: "prevision", label: "No tenemos deudas que no podamos pagar" },
-    { id: "prevision_06", dimension: "prevision", label: "Contamos con apoyo familiar ante crisis" },
-    { id: "prevision_07", dimension: "prevision", label: "Tenemos conocimiento de educación financiera" },
-    { id: "prevision_08", dimension: "prevision", label: "Nuestros bienes están protegidos" },
+    // INGRESOS (8)
+    { id: "ingresos_01", dimension: "ingresos", label: "Tengo ingresos actualmente" },
+    { id: "ingresos_02", dimension: "ingresos", label: "Mis ingresos son estables" },
+    { id: "ingresos_03", dimension: "ingresos", label: "Recibo algún programa o ayuda del Estado" },
+    { id: "ingresos_04", dimension: "ingresos", label: "Mis ingresos alcanzan para cubrir los gastos básicos" },
+    { id: "ingresos_05", dimension: "ingresos", label: "Puedo afrontar un gasto inesperado" },
+    { id: "ingresos_06", dimension: "ingresos", label: "Puedo planificar mis gastos con anticipación" },
+    { id: "ingresos_07", dimension: "ingresos", label: "No tengo deudas que no pueda pagar" },
+    { id: "ingresos_08", dimension: "ingresos", label: "Cuento con apoyo familiar ante una crisis económica" },
 
-    // CULTURA (8)
-    { id: "cultura_01", dimension: "cultura", label: "Participamos en actividades del barrio" },
-    { id: "cultura_02", dimension: "cultura", label: "Tenemos momentos de descanso y recreación" },
-    { id: "cultura_03", dimension: "cultura", label: "Accedemos a centros culturales o bibliotecas" },
-    { id: "cultura_04", dimension: "cultura", label: "Nos sentimos parte de la identidad local" },
-    { id: "cultura_05", dimension: "cultura", label: "Hay respeto por la diversidad cultural" },
-    { id: "cultura_06", dimension: "cultura", label: "Podemos practicar deportes gratuitamente" },
-    { id: "cultura_07", dimension: "cultura", label: "Hay oferta de eventos culturales en la zona" },
-    { id: "cultura_08", dimension: "cultura", label: "Contamos con redes de apoyo vecinal" }
+    // RED / VINCULOS (8)
+    { id: "red_01", dimension: "red", label: "Tengo alguien que puede ayudarme en una urgencia" },
+    { id: "red_02", dimension: "red", label: "Tengo alguien que puede recomendarme para un trabajo" },
+    { id: "red_03", dimension: "red", label: "Participo en algún espacio comunitario o grupal" },
+    { id: "red_04", dimension: "red", label: "Me siento parte de mi barrio o comunidad" },
+    { id: "red_05", dimension: "red", label: "Tengo personas de confianza con quienes hablar" },
+    { id: "red_06", dimension: "red", label: "Hay respeto y convivencia sana en mi entorno" },
+    { id: "red_07", dimension: "red", label: "Accedo a actividades recreativas o culturales cerca" },
+    { id: "red_08", dimension: "red", label: "Me siento contenido/a por mi red de vínculos" },
   ] as Indicator[]
 };
 
-export const CITIES = ["Berazategui", "Quilmes", "Florencio Varela", "Ezpeleta", "Bernal", "Avellaneda"];
+export const CITIES = [
+  // GBA Sur
+  "Berazategui", "Quilmes", "Florencio Varela", "Ezpeleta", "Bernal", "Avellaneda",
+  "Lanús", "Lomas de Zamora", "Banfield", "Temperley", "Adrogué", "Monte Grande",
+  // GBA Norte
+  "San Isidro", "San Fernando", "Tigre", "Vicente López", "Olivos", "Martínez",
+  // GBA Oeste
+  "Morón", "Ituzaingó", "Castelar", "Merlo", "Moreno", "La Matanza", "Ramos Mejía",
+  // CABA
+  "Palermo", "Flores", "Caballito", "Villa Lugano", "Barracas", "La Boca", "Balvanera",
+  "Villa Soldati", "Mataderos", "Liniers", "Parque Patricios", "Nueva Pompeya",
+  // Interior
+  "Córdoba Capital", "Rosario", "Mendoza Capital", "Tucumán Capital", "Mar del Plata",
+  "La Plata", "Bahía Blanca", "Salta Capital", "Resistencia", "Posadas",
+];
+
+export const BARRIOS_CABA = [
+  "Palermo", "Flores", "Caballito", "Villa Lugano", "Barracas", "La Boca",
+  "Balvanera", "Villa Soldati", "Mataderos", "Liniers", "Parque Patricios",
+  "Nueva Pompeya", "Villa Urquiza", "Saavedra", "Núñez", "Belgrano",
+  "Coghlan", "Colegiales", "Chacarita", "Villa Crespo", "Almagro",
+  "Boedo", "San Cristóbal", "Constitución", "San Telmo", "Monserrat",
+  "Puerto Madero", "Retiro", "Recoleta", "Villa Pueyrredón", "Agronomía",
+  "Versalles", "Villa Real", "Monte Castro", "Floresta", "Vélez Sársfield",
+  "Villa Devoto", "Villa del Parque", "Villa Santa Rita", "Villa Gral. Mitre",
+];
 
 export const CHOICE_COLORS = {
   rojo: "hsl(0, 84%, 60%)",
