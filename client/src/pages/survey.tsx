@@ -222,7 +222,7 @@ export default function Survey() {
             <header className="space-y-2">
               <h1 className="text-4xl font-black">Tu Diagnóstico</h1>
               <p className="text-muted-foreground text-lg">
-                Este es el resultado de tu autodiagnóstico. Tu mirada es fundamental para entender la realidad de tu barrio.
+                Este es el resultado de tu autodiagnóstico. Tu mirada es fundamental para entender tu realidad.
               </p>
             </header>
 
@@ -265,24 +265,33 @@ export default function Survey() {
             </div>
           </div>
 
-          <aside className="w-full md:w-80 space-y-6">
-            <div className="space-y-3">
+          <div className="w-full md:w-80 space-y-4">
+
+            {/* CTA card */}
+            <div className="rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/30 p-5 space-y-3">
+              <div className="text-sm font-black text-white leading-snug">
+                Identificamos qué está bloqueando tu bienestar.
+              </div>
+              <p className="text-xs text-white/60 leading-relaxed">
+                Tu plan de acción personalizado tiene los pasos concretos y los recursos disponibles para ayudarte a avanzar hoy.
+              </p>
               <Button
                 onClick={() => setLocation("/prioridades")}
                 className="w-full h-12 font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
                 data-testid="button-go-prioridades"
               >
-                <Target className="w-5 h-5" /> Tu Plan
-              </Button>
-              <Button
-                onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
-                variant="outline"
-                className="w-full h-12 border-red-500/20 bg-red-500/5 text-red-400 font-bold rounded-xl hover:bg-red-500/10"
-              >
-                Salir
+                <Target className="w-5 h-5" /> Ver mi plan de acción
               </Button>
             </div>
-          </aside>
+
+            <Button
+              onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
+              variant="outline"
+              className="w-full h-10 border-red-500/20 bg-red-500/5 text-red-400 font-bold rounded-xl hover:bg-red-500/10 text-sm"
+            >
+              Salir
+            </Button>
+          </div>
         </div>
       </div>
     );
