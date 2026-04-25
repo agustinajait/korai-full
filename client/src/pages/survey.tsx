@@ -210,14 +210,14 @@ function ProfundizacionScreen({ dimensiones, onComplete }: { dimensiones: string
   const valorActual = respuestas[preguntaActual.id];
 
   return (
-    <div className="min-h-screen pt-20 pb-10 px-4 flex flex-col items-center max-w-xl mx-auto">
+    <div className="min-h-screen pt-20 pb-10 px-4 flex flex-col items-center max-w-xl mx-auto bg-[#F4F0FF]">
       {/* Progress */}
       <div className="w-full mb-8">
-        <div className="flex justify-between text-xs text-muted-foreground mb-2">
+        <div className="flex justify-between text-xs text-[#6B5FA0] mb-2">
           <span>{dimInfo?.emoji} Profundizando en {dimInfo?.name}</span>
           <span>{pregActualNum} / {totalPregs}</span>
         </div>
-        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-[#DDD6FE] rounded-full overflow-hidden">
           <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${(pregActualNum / totalPregs) * 100}%` }} />
         </div>
       </div>
@@ -225,10 +225,10 @@ function ProfundizacionScreen({ dimensiones, onComplete }: { dimensiones: string
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full mb-6 p-4 rounded-2xl bg-primary/10 border border-primary/20"
+        className="w-full mb-6 p-4 rounded-2xl bg-[#EDE9FE] border border-[#C4B5FD]"
       >
-        <div className="text-sm font-black text-primary">{dimInfo?.emoji} Un poco más sobre {dimInfo?.name}</div>
-        <p className="text-xs text-muted-foreground mt-1">Estas preguntas nos ayudan a conectarte con los recursos correctos.</p>
+        <div className="text-sm font-black text-[#5B21B6]">{dimInfo?.emoji} Un poco más sobre {dimInfo?.name}</div>
+        <p className="text-xs text-[#6B5FA0] mt-1">Estas preguntas nos ayudan a conectarte con los recursos correctos.</p>
       </motion.div>
 
       <motion.div key={preguntaActual.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full space-y-5">
@@ -240,7 +240,7 @@ function ProfundizacionScreen({ dimensiones, onComplete }: { dimensiones: string
             return (
               <motion.button key={op.value} whileTap={{ scale: 0.97 }}
                 onClick={() => handleRespuesta(preguntaActual.id, op.value, preguntaActual.tipo)}
-                className={`w-full p-4 rounded-2xl border text-left transition-all ${sel ? "bg-primary/20 border-primary text-white font-bold" : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"}`}
+                className={`w-full p-4 rounded-2xl border text-left transition-all ${sel ? "bg-primary/20 border-primary text-[#1E1040] font-bold" : "bg-white border-[#DDD6FE] text-[#3D2A8A] hover:bg-[#EDE9FE]"}`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${sel ? "border-primary bg-primary" : "border-white/30"}`}>
@@ -254,7 +254,7 @@ function ProfundizacionScreen({ dimensiones, onComplete }: { dimensiones: string
         </div>
 
         {preguntaActual.tipo === "multi" && (valorActual || []).length > 0 && (
-          <Button onClick={avanzar} className="w-full h-12 font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center gap-2">
+          <Button onClick={avanzar} className="w-full h-12 font-bold rounded-xl bg-[#5B21B6] flex items-center justify-center gap-2">
             Continuar <ChevronRight className="w-4 h-4" />
           </Button>
         )}
@@ -462,12 +462,12 @@ export default function Survey() {
 
   if (showResultsScreen && results) {
     return (
-      <div className="min-h-screen pt-20 pb-10 px-4 max-w-6xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500">
+      <div className="min-h-screen pt-20 pb-10 px-4 max-w-6xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500 bg-[#F4F0FF]">
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex-1 space-y-6">
             <header className="space-y-2">
               <h1 className="text-4xl font-black">Tu Diagnóstico</h1>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-[#6B5FA0] text-lg">
                 Este es el resultado de tu autodiagnóstico. Tu mirada es fundamental para entender tu realidad.
               </p>
             </header>
@@ -476,32 +476,32 @@ export default function Survey() {
               {INSTRUMENT.dimensions.map(d => {
                 const s = results.perDim[d.id];
                 return (
-                  <div key={d.id} className="p-6 rounded-3xl bg-white/5 border border-white/10 shadow-xl space-y-4 hover:bg-white/10 transition-colors">
+                  <div key={d.id} className="p-6 rounded-3xl bg-white border border-[#DDD6FE] shadow-sm space-y-4 hover:bg-[#EDE9FE] transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{d.emoji}</span>
                         <div>
                           <div className="font-bold text-base">{d.name}</div>
-                          <div className="text-[10px] text-muted-foreground uppercase">Nivel: {s.color}</div>
+                          <div className="text-[10px] text-[#6B5FA0] uppercase">Nivel: {s.color}</div>
                         </div>
                       </div>
                       <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${
-                        s.color === 'rojo' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
-                        s.color === 'amarillo' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
-                        'bg-green-500/20 text-green-400 border-green-500/30'
+                        s.color === 'rojo' ? 'bg-red-100 text-red-600 border-red-300' :
+                        s.color === 'amarillo' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
+                        'bg-green-100 text-green-700 border-green-500/30'
                       }`}>
                         {s.color}
                       </div>
                     </div>
 
-                    <div className="flex h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                    <div className="flex h-2 w-full bg-white/80 rounded-full overflow-hidden border border-[#EDE9FE]">
                       <div style={{ width: `${(s.v / s.n) * 100}%` }} className="bg-[#22c55e]" />
                       <div style={{ width: `${(s.a / s.n) * 100}%` }} className="bg-[#f59e0b]" />
                       <div style={{ width: `${(s.r / s.n) * 100}%` }} className="bg-[#ef4444]" />
                     </div>
 
                     <div className="pt-2">
-                      <p className="text-[11px] leading-relaxed text-white/70 italic bg-white/5 p-3 rounded-xl border border-white/5">
+                      <p className="text-[11px] leading-relaxed text-[#3D2A8A] italic bg-white/80 p-3 rounded-xl border border-[#EDE9FE]">
                         {s.color === 'rojo' ? 'Se detectan áreas de mejora urgente.' : s.color === 'amarillo' ? 'Existen aspectos que requieren atención.' : 'La situación es mayormente positiva.'}
                       </p>
                     </div>
@@ -514,16 +514,16 @@ export default function Survey() {
           <div className="w-full md:w-80 space-y-4">
 
             {/* CTA card */}
-            <div className="rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/30 p-5 space-y-3">
-              <div className="text-sm font-black text-white leading-snug">
+            <div className="rounded-2xl bg-[#EDE9FE] border border-[#C4B5FD] p-5 space-y-3">
+              <div className="text-sm font-black text-[#1E1040] leading-snug">
                 Identificamos qué está bloqueando tu bienestar.
               </div>
-              <p className="text-xs text-white/60 leading-relaxed">
+              <p className="text-xs text-[#6B5FA0] leading-relaxed">
                 Tu plan de acción personalizado tiene los pasos concretos y los recursos disponibles para ayudarte a avanzar hoy.
               </p>
               <Button
                 onClick={() => setLocation("/prioridades")}
-                className="w-full h-12 font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
+                className="w-full h-12 font-bold rounded-xl bg-[#5B21B6] shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
                 data-testid="button-go-prioridades"
               >
                 <Target className="w-5 h-5" /> Ver mi plan de acción
@@ -533,7 +533,7 @@ export default function Survey() {
             <Button
               onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
               variant="outline"
-              className="w-full h-10 border-red-500/20 bg-red-500/5 text-red-400 font-bold rounded-xl hover:bg-red-500/10 text-sm"
+              className="w-full h-10 border-red-400 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 text-sm"
             >
               Salir
             </Button>
@@ -546,7 +546,7 @@ export default function Survey() {
   if (!currentIndicator && !showCommentScreen) return null;
 
   return (
-    <div className="min-h-screen pt-20 pb-10 px-4 flex flex-col items-center max-w-xl mx-auto">
+    <div className="min-h-screen pt-20 pb-10 px-4 flex flex-col items-center max-w-xl mx-auto bg-[#F4F0FF]">
       <AnimatePresence>
         {showLevelUp.show && (
           <motion.div
@@ -555,7 +555,7 @@ export default function Survey() {
             exit={{ opacity: 0, scale: 0.8 }}
             className="fixed top-24 left-0 right-0 mx-auto w-max z-50 pointer-events-none"
           >
-            <div className="bg-gradient-to-r from-primary to-blue-600 text-white px-6 py-3 rounded-full font-bold shadow-2xl flex items-center gap-2 text-lg">
+            <div className="bg-gradient-to-r from-primary to-blue-600 text-[#1E1040] px-6 py-3 rounded-full font-bold shadow-2xl flex items-center gap-2 text-lg">
               <span>⭐</span> Nivel Completado: {showLevelUp.dimension}
             </div>
           </motion.div>
@@ -578,13 +578,13 @@ export default function Survey() {
             className="w-full space-y-6 mt-4"
           >
             <div className="space-y-2">
-               <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">
+               <span className="text-xs font-bold text-[#5B21B6] uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">
                  {dimension?.name}
                </span>
                <h2 className="text-3xl font-display font-bold leading-tight">
                  {currentIndicator.label}
                </h2>
-               <p className="text-muted-foreground text-lg">
+               <p className="text-[#6B5FA0] text-lg">
                  Selecciona la opción que mejor represente tu situación.
                </p>
             </div>
@@ -613,12 +613,12 @@ export default function Survey() {
               />
             </div>
 
-            <div className="flex justify-between items-center mt-8 pt-4 border-t border-white/5">
+            <div className="flex justify-between items-center mt-8 pt-4 border-t border-[#EDE9FE]">
               <Button
                 variant="ghost"
                 onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))}
                 disabled={currentIdx === 0}
-                className="text-muted-foreground hover:text-white"
+                className="text-[#6B5FA0] hover:text-[#1E1040]"
               >
                 Anterior
               </Button>
@@ -626,7 +626,7 @@ export default function Survey() {
                 variant="ghost"
                 onClick={() => setCurrentIdx(Math.min(indicators.length - 1, currentIdx + 1))}
                 disabled={currentIdx === indicators.length - 1 || !answers[currentIndicator.id]}
-                className="text-muted-foreground hover:text-white"
+                className="text-[#6B5FA0] hover:text-[#1E1040]"
               >
                 Siguiente
               </Button>
@@ -640,7 +640,7 @@ export default function Survey() {
           className="w-full space-y-8 mt-8"
         >
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 text-green-400 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-700 mb-4">
               <motion.span
                 initial={{ rotate: -45, scale: 0 }}
                 animate={{ rotate: 0, scale: 1 }}
@@ -650,7 +650,7 @@ export default function Survey() {
               </motion.span>
             </div>
             <h2 className="text-3xl font-display font-bold">¡Diagnóstico completado!</h2>
-            <p className="text-muted-foreground">
+            <p className="text-[#6B5FA0]">
               Antes de terminar, ¿quieres dejar algún comentario adicional sobre tu barrio?
             </p>
           </div>
@@ -658,14 +658,14 @@ export default function Survey() {
           <GlassCard className="p-6">
             <Textarea
               placeholder="Escribe aquí tus observaciones, reclamos o sugerencias..."
-              className="min-h-[150px] bg-black/20 border-white/10 text-lg resize-none focus:ring-primary/50"
+              className="min-h-[150px] bg-black/20 border-[#DDD6FE] text-lg resize-none focus:ring-primary/50"
               value={comment}
               onChange={e => setComment(e.target.value)}
             />
           </GlassCard>
 
           {submitError && (
-            <div className="text-red-400 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+            <div className="text-red-600 text-sm text-center bg-red-50 border border-red-500/20 rounded-xl px-4 py-3">
               {submitError}
             </div>
           )}
@@ -673,7 +673,7 @@ export default function Survey() {
           <Button
             onClick={handleAfterComment}
             disabled={isPending}
-            className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:to-primary shadow-lg shadow-primary/25"
+            className="w-full h-14 text-lg font-bold rounded-xl bg-[#5B21B6] hover:to-primary shadow-lg shadow-primary/25"
           >
             {isPending ? (
               <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Guardando...</>
