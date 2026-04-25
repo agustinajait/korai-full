@@ -5,69 +5,109 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, Clock, AlertTriangle, CheckCircle2, ChevronRight, ChevronDown, ExternalLink, MessageCircle } from "lucide-react";
 import { generatePlanDesdeScores, type PlanItem, type Sello } from "@/lib/korai-logic";
 
-// Programas reales de CABA por dimensión para el mensaje de WhatsApp
+// Programas reales por dimensión para el mensaje de WhatsApp
 const PROGRAMAS_WA: Record<string, { nombre: string; detalle: string }[]> = {
+  empleo: [
+    { nombre: "Portal Empleo", detalle: "portalempleo.gob.ar" },
+    { nombre: "Oportunai", detalle: "Creá tu CV y video CV · oportunai.com" },
+    { nombre: "Potenciar Trabajo", detalle: "argentina.gob.ar/desarrollosocial/potenciartrabajo" },
+  ],
+  educacion: [
+    { nombre: "Plan FinEs", detalle: "Terminá el secundario gratis · argentina.gob.ar/educacion/fines" },
+    { nombre: "Becas Progresar", detalle: "Apoyo económico · argentina.gob.ar/educacion/progresar" },
+  ],
   salud: [
     { nombre: "CAPS (Centro de Salud gratuito)", detalle: "0800-222-5462 · buenosaires.gob.ar/salud/caps" },
     { nombre: "Programa SUMAR", detalle: "Cobertura gratuita · argentina.gob.ar/salud/sumar" },
   ],
-  educacion: [
-    { nombre: "Plan FinEs", detalle: "Terminá el secundario gratis · argentina.gob.ar/educacion/fines" },
-    { nombre: "Becas Progresar", detalle: "Apoyo económico para estudiar · argentina.gob.ar/educacion/progresar" },
-  ],
-  trabajo: [
-    { nombre: "Portal Empleo", detalle: "Bolsa de trabajo · portalempleo.gob.ar" },
-    { nombre: "Fomento al Empleo CABA", detalle: "Subsidios para empleadores · buenosaires.gob.ar/trabajo" },
-  ],
   vivienda: [
-    { nombre: "Subsidio Habitacional 690", detalle: "Para familias en riesgo · atencioninmediata@buenosaires.gob.ar" },
-    { nombre: "Programa Nuestras Familias", detalle: "Acompañamiento habitacional · nuestrasfamilias@buenosaires.gob.ar" },
+    { nombre: "Subsidio Habitacional 690", detalle: "Para familias en riesgo · buenosaires.gob.ar" },
+    { nombre: "PROMEBA", detalle: "Mejoramiento de barrios · argentina.gob.ar/habitat/promeba" },
   ],
-  prevision: [
+  ingresos: [
     { nombre: "ANSES", detalle: "AUH y prestaciones · anses.gob.ar · Tel: 130" },
-    { nombre: "Potenciar Trabajo", detalle: "Empleo y capacitación · argentina.gob.ar/desarrollosocial" },
+    { nombre: "Portal Empleo", detalle: "Oportunidades laborales · portalempleo.gob.ar" },
   ],
-  cultura: [
+  red: [
     { nombre: "Centros Culturales Barriales", detalle: "Actividades gratuitas · buenosaires.gob.ar/cultura" },
+    { nombre: "Puntos de Cultura", detalle: "argentina.gob.ar/cultura" },
   ],
 };
 
 const DIM_NOMBRES: Record<string, string> = {
-  salud: "Salud",
+  empleo: "Empleo",
   educacion: "Educación",
-  trabajo: "Trabajo",
+  salud: "Salud",
   vivienda: "Vivienda",
-  prevision: "Previsión",
-  cultura: "Cultura",
+  ingresos: "Ingresos",
+  red: "Red / Vínculos",
 };
 
 function generarMensajeWhatsApp(plan: PlanItem[]): string {
-  const criticas = plan.filter(p => p.nivelColor === "rojo" || p.nivelColor === "amarillo").slice(0, 3);
+  const profundizacion = (() => {
+    try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; }
+  })();
 
-  let msg = "🌱 *Mi diagnóstico KORAI*\n\n";
-  msg += "Completé mi diagnóstico de bienestar comunitario. Estas son mis áreas prioritarias:\n\n";
+  const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
+  const alertas = plan.filter(p => p.nivelColor === "amarillo").slice(0, 1);
+  const todas = [...criticas, ...alertas];
 
-  criticas.forEach((p, i) => {
-    msg += `${i + 1}. ${p.emoji} *${p.dimensionName}* — ${p.nivelColor === "rojo" ? "🔴 Crítico" : "🟡 Alerta"}\n`;
+  // Nombre del usuario si está disponible
+  const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
+  const nombre = context.name ? `, ${context.name}` : "";
+
+  let msg = `🌱 *Diagnóstico KORAI completado*\n\n`;
+  msg += `Hola${nombre}. Completaste tu diagnóstico de bienestar. Estas son tus áreas prioritarias:\n\n`;
+
+  todas.forEach((p, i) => {
+    const icono = p.nivelColor === "rojo" ? "🔴" : "🟡";
+    msg += `${icono} *${p.dimensionName}*\n`;
     msg += `   ${p.metaCorto}\n\n`;
   });
 
-  msg += "📋 *Recursos disponibles para mí en CABA:*\n\n";
+  // Personalización según profundización
+  if (profundizacion.emp_disponibilidad && profundizacion.emp_disponibilidad !== "no") {
+    msg += `💼 *Oportunidades de empleo para vos:*\n`;
+    msg += `• Portal Empleo: portalempleo.gob.ar\n`;
+    msg += `• Creá tu perfil y CV en Oportunai: oportunai.com\n\n`;
+  }
 
-  criticas.forEach(p => {
-    const programas = PROGRAMAS_WA[p.dimensionId];
-    if (programas) {
-      msg += `${p.emoji} *${DIM_NOMBRES[p.dimensionId]}*\n`;
-      programas.forEach(prog => {
-        msg += `• ${prog.nombre}\n  ${prog.detalle}\n`;
-      });
-      msg += "\n";
-    }
-  });
+  if (profundizacion.edu_secundario === "no" || profundizacion.edu_retomar?.includes("secundario")) {
+    msg += `📚 *Podés terminar el secundario gratis:*\n`;
+    msg += `• Plan FinEs: argentina.gob.ar/educacion/fines\n\n`;
+  }
 
-  msg += "---\n";
-  msg += "🔗 Hacé tu diagnóstico en: korai-full.vercel.app";
+  if (profundizacion.sal_cobertura === "no") {
+    msg += `🩺 *Accedé a salud gratuita:*\n`;
+    msg += `• CAPS (centro de salud): 0800-222-5462\n`;
+    msg += `• Programa SUMAR: argentina.gob.ar/salud/sumar\n\n`;
+  }
 
+  if (profundizacion.viv_riesgo === "si") {
+    msg += `🏠 *Apoyo habitacional urgente:*\n`;
+    msg += `• Subsidio Habitacional: buenosaires.gob.ar\n\n`;
+  }
+
+  if (profundizacion.ing_programa === "no") {
+    msg += `🧾 *Programas de apoyo económico:*\n`;
+    msg += `• ANSES: anses.gob.ar · Tel: 130\n\n`;
+  }
+
+  // Si no hay profundización, mostrar recursos generales
+  if (Object.keys(profundizacion).length === 0) {
+    msg += `📋 *Recursos disponibles:*\n\n`;
+    todas.forEach(p => {
+      const programas = PROGRAMAS_WA[p.dimensionId];
+      if (programas) {
+        msg += `${p.emoji} *${DIM_NOMBRES[p.dimensionId]}*\n`;
+        programas.forEach(prog => { msg += `• ${prog.nombre}\n  ${prog.detalle}\n`; });
+        msg += "\n";
+      }
+    });
+  }
+
+  msg += `---\n`;
+  msg += `🔗 korai-full.vercel.app`;
   return msg;
 }
 
