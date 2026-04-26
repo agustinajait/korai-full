@@ -12,18 +12,18 @@ interface TrafficLightButtonProps {
 
 const VARIANTS = {
   verde: {
-    base: "border-green-500/30 bg-green-500/5 hover:bg-green-500/20 text-green-100",
-    active: "bg-green-500/20 border-green-500 ring-2 ring-green-500/50 shadow-[0_0_30px_-5px_hsl(142,71%,45%)]",
+    base: "border-green-400 bg-green-50 hover:bg-green-100 text-green-900",
+    active: "bg-green-100 border-green-500 ring-2 ring-green-400/50 shadow-[0_0_20px_-5px_rgba(34,197,94,0.4)]",
     dot: "bg-green-500"
   },
   amarillo: {
-    base: "border-yellow-500/30 bg-yellow-500/5 hover:bg-yellow-500/20 text-yellow-100",
-    active: "bg-yellow-500/20 border-yellow-500 ring-2 ring-yellow-500/50 shadow-[0_0_30px_-5px_hsl(38,92%,50%)]",
+    base: "border-yellow-400 bg-yellow-50 hover:bg-yellow-100 text-yellow-900",
+    active: "bg-yellow-100 border-yellow-500 ring-2 ring-yellow-400/50 shadow-[0_0_20px_-5px_rgba(234,179,8,0.4)]",
     dot: "bg-yellow-500"
   },
   rojo: {
-    base: "border-red-500/30 bg-red-500/5 hover:bg-red-500/20 text-red-100",
-    active: "bg-red-500/20 border-red-500 ring-2 ring-red-500/50 shadow-[0_0_30px_-5px_hsl(0,84%,60%)]",
+    base: "border-red-400 bg-red-50 hover:bg-red-100 text-red-900",
+    active: "bg-red-100 border-red-500 ring-2 ring-red-400/50 shadow-[0_0_20px_-5px_rgba(239,68,68,0.4)]",
     dot: "bg-red-500"
   }
 };
@@ -58,7 +58,7 @@ export function TrafficLightButton({ color, label, subLabel, selected, onClick, 
           <motion.svg 
             initial={{ scale: 0 }} 
             animate={{ scale: 1 }} 
-            className="w-3.5 h-3.5 text-black font-bold" 
+            className="w-3.5 h-3.5 text-white font-bold" 
             viewBox="0 0 24 24" 
             fill="none" 
             stroke="currentColor" 
