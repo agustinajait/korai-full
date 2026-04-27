@@ -1,4 +1,4 @@
-import { INSTRUMENT } from "./instrument";
+import { INSTRUMENT, getActiveIndicatorsSafe } from "./instrument";
 
 export interface DimensionScore {
   dimensionId: string;
@@ -10,6 +10,7 @@ export interface DimensionScore {
   amarillo: number;
   rojo: number;
   color: "rojo" | "amarillo" | "verde";
+  promedio: number;
 }
 
 export interface PlanItem {
@@ -29,76 +30,76 @@ export interface PlanItem {
   esPrioritaria?: boolean; // área bloqueante según nueva lógica
 }
 
-// Nueva lógica: niveles de prioridad según el doc
-// 1. Crítico (bloquea todo): salud grave, riesgo de vivienda
-// 2. Urgente: empleo / ingresos
-// 3. Desarrollo: educación / red
+// Nueva lógica de priorización
+// 1. Crítico: salud, vivienda
+// 2. Urgente: empleo, prevision
+// 3. Desarrollo: educacion, red
 const PRIORIDAD_BLOQUEANTE: Record<string, number> = {
-  salud:     1, // crítico
-  vivienda:  1, // crítico
-  empleo:    2, // urgente
-  ingresos:  2, // urgente
-  educacion: 3, // desarrollo
-  red:       3, // desarrollo
+  salud:     1,
+  vivienda:  1,
+  empleo:    2,
+  prevision: 2,
+  educacion: 3,
+  red:       3,
 };
 
 const ACCIONES_CORTO: Record<string, string[]> = {
   empleo: [
-    "Actualizar mi CV y registrarme en Portal Empleo.",
-    "Acercarme a la oficina de empleo local.",
-    "Consultar capacitaciones gratuitas disponibles en mi zona.",
+    "Registrarme en el CIL para hacer mi CV esta semana.",
+    "Inscribirme en TrabajoBA para ver ofertas laborales.",
+    "Consultar cursos gratuitos de formación profesional en mi barrio.",
+  ],
+  prevision: [
+    "Consultar en ANSES sobre asignaciones y prestaciones disponibles.",
+    "Armar un presupuesto mensual simple para organizar mis gastos.",
+    "Ver si califico para algún programa de asistencia económica.",
   ],
   educacion: [
-    "Consultar en la municipalidad sobre programas de terminalidad educativa.",
+    "Consultar sobre el Plan FinEs para terminar el secundario.",
     "Inscribirme en 1 curso o taller gratuito disponible en mi zona.",
     "Buscar becas disponibles (Progresar, FinEs).",
   ],
   salud: [
-    "Programar 1 consulta médica preventiva esta semana.",
+    "Acercarme al CeSAC de mi barrio esta semana.",
     "Verificar mi calendario de vacunación y completar las pendientes.",
-    "Acercarme al centro de salud más cercano para un chequeo.",
+    "Consultar sobre el Programa SUMAR si no tengo obra social.",
   ],
   vivienda: [
-    "Hacer 1 reclamo formal sobre la necesidad más urgente en mi hogar.",
-    "Consultar programas de mejoramiento habitacional en la municipalidad.",
+    "Llamar al 147 para hacer un reclamo formal sobre servicios.",
+    "Consultar programas de mejoramiento habitacional.",
     "Verificar mi acceso a servicios básicos (agua, gas, electricidad).",
-  ],
-  ingresos: [
-    "Consultar en ANSES sobre asignaciones y prestaciones disponibles.",
-    "Armar un presupuesto mensual simple.",
-    "Ver oportunidades laborales en Portal Empleo.",
   ],
   red: [
     "Asistir a 1 actividad comunitaria o cultural este mes.",
-    "Conectarme con redes vecinales o centros culturales barriales.",
+    "Conectarme con centros culturales o espacios barriales.",
     "Buscar espacios de apoyo en mi comunidad.",
   ],
 };
 
 const METAS_CORTO: Record<string, string> = {
-  empleo:    "Actualizar mi CV y registrarme en al menos 1 plataforma de empleo.",
+  empleo:    "Registrarme en el CIL y TrabajoBA esta semana.",
+  prevision: "Consultar en ANSES sobre programas disponibles y armar un presupuesto.",
   educacion: "Inscribirme en 1 curso o taller gratuito disponible en mi zona.",
-  salud:     "Programar al menos 1 consulta médica preventiva este mes.",
+  salud:     "Acercarme al CeSAC de mi barrio para un chequeo preventivo.",
   vivienda:  "Hacer 1 reclamo formal sobre la necesidad más urgente en mi hogar.",
-  ingresos:  "Consultar en ANSES sobre programas disponibles y armar un presupuesto.",
   red:       "Asistir a 1 actividad comunitaria o cultural este mes.",
 };
 
 const METAS_MEDIANO: Record<string, string> = {
   empleo:    "Lograr un empleo con mejores condiciones o formalizar mi actividad actual.",
+  prevision: "Tener un fondo de emergencia equivalente a 1 mes de gastos básicos.",
   educacion: "Terminar un ciclo educativo (secundario o formación técnica) en los próximos 2 años.",
   salud:     "Completar todos los controles médicos preventivos y vacunas pendientes.",
   vivienda:  "Resolver al menos 2 problemas críticos de infraestructura de mi hogar.",
-  ingresos:  "Tener un fondo de emergencia equivalente a 1 mes de gastos básicos.",
   red:       "Participar activamente en una organización barrial o proyecto comunitario.",
 };
 
 const METAS_LARGO: Record<string, string> = {
   empleo:    "Tener empleo estable, con aportes y condiciones dignas.",
+  prevision: "Contar con ingresos estables y planificación financiera que brinde tranquilidad.",
   educacion: "Alcanzar el nivel educativo deseado y mantener formación continua.",
   salud:     "Mantener un estado de salud estable con controles regulares y acceso pleno.",
   vivienda:  "Vivir en una casa segura, con todos los servicios básicos resueltos.",
-  ingresos:  "Contar con ingresos estables y planificación financiera que brinde tranquilidad.",
   red:       "Ser parte activa de la vida cultural y social del barrio, con redes de apoyo sólidas.",
 };
 
@@ -191,7 +192,7 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
       accion: "Hacer un reclamo ahora",
     },
   ],
-  ingresos: [
+  prevision: [
     {
       nombre: "ANSES — Turno online",
       descripcionCorta: "AUH, jubilaciones, Potenciar Trabajo y más. Sacá turno sin salir de casa.",
@@ -234,37 +235,78 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
   ],
 };
 
-export function calcularScores(answers: Record<string, string>): DimensionScore[] {
+export function calcularScores(answers: Record<string, string>, situacionLaboral?: string): DimensionScore[] {
+  const activeIndicators = getActiveIndicatorsSafe(situacionLaboral);
+
   return INSTRUMENT.dimensions.map(d => {
-    const dimIndicators = INSTRUMENT.indicators.filter(i => i.dimension === d.id);
+    const dimIndicators = activeIndicators.filter(i => i.dimension === d.id);
     const total = dimIndicators.length;
-    const verde    = dimIndicators.filter(i => answers[i.id] === "verde").length;
-    const amarillo = dimIndicators.filter(i => answers[i.id] === "amarillo").length;
-    const rojo     = dimIndicators.filter(i => answers[i.id] === "rojo").length;
-    const score    = verde;
+    if (total === 0) {
+      return { dimensionId: d.id, dimensionName: d.name, emoji: d.emoji, score: 0, total: 0, verde: 0, amarillo: 0, rojo: 0, color: "verde" as const, promedio: 0 };
+    }
+
+    // Para indicadores invertidos (ej: "tengo deudas"): verde=rojo, rojo=verde
+    const valorNumerico = (ind: typeof dimIndicators[0], resp: string): number => {
+      if (ind.invert) {
+        if (resp === "verde") return 2;   // positivo en pregunta invertida = problema
+        if (resp === "amarillo") return 1;
+        if (resp === "rojo") return 0;    // negativo en pregunta invertida = OK
+      }
+      if (resp === "verde") return 0;
+      if (resp === "amarillo") return 1;
+      if (resp === "rojo") return 2;
+      return 1; // sin respuesta = neutro
+    };
+
+    let verde = 0, amarillo = 0, rojo = 0;
+    let suma = 0;
+    dimIndicators.forEach(ind => {
+      const resp = answers[ind.id] || "amarillo";
+      const v = valorNumerico(ind, resp);
+      suma += v;
+      // Contar colores efectivos (post-invert)
+      if (v === 0) verde++;
+      else if (v === 1) amarillo++;
+      else rojo++;
+    });
+
+    const promedio = suma / total;
+    // promedio >= 1.5 → ROJO, >= 0.5 → AMARILLO, < 0.5 → VERDE
     const color: "rojo" | "amarillo" | "verde" =
-      score <= 2 ? "rojo" : score <= 5 ? "amarillo" : "verde";
-    return { dimensionId: d.id, dimensionName: d.name, emoji: d.emoji, score, total, verde, amarillo, rojo, color };
+      promedio >= 1.5 ? "rojo" : promedio >= 0.5 ? "amarillo" : "verde";
+
+    return {
+      dimensionId: d.id,
+      dimensionName: d.name,
+      emoji: d.emoji,
+      score: verde,
+      total,
+      verde,
+      amarillo,
+      rojo,
+      color,
+      promedio: Math.round(promedio * 100) / 100,
+    };
   });
 }
 
 // Nueva lógica de priorización según el documento
 // Selecciona hasta 2 áreas prioritarias por factor bloqueante
 export function getPrioridadesBloqueantes(scores: DimensionScore[]): DimensionScore[] {
-  const rojas = scores.filter(s => s.color === "rojo");
-  if (rojas.length === 0) return [];
+  const rojas = scores.filter(s => s.color === "rojo")
+    .sort((a, b) => (PRIORIDAD_BLOQUEANTE[a.dimensionId] || 3) - (PRIORIDAD_BLOQUEANTE[b.dimensionId] || 3));
 
-  // Ordenar por nivel de prioridad bloqueante (1=crítico, 2=urgente, 3=desarrollo)
-  const ordenadas = [...rojas].sort((a, b) =>
-    (PRIORIDAD_BLOQUEANTE[a.dimensionId] || 3) - (PRIORIDAD_BLOQUEANTE[b.dimensionId] || 3)
-  );
+  if (rojas.length >= 2) return rojas.slice(0, 2);
 
-  // Máximo 2 áreas prioritarias
-  return ordenadas.slice(0, 2);
+  // Completar con amarillas si hay menos de 2 rojas
+  const amarillas = scores.filter(s => s.color === "amarillo")
+    .sort((a, b) => (PRIORIDAD_BLOQUEANTE[a.dimensionId] || 3) - (PRIORIDAD_BLOQUEANTE[b.dimensionId] || 3));
+
+  return [...rojas, ...amarillas].slice(0, 2);
 }
 
-export function generatePlanDesdeScores(answers: Record<string, string>, topN: number = 5): PlanItem[] {
-  const scores = calcularScores(answers);
+export function generatePlanDesdeScores(answers: Record<string, string>, topN: number = 5, situacionLaboral?: string): PlanItem[] {
+  const scores = calcularScores(answers, situacionLaboral);
   const prioritarias = getPrioridadesBloqueantes(scores);
   const idsPrioritarias = new Set(prioritarias.map(p => p.dimensionId));
 

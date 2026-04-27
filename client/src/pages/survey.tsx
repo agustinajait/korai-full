@@ -7,7 +7,7 @@ import { ProgressHeader } from "@/components/layout/progress-header";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { INSTRUMENT } from "@/lib/instrument";
+import { INSTRUMENT, getActiveIndicatorsSafe } from "@/lib/instrument";
 import { queryClient } from "@/lib/queryClient";
 import { Loader2, ArrowRight, Target, ChevronRight } from "lucide-react";
 import { generatePlanDesdeScores, getPrioridadesBloqueantes, calcularScores } from "@/lib/korai-logic";
@@ -285,13 +285,14 @@ export default function Survey() {
   const [profundizacionRespuestas, setProfundizacionRespuestas] = useState<Record<string, any>>({});
 
   const context = JSON.parse(localStorage.getItem("korai_context") || "{}");
+  const situacionLaboral = context.demographics?.situacion_laboral;
+  const indicators = getActiveIndicatorsSafe(situacionLaboral);
 
   // Redirect if no context AND no saved answers
   useEffect(() => {
     if (!context.city && !hasSavedAnswers) setLocation("/");
   }, [context, setLocation]);
 
-  const indicators = INSTRUMENT.indicators;
   const currentIndicator = indicators[currentIdx];
   const dimension = INSTRUMENT.dimensions.find(d => d.id === currentIndicator?.dimension);
 
