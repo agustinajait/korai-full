@@ -48,6 +48,19 @@ async function fetchResponses() {
 }
 
 // ─── Vista de caso individual ───────────────────────────────────────────────
+// Helper: extrae nombre y apellido del perfil_contextual
+function getNombrePersona(r: any): string {
+  try {
+    const p = JSON.parse(typeof r.perfil_contextual === "string" ? r.perfil_contextual : "{}");
+    const nombre = p?.nombre || p?.demographics?.nombre || "";
+    const apellido = p?.apellido || p?.demographics?.apellido || "";
+    if (nombre || apellido) return `${nombre} ${apellido}`.trim();
+  } catch {}
+  // Fallback: dni_real si existe
+  if (r.dni_real) return `DNI ${r.dni_real}`;
+  return `Caso #${r.id?.slice(0, 6) || "—"}`;
+}
+
 function CasoIndividual({ response, onBack }: { response: any; onBack: () => void }) {
   const answers = response.answers as Record<string, string>;
   const sitLab = (() => { try { const p = JSON.parse(typeof response.perfil_contextual === "string" ? response.perfil_contextual : "{}"); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
@@ -82,7 +95,7 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
             <User className="w-7 h-7 text-white" />
           </div>
           <div className="flex-1">
-            <div className="text-xl font-black">Caso #{response.id?.slice(0, 8) || "—"}</div>
+            <div className="text-xl font-black">{getNombrePersona(response)}</div>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               <span className="text-xs text-white/50 flex items-center gap-1">
                 <MapPin className="w-3 h-3 text-primary" /> {barrio}
@@ -408,7 +421,7 @@ export default function Dashboard() {
                       <User className="w-4 h-4 text-white/40" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm">Caso #{r.id?.slice(0, 8) || String(i + 1).padStart(3, "0")}</div>
+                      <div className="font-bold text-sm">{getNombrePersona(r)}</div>
                       <div className="text-[11px] text-white/40 flex items-center gap-2">
                         <MapPin className="w-2.5 h-2.5 text-primary" /> {barrio} · {fecha}
                       </div>
