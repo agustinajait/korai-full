@@ -44,70 +44,66 @@ const DIM_NOMBRES: Record<string, string> = {
 };
 
 function generarMensajeWhatsApp(plan: PlanItem[]): string {
-  const profundizacion = (() => {
-    try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; }
-  })();
-
-  const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
-  const alertas = plan.filter(p => p.nivelColor === "amarillo").slice(0, 1);
-  const todas = [...criticas, ...alertas];
-
-  // Nombre del usuario si está disponible
+  const profundizacion = (() => { try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; } })();
   const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-  const nombre = context.name ? `, ${context.name}` : "";
+  const nombre = context.nombre ? context.nombre : "";
 
-  let msg = `🌱 *Diagnóstico KORAI completado*\n\n`;
-  msg += `Hola${nombre}. Completaste tu diagnóstico de bienestar. Estas son tus áreas prioritarias:\n\n`;
+  // Áreas prioritarias (máx 2 rojas, luego amarillas)
+  const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
+  const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
 
-  todas.forEach((p, i) => {
-    const icono = p.nivelColor === "rojo" ? "🔴" : "🟡";
-    msg += `${icono} *${p.dimensionName}*\n`;
-    msg += `   ${p.metaCorto}\n\n`;
+  // Convertir áreas a texto natural
+  const areasTexto = areas.map(p => p.dimensionName.toLowerCase()).join(" y ");
+
+  // Mensaje inicial personalizado
+  let msg = `Hola${nombre ? ` ${nombre}` : ""}, ¿cómo estás? 👋 Soy Korai.\n\n`;
+  msg += `Vimos tu diagnóstico y detectamos que hoy podrías necesitar apoyo en *${areasTexto}*.\n\n`;
+  msg += `Te vamos a acompañar y acercarte oportunidades.\n\n`;
+
+  // Recursos personalizados según profundización
+  msg += `📋 *Opciones concretas para vos:*\n\n`;
+
+  areas.forEach(p => {
+    msg += `${p.emoji} *${p.dimensionName}*\n`;
+
+    // Personalización según respuestas de profundización
+    if (p.dimensionId === "empleo") {
+      if (profundizacion.emp_disponibilidad && profundizacion.emp_disponibilidad !== "no") {
+        msg += `👉 Sacá turno en el CIL para hacer tu CV: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
+        msg += `👉 Registrate en TrabajoBA: trabajoba.buenosaires.gob.ar\n`;
+      } else {
+        msg += `👉 Cursos gratuitos de formación: buenosaires.gob.ar/educacion/formacion-profesional\n`;
+      }
+    }
+    if (p.dimensionId === "salud") {
+      msg += `👉 Centro de salud gratuito: 0800-222-5462\n`;
+      if (profundizacion.sal_cobertura === "no") {
+        msg += `👉 Programa SUMAR (sin obra social): argentina.gob.ar/salud/sumar\n`;
+      }
+    }
+    if (p.dimensionId === "vivienda") {
+      msg += `👉 Reclamos de servicios: Llamá al 147\n`;
+      if (profundizacion.viv_riesgo === "si") {
+        msg += `👉 Asistencia habitacional urgente: 0800-333-3190\n`;
+      }
+    }
+    if (p.dimensionId === "prevision" || p.dimensionId === "ingresos") {
+      msg += `👉 ANSES — Turno online: anses.gob.ar/turnos · Tel: 130\n`;
+    }
+    if (p.dimensionId === "educacion") {
+      if (profundizacion.edu_secundario === "no") {
+        msg += `👉 Plan FinEs (secundario gratis): argentina.gob.ar/educacion/fines\n`;
+      } else {
+        msg += `👉 Cursos gratuitos por barrio: buenosaires.gob.ar/educacion/formacion-profesional\n`;
+      }
+    }
+    if (p.dimensionId === "red") {
+      msg += `👉 Centros culturales barriales: buenosaires.gob.ar/cultura/centros-culturales\n`;
+    }
+    msg += "\n";
   });
 
-  // Personalización según profundización
-  if (profundizacion.emp_disponibilidad && profundizacion.emp_disponibilidad !== "no") {
-    msg += `💼 *Oportunidades de empleo para vos:*\n`;
-    msg += `• Portal Empleo: portalempleo.gob.ar\n`;
-    msg += `• Creá tu perfil y CV en Oportunai: oportunai.com\n\n`;
-  }
-
-  if (profundizacion.edu_secundario === "no" || profundizacion.edu_retomar?.includes("secundario")) {
-    msg += `📚 *Podés terminar el secundario gratis:*\n`;
-    msg += `• Plan FinEs: argentina.gob.ar/educacion/fines\n\n`;
-  }
-
-  if (profundizacion.sal_cobertura === "no") {
-    msg += `🩺 *Accedé a salud gratuita:*\n`;
-    msg += `• CAPS (centro de salud): 0800-222-5462\n`;
-    msg += `• Programa SUMAR: argentina.gob.ar/salud/sumar\n\n`;
-  }
-
-  if (profundizacion.viv_riesgo === "si") {
-    msg += `🏠 *Apoyo habitacional urgente:*\n`;
-    msg += `• Subsidio Habitacional: buenosaires.gob.ar\n\n`;
-  }
-
-  if (profundizacion.ing_programa === "no") {
-    msg += `🧾 *Programas de apoyo económico:*\n`;
-    msg += `• ANSES: anses.gob.ar · Tel: 130\n\n`;
-  }
-
-  // Si no hay profundización, mostrar recursos generales
-  if (Object.keys(profundizacion).length === 0) {
-    msg += `📋 *Recursos disponibles:*\n\n`;
-    todas.forEach(p => {
-      const programas = PROGRAMAS_WA[p.dimensionId];
-      if (programas) {
-        msg += `${p.emoji} *${DIM_NOMBRES[p.dimensionId]}*\n`;
-        programas.forEach(prog => { msg += `• ${prog.nombre}\n  ${prog.detalle}\n`; });
-        msg += "\n";
-      }
-    });
-  }
-
-  msg += `---\n`;
-  msg += `🔗 korai-full.vercel.app`;
+  msg += `---\n🌱 korai-full.vercel.app`;
   return msg;
 }
 
@@ -269,7 +265,7 @@ export default function Prioridades() {
                       #{p.rank}
                     </div>
                     <div>
-                      <div className="font-bold text-base flex items-center gap-2 flex-wrap">
+                      <div className="font-bold text-base text-[#1E1040] flex items-center gap-2 flex-wrap">
                         <span>{p.emoji}</span>
                         <span>{p.titulo}</span>
                       </div>
@@ -288,7 +284,7 @@ export default function Prioridades() {
 
                 <p className="text-sm text-[#3D2A8A]">{p.motivo}</p>
 
-                <div className="p-3 rounded-xl bg-white/80 border border-[#EDE9FE] space-y-2">
+                <div className="p-3 rounded-xl bg-white border border-[#DDD6FE] space-y-2">
                   <div className="text-[10px] font-black uppercase text-green-700 tracking-wider">Meta corto plazo</div>
                   <p className="text-sm text-[#1E1040]">{p.metaCorto}</p>
                   <div className="space-y-1 pt-1">
@@ -343,11 +339,11 @@ export default function Prioridades() {
 
               {isExpanded && (
                 <div className="px-5 pb-5 space-y-3 border-t border-[#EDE9FE] pt-3">
-                  <div className="p-3 rounded-xl bg-white/80 border border-[#EDE9FE]">
+                  <div className="p-3 rounded-xl bg-white border border-[#DDD6FE]">
                     <div className="text-[10px] font-black uppercase text-yellow-700 tracking-wider">Mediano plazo (1-3 años)</div>
                     <p className="text-sm text-[#1E1040] mt-1">{p.metaMediano}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-white/80 border border-[#EDE9FE]">
+                  <div className="p-3 rounded-xl bg-white border border-[#DDD6FE]">
                     <div className="text-[10px] font-black uppercase text-[#5B21B6] tracking-wider">Largo plazo (5-10 años)</div>
                     <p className="text-sm text-[#1E1040] mt-1">{p.metaLargo}</p>
                   </div>
