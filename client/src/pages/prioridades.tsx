@@ -143,7 +143,22 @@ export default function Prioridades() {
   const handleWhatsApp = () => {
     const mensaje = generarMensajeWhatsApp(plan);
     const encoded = encodeURIComponent(mensaje);
-    window.open(`https://wa.me/?text=${encoded}`, "_blank");
+
+    // Leer teléfono del contexto
+    const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
+    const telefono = context.telefono?.replace(/\D/g, ""); // solo dígitos
+
+    let url: string;
+    if (telefono && telefono.length >= 8) {
+      // Si tiene código de país (empieza con 54 para Argentina o con +)
+      const numero = telefono.startsWith("54") ? telefono : `54${telefono}`;
+      url = `https://wa.me/${numero}?text=${encoded}`;
+    } else {
+      // Sin número → abre WhatsApp para que el usuario elija
+      url = `https://wa.me/?text=${encoded}`;
+    }
+
+    window.open(url, "_blank");
   };
 
   const toggleExpanded = (dimId: string) => {
