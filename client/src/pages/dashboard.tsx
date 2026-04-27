@@ -50,8 +50,9 @@ async function fetchResponses() {
 // ─── Vista de caso individual ───────────────────────────────────────────────
 function CasoIndividual({ response, onBack }: { response: any; onBack: () => void }) {
   const answers = response.answers as Record<string, string>;
-  const scores = calcularScores(answers);
-  const plan = generatePlanDesdeScores(answers, 6);
+  const sitLab = (() => { try { const p = JSON.parse(typeof response.perfil_contextual === "string" ? response.perfil_contextual : "{}"); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
+  const scores = calcularScores(answers, sitLab);
+  const plan = generatePlanDesdeScores(answers, 6, sitLab);
   const barrio = response.territorio?.barrio || "Sin barrio";
   const fecha = new Date(response.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" });
 
@@ -392,7 +393,8 @@ export default function Dashboard() {
             </div>
             <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto">
               {filtered.map((r, i) => {
-                const scores = calcularScores(r.answers || {});
+                const sitLabR = (() => { try { const p = JSON.parse(typeof r.perfil_contextual === "string" ? r.perfil_contextual : "{}"); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
+                const scores = calcularScores(r.answers || {}, sitLabR);
                 const rojas = scores.filter(s => s.color === "rojo").length;
                 const barrio = r.territorio?.barrio || "Sin barrio";
                 const fecha = new Date(r.submitted_at).toLocaleDateString("es-AR");
