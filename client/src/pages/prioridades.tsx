@@ -302,27 +302,30 @@ export default function Prioridades() {
                 </div>
 
                 {p.recursos.length > 0 && (
-                  <div className="space-y-1.5">
-                    <div className="text-[10px] font-black uppercase text-[#6B5FA0] tracking-wider">Recursos</div>
-                    <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-black uppercase text-[#6B5FA0] tracking-wider">Recursos disponibles</div>
+                    <div className="space-y-2">
                       {p.recursos.map((r, ri) => (
-                        r.url ? (
-                          <a
-                            key={ri}
-                            href={r.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs text-[#5B21B6] hover:underline bg-white/80 px-2.5 py-1.5 rounded-lg border border-[#EDE9FE]"
-                            data-testid={`link-recurso-${p.dimensionId}-${ri}`}
-                          >
-                            <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                            {r.nombre}
-                          </a>
-                        ) : (
-                          <span key={ri} className="inline-flex items-center text-xs text-[#6B5FA0] bg-white/80 px-2.5 py-1.5 rounded-lg border border-[#EDE9FE]">
-                            {r.nombre}
-                          </span>
-                        )
+                        <div key={ri} className="p-3 rounded-xl bg-white border border-[#DDD6FE] space-y-1.5">
+                          <div className="font-bold text-sm text-[#1E1040]">{r.nombre}</div>
+                          {r.descripcionCorta && <p className="text-xs text-[#6B5FA0]">{r.descripcionCorta}</p>}
+                          <div className="flex gap-2 flex-wrap pt-0.5">
+                            {r.url && (
+                              <a href={r.url} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5B21B6] bg-[#EDE9FE] px-3 py-1.5 rounded-lg hover:bg-[#DDD6FE] transition-colors"
+                                data-testid={`link-recurso-${p.dimensionId}-${ri}`}>
+                                <ExternalLink className="w-3 h-3" />
+                                {r.accion || "Ver más"}
+                              </a>
+                            )}
+                            {r.telefono && (
+                              <a href={`tel:${r.telefono}`}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
+                                📞 Llamar al {r.telefono}
+                              </a>
+                            )}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>

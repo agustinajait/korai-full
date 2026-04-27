@@ -24,7 +24,7 @@ export interface PlanItem {
   accionesCorto: string[];
   metaMediano: string;
   metaLargo: string;
-  recursos: { nombre: string; descripcionCorta?: string; url?: string }[];
+  recursos: { nombre: string; descripcionCorta?: string; url?: string; telefono?: string; accion?: string }[];
   cuando: string;
   esPrioritaria?: boolean; // área bloqueante según nueva lógica
 }
@@ -102,31 +102,135 @@ const METAS_LARGO: Record<string, string> = {
   red:       "Ser parte activa de la vida cultural y social del barrio, con redes de apoyo sólidas.",
 };
 
-const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: string; url?: string }[]> = {
+const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: string; url?: string; telefono?: string; accion?: string }[]> = {
   empleo: [
-    { nombre: "Portal Empleo", descripcionCorta: "Ministerio de Trabajo", url: "https://www.portalempleo.gob.ar" },
-    { nombre: "Oportunai", descripcionCorta: "Creá tu CV y video CV", url: "https://www.oportunai.com.ar" },
-    { nombre: "Potenciar Trabajo", descripcionCorta: "Programa de empleo y capacitación" },
+    {
+      nombre: "Centro de Integración Laboral (CIL)",
+      descripcionCorta: "Sacá turno para hacer tu CV y acceder a programas de empleo. Llevá DNI y CUIL.",
+      url: "https://buenosaires.gob.ar/tramites/centro-de-integracion-laboral",
+      accion: "Sacar turno online",
+    },
+    {
+      nombre: "TrabajoBA — Portal de Empleo CABA",
+      descripcionCorta: "Registrate y accedé a ofertas laborales en la Ciudad.",
+      url: "https://trabajoba.buenosaires.gob.ar",
+      accion: "Registrarme gratis",
+    },
+    {
+      nombre: "Oportunai — CV y Video CV",
+      descripcionCorta: "Creá tu perfil laboral y video CV gratis para destacarte.",
+      url: "https://oportunai.com",
+      accion: "Crear mi perfil",
+    },
+    {
+      nombre: "Formación Profesional CABA — Cursos gratuitos",
+      descripcionCorta: "Más de 3.400 cursos gratuitos en 50+ centros en toda la Ciudad.",
+      url: "https://buenosaires.gob.ar/educacion/agencia-de-habilidades-para-el-futuro/formacion-profesional",
+      accion: "Ver cursos por barrio",
+    },
   ],
   educacion: [
-    { nombre: "Plan FinEs", descripcionCorta: "Terminalidad educativa", url: "https://www.argentina.gob.ar/educacion/fines" },
-    { nombre: "Becas Progresar", descripcionCorta: "Becas para formación", url: "https://www.argentina.gob.ar/educacion/progresar" },
+    {
+      nombre: "Plan FinEs — Terminá el secundario gratis",
+      descripcionCorta: "Programa nacional para adultos. Se cursa cerca de tu casa.",
+      url: "https://www.argentina.gob.ar/educacion/fines",
+      accion: "Ver cómo inscribirme",
+    },
+    {
+      nombre: "Becas Progresar",
+      descripcionCorta: "Apoyo económico mensual para seguir estudiando o capacitarte.",
+      url: "https://www.argentina.gob.ar/educacion/progresar",
+      accion: "Verificar si califico",
+    },
+    {
+      nombre: "Centros de Formación Profesional por barrio",
+      descripcionCorta: "Cursos gratuitos en Agronomía, Balvanera, Flores, Lugano, Palermo y más.",
+      url: "https://buenosaires.gob.ar/educacion/agencia-de-habilidades-para-el-futuro/sedes-de-formacion-profesional",
+      accion: "Buscar el centro más cercano",
+    },
   ],
   salud: [
-    { nombre: "CAPS", descripcionCorta: "Centro de Atención Primaria de Salud más cercano" },
-    { nombre: "Programa SUMAR", descripcionCorta: "Cobertura de salud gratuita", url: "https://www.argentina.gob.ar/salud/sumar" },
+    {
+      nombre: "CeSAC — Centro de Salud gratuito en tu barrio",
+      descripcionCorta: "Atención médica, pediatría, salud mental y más. Sin obra social.",
+      url: "https://buenosaires.gob.ar/salud/centros-de-salud-y-hospitales",
+      telefono: "0800-222-5462",
+      accion: "Encontrar el CeSAC más cercano",
+    },
+    {
+      nombre: "Programa SUMAR — Cobertura de salud gratuita",
+      descripcionCorta: "Para personas sin obra social. Cubre controles, vacunas y más.",
+      url: "https://www.argentina.gob.ar/salud/sumar",
+      accion: "Inscribirme al SUMAR",
+    },
+    {
+      nombre: "Salud Mental — Línea gratuita CABA",
+      descripcionCorta: "Atención y orientación en salud mental las 24hs.",
+      telefono: "0800-333-1665",
+      accion: "Llamar gratis",
+    },
   ],
   vivienda: [
-    { nombre: "Mejoramiento Habitacional", descripcionCorta: "Programa municipal de mejoras" },
-    { nombre: "PROMEBA", descripcionCorta: "Mejoramiento de Barrios", url: "https://www.argentina.gob.ar/habitat/promeba" },
+    {
+      nombre: "Asistencia Habitacional CABA (Subsidio 690)",
+      descripcionCorta: "Para familias en situación de calle o riesgo habitacional.",
+      url: "https://buenosaires.gob.ar/desarrollohumanoyhabitat/inclusion-social-y-atencion-inmediata/asistencia-habitacional",
+      telefono: "0800-333-3190",
+      accion: "Consultar cómo acceder",
+    },
+    {
+      nombre: "PROMEBA — Mejoramiento de barrios",
+      descripcionCorta: "Programa nacional para mejoras en infraestructura del hogar.",
+      url: "https://www.argentina.gob.ar/habitat/promeba",
+      accion: "Ver si aplica en mi barrio",
+    },
+    {
+      nombre: "Línea 147 — Reclamos de servicios urbanos CABA",
+      descripcionCorta: "Reclamos por agua, gas, electricidad, residuos e iluminación.",
+      telefono: "147",
+      accion: "Hacer un reclamo ahora",
+    },
   ],
   ingresos: [
-    { nombre: "ANSES", descripcionCorta: "Asignaciones y prestaciones", url: "https://www.anses.gob.ar" },
-    { nombre: "Portal Empleo", descripcionCorta: "Oportunidades laborales", url: "https://www.portalempleo.gob.ar" },
+    {
+      nombre: "ANSES — Turno online",
+      descripcionCorta: "AUH, jubilaciones, Potenciar Trabajo y más. Sacá turno sin salir de casa.",
+      url: "https://www.anses.gob.ar/turnos",
+      telefono: "130",
+      accion: "Sacar turno en ANSES",
+    },
+    {
+      nombre: "mi ANSES — Trámites online",
+      descripcionCorta: "Consultá y gestioná tus beneficios desde el celular.",
+      url: "https://mi.anses.gob.ar",
+      accion: "Ingresar a mi ANSES",
+    },
+    {
+      nombre: "TrabajoBA — Oportunidades laborales",
+      descripcionCorta: "Portal de empleo del Gobierno de CABA.",
+      url: "https://trabajoba.buenosaires.gob.ar",
+      accion: "Ver ofertas de trabajo",
+    },
   ],
   red: [
-    { nombre: "Puntos de Cultura", descripcionCorta: "Ministerio de Cultura", url: "https://www.argentina.gob.ar/cultura" },
-    { nombre: "Centros Culturales", descripcionCorta: "Espacios barriales de encuentro" },
+    {
+      nombre: "Centros Culturales Barriales CABA",
+      descripcionCorta: "Actividades gratuitas de arte, deporte y comunidad en tu barrio.",
+      url: "https://buenosaires.gob.ar/cultura/centros-culturales",
+      accion: "Ver centros cerca mío",
+    },
+    {
+      nombre: "Puntos de Encuentro Comunitario",
+      descripcionCorta: "Espacios de participación vecinal y talleres gratuitos.",
+      url: "https://www.argentina.gob.ar/cultura",
+      accion: "Encontrar espacios",
+    },
+    {
+      nombre: "Línea 102 — Infancia y Adolescencia",
+      descripcionCorta: "Orientación y apoyo para familias con niños y adolescentes.",
+      telefono: "102",
+      accion: "Llamar gratis",
+    },
   ],
 };
 

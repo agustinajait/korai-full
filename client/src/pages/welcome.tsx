@@ -269,6 +269,11 @@ export default function Welcome() {
   const handleFormNext = () => {
     if (!dni.trim()) { setFormError("El DNI es necesario para guardar tu diagnóstico."); return; }
     setFormError("");
+    // Limpiar diagnóstico anterior para evitar mostrar datos cacheados
+    localStorage.removeItem("korai_user_answers");
+    localStorage.removeItem("korai_user_plan_v1");
+    localStorage.removeItem("korai_user_sello_v1");
+    localStorage.removeItem("korai_profundizacion");
     setContextStep(0);
     setContextAnswers({});
     setMode("context");
