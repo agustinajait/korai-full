@@ -232,7 +232,7 @@ function ProfundizacionScreen({ dimensiones, onComplete }: { dimensiones: string
       </motion.div>
 
       <motion.div key={preguntaActual.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full space-y-5">
-        <h2 className="text-2xl font-display font-bold leading-snug">{preguntaActual.texto}</h2>
+        <h2 className="text-2xl font-display font-bold leading-snug text-[#1E1040]">{preguntaActual.texto}</h2>
 
         <div className="grid gap-3">
           {preguntaActual.opciones.map(op => {

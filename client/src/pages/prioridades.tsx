@@ -200,7 +200,7 @@ export default function Prioridades() {
             <Target className="w-6 h-6 text-[#5B21B6]" />
           </div>
           <div>
-            <h1 className="text-2xl font-black" data-testid="text-prioridades-title">TU PLAN</h1>
+            <h1 className="text-2xl font-black text-[#1E1040]" data-testid="text-prioridades-title">TU PLAN</h1>
             <p className="text-xs text-[#6B5FA0]">Prioridades y metas basadas en tu diagnóstico</p>
           </div>
         </div>
