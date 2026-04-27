@@ -466,7 +466,7 @@ export default function Survey() {
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex-1 space-y-6">
             <header className="space-y-2">
-              <h1 className="text-4xl font-black">Tu Diagnóstico</h1>
+              <h1 className="text-4xl font-black text-[#1E1040]">Tu Diagnóstico</h1>
               <p className="text-[#6B5FA0] text-lg">
                 Este es el resultado de tu autodiagnóstico. Tu mirada es fundamental para entender tu realidad.
               </p>
@@ -649,7 +649,7 @@ export default function Survey() {
                 🎉
               </motion.span>
             </div>
-            <h2 className="text-3xl font-display font-bold">¡Diagnóstico completado!</h2>
+            <h2 className="text-3xl font-display font-bold text-[#1E1040]">¡Diagnóstico completado!</h2>
             <p className="text-[#6B5FA0]">
               Antes de terminar, ¿quieres dejar algún comentario adicional sobre tu barrio?
             </p>

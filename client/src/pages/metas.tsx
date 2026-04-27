@@ -88,7 +88,7 @@ export default function Metas() {
             <Calendar className="w-6 h-6 text-[#5B21B6]" />
           </div>
           <div>
-            <h1 className="text-2xl font-black" data-testid="text-metas-title">Mis Metas</h1>
+            <h1 className="text-2xl font-black text-[#1E1040]" data-testid="text-metas-title">Mis Metas</h1>
             <p className="text-xs text-[#6B5FA0]">Vista por dimensi&oacute;n</p>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function Metas() {
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{m.emoji}</span>
                   <div>
-                    <div className="font-bold text-base">{m.dimensionName}</div>
+                    <div className="font-bold text-base text-[#1E1040]">{m.dimensionName}</div>
                     <div className={`text-[10px] font-black uppercase ${colorText(m.color)}`}>Nivel: {m.color}</div>
                   </div>
                 </div>
