@@ -581,7 +581,7 @@ export default function Survey() {
                <span className="text-xs font-bold text-[#5B21B6] uppercase tracking-widest bg-primary/10 px-2 py-1 rounded">
                  {dimension?.name}
                </span>
-               <h2 className="text-3xl font-display font-bold leading-tight">
+               <h2 className="text-3xl font-display font-bold leading-tight text-[#1E1040]">
                  {currentIndicator.label}
                </h2>
                <p className="text-[#6B5FA0] text-lg">

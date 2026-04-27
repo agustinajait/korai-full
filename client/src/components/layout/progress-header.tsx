@@ -13,20 +13,20 @@ export function ProgressHeader({ currentStep, totalSteps, currentDimensionId }: 
   const dimension = INSTRUMENT.dimensions.find(d => d.id === currentDimensionId);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-white/5 px-4 py-3">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-[#F4F0FF]/90 backdrop-blur-md border-b border-[#DDD6FE] px-4 py-3">
       <div className="max-w-xl mx-auto flex flex-col gap-2">
-        <div className="flex justify-between items-center text-xs font-bold text-muted-foreground uppercase tracking-widest">
+        <div className="flex justify-between items-center text-xs font-bold text-[#6B5FA0] uppercase tracking-widest">
           <motion.span 
             key={dimension?.id}
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-primary"
+            className="text-[#5B21B6]"
           >
             {dimension?.emoji} {dimension?.name}
           </motion.span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <Progress value={progress} className="h-1.5 bg-white/10" indicatorClassName="bg-gradient-to-r from-primary to-accent transition-all duration-500 ease-out" />
+        <Progress value={progress} className="h-1.5 bg-[#DDD6FE]" indicatorClassName="bg-gradient-to-r from-[#5B21B6] to-[#7C3AED] transition-all duration-500 ease-out" />
       </div>
     </div>
   );
