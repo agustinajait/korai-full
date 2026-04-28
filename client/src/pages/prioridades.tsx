@@ -106,15 +106,43 @@ function generarMensaje2(plan: PlanItem[]): string {
 // ─── Handler: Mensaje 1 ───────────────────────────────────────────────────
 function usarWhatsAppMensaje1(plan: PlanItem[]) {
   const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-  const mensaje = generarMensaje1(plan);
-  const encoded = encodeURIComponent(mensaje);
+  const profundizacion = (() => { try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; } })();
+  const nombre = context.nombre || "";
+  const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
+  const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
+  const areasTexto = areas.map(p => p.dimensionName).join(" y ");
+
+  let msg = `Hola${nombre ? ` ${nombre}` : ""} 👋 Soy Korai, tu asistente de bienestar.\n\n`;
+  msg += `Terminaste tu diagnóstico y detectamos que hoy podrías necesitar apoyo en *${areasTexto}*.\n\n`;
+  msg += `🗓️ *Tu plan para las próximas 2 semanas:*\n\n`;
+
+  areas.forEach(p => {
+    msg += `${p.emoji} *${p.dimensionName}*\n`;
+    p.accionesCorto.slice(0, 2).forEach((a, i) => {
+      msg += `${i + 1}. ${a}\n`;
+    });
+    const r = p.recursos?.[0];
+    if (r?.telefono) msg += `📞 ${r.nombre}: ${r.telefono}\n`;
+    else if (r?.url) msg += `🔗 ${r.nombre}: ${r.url}\n`;
+
+    if (p.dimensionId === "empleo" && profundizacion?.emp_disponibilidad !== "no") {
+      msg += `🔗 Turno CIL: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
+    }
+    if (p.dimensionId === "salud" && profundizacion?.sal_cobertura === "no") {
+      msg += `📞 SUMAR (sin obra social): 0800-222-5462\n`;
+    }
+    msg += "\n";
+  });
+
+  msg += `En 7 días te vamos a preguntar cómo te fue 💪\n`;
+  msg += `_Korai — korai-full.vercel.app_`;
+
+  const encoded = encodeURIComponent(msg);
   const telefono = context.telefono?.replace(/\D/g, "");
-  let url: string;
+  let url = `https://wa.me/?text=${encoded}`;
   if (telefono && telefono.length >= 8) {
     const numero = telefono.startsWith("54") ? telefono : `54${telefono}`;
     url = `https://wa.me/${numero}?text=${encoded}`;
-  } else {
-    url = `https://wa.me/?text=${encoded}`;
   }
   window.open(url, "_blank");
 }
@@ -169,7 +197,39 @@ export default function Prioridades() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
+    // Registrar aceptación en Supabase silenciosamente
+    const dniHash = localStorage.getItem("korai_user_dni_hash_v1") || "";
+    if (dniHash) {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/responses?campaign_id=eq.${CAMPAIGN_ID}&dni_hash=eq.${dniHash}&order=submitted_at.desc&limit=1`,
+          { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
+        );
+        const data = await res.json();
+        if (data && data.length > 0) {
+          await fetch(
+            `${SUPABASE_URL}/rest/v1/responses?id=eq.${data[0].id}`,
+            {
+              method: "PATCH",
+              headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+              },
+              body: JSON.stringify({
+                acepto_seguimiento: true,
+                fecha_aceptacion: new Date().toISOString(),
+              }),
+            }
+          );
+        }
+      } catch (e) {
+        console.warn("No se pudo registrar aceptación:", e);
+      }
+    }
+    // Abrir WhatsApp con mensaje unificado
     usarWhatsAppMensaje1(plan);
   };
 
