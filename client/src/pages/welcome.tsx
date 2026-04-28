@@ -7,8 +7,8 @@ import { useState } from "react";
 import { hashDNI } from "@/lib/korai-logic";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import oraiMujer from "@/lib/oraiMujer";
-import koraiLogo from "@/lib/koraiLogo";
+import { ZONAS_BUENOS_AIRES } from "@/lib/instrument";
+import oraiMujer from "@/lib/oraiMujer";import koraiLogo from "@/lib/koraiLogo";
 
 if (typeof document !== "undefined" && !document.getElementById("montserrat-font")) {
   const link = document.createElement("link");
@@ -17,19 +17,6 @@ if (typeof document !== "undefined" && !document.getElementById("montserrat-font
   link.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap";
   document.head.appendChild(link);
 }
-
-const BARRIOS_CABA = [
-  "Agronomía","Almagro","Balvanera","Barracas","Belgrano","Boedo",
-  "Caballito","Chacarita","Coghlan","Colegiales","Constitución",
-  "Flores","Floresta","La Boca","La Paternal","Liniers","Mataderos",
-  "Monte Castro","Montserrat","Nueva Pompeya","Núñez","Palermo",
-  "Parque Avellaneda","Parque Chacabuco","Parque Chas","Parque Patricios",
-  "Puerto Madero","Recoleta","Retiro","Saavedra","San Cristóbal",
-  "San Nicolás","San Telmo","Tribunales","Versalles","Villa Crespo",
-  "Villa del Parque","Villa Devoto","Villa General Mitre","Villa Lugano",
-  "Villa Luro","Villa Ortúzar","Villa Pueyrredón","Villa Real",
-  "Villa Riachuelo","Villa Santa Rita","Villa Soldati","Villa Urquiza",
-];
 
 // Paleta clara
 const C = {
@@ -47,7 +34,7 @@ const C = {
 const CONTEXT_QUESTIONS = [
   {
     id: "edad",
-    emoji: "🎂",
+    emoji: "📋",
     titulo: "¿En qué rango de edad estás?",
     subtitulo: "Nos ayuda a conectarte con programas según tu momento de vida.",
     opciones: [
@@ -466,13 +453,22 @@ export default function Welcome() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider" style={{ color: C.textSub }}>Barrio</label>
+            <label className="text-xs font-bold uppercase tracking-wider" style={{ color: C.textSub }}>Zona / Barrio</label>
             <Select onValueChange={setNeighborhood}>
               <SelectTrigger className="h-11 text-sm border-2 rounded-xl" style={{ background: C.bgCard, borderColor: C.border, color: C.text }}>
-                <SelectValue placeholder="Seleccioná tu barrio" />
+                <SelectValue placeholder="Seleccioná tu zona o barrio" />
               </SelectTrigger>
-              <SelectContent className="max-h-60" style={{ background: C.bgCard, borderColor: C.border }}>
-                {BARRIOS_CABA.map(b => <SelectItem key={b} value={b} style={{ color: C.text }}>{b}</SelectItem>)}
+              <SelectContent className="max-h-72" style={{ background: C.bgCard, borderColor: C.border }}>
+                {Object.entries(ZONAS_BUENOS_AIRES).map(([zona, barrios]) => (
+                  <div key={zona}>
+                    <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-wider" style={{ color: C.textSub, background: C.bg }}>
+                      {zona}
+                    </div>
+                    {barrios.map(b => (
+                      <SelectItem key={b} value={b} style={{ color: C.text }}>{b}</SelectItem>
+                    ))}
+                  </div>
+                ))}
               </SelectContent>
             </Select>
           </div>

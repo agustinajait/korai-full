@@ -98,27 +98,127 @@ export function getActiveIndicatorsSafe(situacionLaboral?: string): typeof INSTR
   });
 }
 
-export const CITIES = [
-  "Berazategui", "Quilmes", "Florencio Varela", "Ezpeleta", "Bernal", "Avellaneda",
-  "Lanús", "Lomas de Zamora", "Banfield", "Temperley", "Adrogué", "Monte Grande",
-  "San Isidro", "San Fernando", "Tigre", "Vicente López", "Olivos", "Martínez",
-  "Morón", "Ituzaingó", "Castelar", "Merlo", "Moreno", "La Matanza", "Ramos Mejía",
-  "Palermo", "Flores", "Caballito", "Villa Lugano", "Barracas", "La Boca", "Balvanera",
-  "Villa Soldati", "Mataderos", "Liniers", "Parque Patricios", "Nueva Pompeya",
-  "Córdoba Capital", "Rosario", "Mendoza Capital", "Tucumán Capital", "Mar del Plata",
-  "La Plata", "Bahía Blanca", "Salta Capital", "Resistencia", "Posadas",
-];
+export const ZONAS_BUENOS_AIRES: Record<string, string[]> = {
+  // ─── CABA ─────────────────────────────────────────────────────────────────
+  "CABA — Centro / Norte": [
+    "Agronomía", "Belgrano", "Coghlan", "Colegiales", "Núñez",
+    "Palermo", "Recoleta", "Retiro", "Saavedra", "Villa Urquiza",
+    "Villa Pueyrredón", "Villa Ortúzar",
+  ],
+  "CABA — Oeste": [
+    "Caballito", "Chacarita", "Floresta", "Flores", "La Paternal",
+    "Liniers", "Monte Castro", "Paternal", "Vélez Sársfield",
+    "Versalles", "Villa Crespo", "Villa del Parque", "Villa Devoto",
+    "Villa General Mitre", "Villa Real", "Villa Santa Rita",
+  ],
+  "CABA — Sur": [
+    "Almagro", "Balvanera", "Barracas", "Boedo", "Constitución",
+    "La Boca", "Mataderos", "Monserrat", "Nueva Pompeya",
+    "Parque Avellaneda", "Parque Chacabuco", "Parque Patricios",
+    "Puerto Madero", "San Cristóbal", "San Telmo", "Villa Lugano",
+    "Villa Luro", "Villa Riachuelo", "Villa Soldati",
+  ],
+  // ─── GBA SUR ──────────────────────────────────────────────────────────────
+  "GBA Sur — Avellaneda": [
+    "Avellaneda", "Dock Sud", "Gerli", "Piñeyro", "Sarandí",
+    "Villa Domínico", "Wilde",
+  ],
+  "GBA Sur — Lanús": [
+    "Lanús Este", "Lanús Oeste", "Gerli", "Monte Chingolo",
+    "Remedios de Escalada", "Valentín Alsina",
+  ],
+  "GBA Sur — Lomas de Zamora": [
+    "Banfield", "Ingeniero Budge", "Lomas de Zamora", "Temperley",
+    "Turdera", "Villa Centenario", "Villa Fiorito",
+  ],
+  "GBA Sur — Quilmes": [
+    "Bernal", "Bernal Oeste", "Don Bosco", "Ezpeleta", "Quilmes",
+    "Quilmes Oeste", "San Francisco Solano",
+  ],
+  "GBA Sur — Berazategui": [
+    "Berazategui", "El Pato", "Hudson", "Juan María Gutiérrez",
+    "Pereyra", "Villa España",
+  ],
+  "GBA Sur — Florencio Varela": [
+    "Bosques", "Florencio Varela", "Gobernador Julio A. Costa",
+    "Ingeniero Juan Allan", "Villa Brown",
+  ],
+  "GBA Sur — Almirante Brown": [
+    "Adrogué", "Burzaco", "Claypole", "Don Orione", "Glew",
+    "José Mármol", "Longchamps", "Malvinas Argentinas",
+    "Ministro Rivadavia", "Rafael Calzada", "San Francisco de Asís",
+    "Solano",
+  ],
+  "GBA Sur — Esteban Echeverría": [
+    "El Jagüel", "Lavallol", "Luis Guillón", "Monte Grande",
+    "9 de Abril",
+  ],
+  "GBA Sur — Ezeiza": [
+    "Canning", "Ezeiza", "La Unión", "Tristán Suárez",
+  ],
+  // ─── GBA OESTE ────────────────────────────────────────────────────────────
+  "GBA Oeste — La Matanza": [
+    "Ciudad Evita", "González Catán", "Gregorio de Laferrere",
+    "Isidro Casanova", "La Tablada", "Lomas del Mirador",
+    "Ramos Mejía", "Rafael Castillo", "San Justo", "Tapiales",
+    "Virrey del Pino",
+  ],
+  "GBA Oeste — Morón": [
+    "Castelar", "El Palomar", "Haedo", "Ituzaingó", "Morón",
+    "Villa Sarmiento",
+  ],
+  "GBA Oeste — Merlo": [
+    "Mariano Acosta", "Merlo", "Parque San Martín", "Pontevedra",
+    "San Antonio de Padua",
+  ],
+  "GBA Oeste — Moreno": [
+    "Cuartel V", "Francisco Álvarez", "La Reja", "Moreno",
+    "Trujui",
+  ],
+  "GBA Oeste — General Rodríguez": [
+    "General Rodríguez",
+  ],
+  "GBA Oeste — Marcos Paz": [
+    "Marcos Paz",
+  ],
+  // ─── GBA NORTE ────────────────────────────────────────────────────────────
+  "GBA Norte — Vicente López": [
+    "Florida", "Florida Oeste", "La Lucila", "Munro", "Olivos",
+    "Vicente López", "Villa Martelli",
+  ],
+  "GBA Norte — San Isidro": [
+    "Béccar", "Boulogne", "Martínez", "San Isidro", "Villa Adelina",
+  ],
+  "GBA Norte — San Fernando": [
+    "San Fernando", "Victoria",
+  ],
+  "GBA Norte — Tigre": [
+    "Don Torcuato", "El Talar", "General Pacheco", "Rincón de Milberg",
+    "Tigre",
+  ],
+  "GBA Norte — Malvinas Argentinas": [
+    "Grand Bourg", "Ingeniero Pablo Nogués", "Los Polvorines",
+    "Malvinas Argentinas", "Tierras Altas",
+  ],
+  "GBA Norte — José C. Paz": [
+    "José C. Paz",
+  ],
+  "GBA Norte — San Miguel": [
+    "Bella Vista", "Campo de Mayo", "San Miguel", "Santa María",
+  ],
+  "GBA Norte — Hurlingham": [
+    "Hurlingham", "William Morris",
+  ],
+  "GBA Norte — Tres de Febrero": [
+    "Caseros", "Ciudadela", "El Palomar", "Loma Hermosa",
+    "Pablo Podestá", "Santos Lugares", "Valentín Alsina",
+  ],
+};
 
-export const BARRIOS_CABA = [
-  "Palermo", "Flores", "Caballito", "Villa Lugano", "Barracas", "La Boca",
-  "Balvanera", "Villa Soldati", "Mataderos", "Liniers", "Parque Patricios",
-  "Nueva Pompeya", "Villa Urquiza", "Saavedra", "Núñez", "Belgrano",
-  "Coghlan", "Colegiales", "Chacarita", "Villa Crespo", "Almagro",
-  "Boedo", "San Cristóbal", "Constitución", "San Telmo", "Monserrat",
-  "Puerto Madero", "Retiro", "Recoleta", "Villa Pueyrredón", "Agronomía",
-  "Versalles", "Villa Real", "Monte Castro", "Floresta", "Vélez Sársfield",
-  "Villa Devoto", "Villa del Parque", "Villa Santa Rita", "Villa Gral. Mitre",
-];
+// Lista plana de todos los barrios para compatibilidad
+export const BARRIOS_CABA = Object.values(ZONAS_BUENOS_AIRES).flat().sort();
+
+export const CITIES = Object.keys(ZONAS_BUENOS_AIRES);
 
 export const CHOICE_COLORS = {
   rojo: "hsl(0, 84%, 60%)",
