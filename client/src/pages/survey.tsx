@@ -593,22 +593,16 @@ export default function Survey() {
             <div className="grid gap-4 mt-8">
               <TrafficLightButton
                 color="verde"
-                label="Sí / Suficiente"
-                subLabel="Estamos bien en este aspecto"
                 onClick={() => handleAnswer("verde")}
                 selected={answers[currentIndicator.id] === "verde"}
               />
               <TrafficLightButton
                 color="amarillo"
-                label="Parcial / Inestable"
-                subLabel="Podría mejorar / A veces sí, a veces no"
                 onClick={() => handleAnswer("amarillo")}
                 selected={answers[currentIndicator.id] === "amarillo"}
               />
               <TrafficLightButton
                 color="rojo"
-                label="No / Insuficiente"
-                subLabel="Tenemos problemas graves aquí"
                 onClick={() => handleAnswer("rojo")}
                 selected={answers[currentIndicator.id] === "rojo"}
               />
