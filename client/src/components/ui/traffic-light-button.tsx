@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 interface TrafficLightButtonProps {
   color: "verde" | "amarillo" | "rojo";
-  label: string;
+  label?: string;
   subLabel?: string;
   selected?: boolean;
   onClick: () => void;
@@ -14,22 +14,26 @@ const VARIANTS = {
   verde: {
     base: "border-green-400 bg-green-50 hover:bg-green-100 text-green-900",
     active: "bg-green-100 border-green-500 ring-2 ring-green-400/50 shadow-[0_0_20px_-5px_rgba(34,197,94,0.4)]",
-    dot: "bg-green-500"
+    dot: "bg-green-500",
+    defaultLabel: "Estoy bien en esto",
   },
   amarillo: {
     base: "border-yellow-400 bg-yellow-50 hover:bg-yellow-100 text-yellow-900",
     active: "bg-yellow-100 border-yellow-500 ring-2 ring-yellow-400/50 shadow-[0_0_20px_-5px_rgba(234,179,8,0.4)]",
-    dot: "bg-yellow-500"
+    dot: "bg-yellow-500",
+    defaultLabel: "Necesito mejorar",
   },
   rojo: {
     base: "border-red-400 bg-red-50 hover:bg-red-100 text-red-900",
     active: "bg-red-100 border-red-500 ring-2 ring-red-400/50 shadow-[0_0_20px_-5px_rgba(239,68,68,0.4)]",
-    dot: "bg-red-500"
+    dot: "bg-red-500",
+    defaultLabel: "Hoy es un problema",
   }
 };
 
 export function TrafficLightButton({ color, label, subLabel, selected, onClick, disabled }: TrafficLightButtonProps) {
   const variant = VARIANTS[color];
+  const displayLabel = label || variant.defaultLabel;
 
   return (
     <motion.button
@@ -50,35 +54,34 @@ export function TrafficLightButton({ color, label, subLabel, selected, onClick, 
       )}
     >
       <div className={cn(
-        "w-6 h-6 rounded-full shadow-lg border-2 border-white/20 flex items-center justify-center transition-all",
+        "w-6 h-6 rounded-full shadow-lg border-2 border-white/20 flex items-center justify-center transition-all flex-shrink-0",
         variant.dot,
         selected ? "scale-110" : "scale-100 group-hover:scale-105"
       )}>
         {selected && (
-          <motion.svg 
-            initial={{ scale: 0 }} 
-            animate={{ scale: 1 }} 
-            className="w-3.5 h-3.5 text-white font-bold" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="4" 
-            strokeLinecap="round" 
+          <motion.svg
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-3.5 h-3.5 text-white font-bold"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeLinecap="round"
             strokeLinejoin="round"
           >
             <polyline points="20 6 9 17 4 12" />
           </motion.svg>
         )}
       </div>
-      
+
       <div className="flex flex-col">
-        <span className="font-display font-bold text-lg leading-tight">{label}</span>
-        {subLabel && <span className="text-xs opacity-70 font-medium">{subLabel}</span>}
+        <span className="font-display font-bold text-base leading-tight">{displayLabel}</span>
+        {subLabel && <span className="text-xs opacity-70 font-medium mt-0.5">{subLabel}</span>}
       </div>
 
       {selected && (
         <motion.div
-          layoutId="glow"
           className="absolute inset-0 rounded-2xl bg-white/5 pointer-events-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
