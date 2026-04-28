@@ -197,7 +197,7 @@ export default function Prioridades() {
           </div>
           <div>
             <h1 className="text-2xl font-black text-[#1E1040]" data-testid="text-prioridades-title">TU PLAN</h1>
-            <p className="text-xs text-[#6B5FA0]">Prioridades y metas basadas en tu diagnóstico</p>
+            <p className="text-xs text-[#6B5FA0]">Qué podés hacer esta semana y tu camino para este año</p>
           </div>
         </div>
       </div>
@@ -284,24 +284,31 @@ export default function Prioridades() {
 
                 <p className="text-sm text-[#3D2A8A]">{p.motivo}</p>
 
-                <div className="p-3 rounded-xl bg-white border border-[#DDD6FE] space-y-2">
-                  <div className="text-[10px] font-black uppercase text-green-700 tracking-wider">Meta corto plazo</div>
-                  <p className="text-sm text-[#1E1040]">{p.metaCorto}</p>
-                  <div className="space-y-1 pt-1">
-                    {p.accionesCorto.map((a, ai) => (
-                      <div key={ai} className="flex items-start gap-2">
-                        <ChevronRight className="w-3.5 h-3.5 text-[#5B21B6] mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-[#3D2A8A]">{a}</p>
+                {/* Esta semana */}
+                <div className="p-4 rounded-xl bg-white border-2 border-[#5B21B6]/20 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">📌</span>
+                    <div className="text-xs font-black uppercase text-[#5B21B6] tracking-wider">Qué podés hacer esta semana</div>
+                  </div>
+                  <div className="space-y-2 pt-1">
+                    {p.accionesCorto.slice(0, 2).map((a, ai) => (
+                      <div key={ai} className="flex items-start gap-2 p-2 rounded-lg bg-[#F4F0FF]">
+                        <span className="text-[#5B21B6] font-black text-sm mt-0.5">{ai + 1}.</span>
+                        <p className="text-sm text-[#1E1040] font-medium">{a}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
+                {/* Recursos */}
                 {p.recursos.length > 0 && (
                   <div className="space-y-2">
-                    <div className="text-[10px] font-black uppercase text-[#6B5FA0] tracking-wider">Recursos disponibles</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">🔗</span>
+                      <div className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Dónde ir o a quién llamar</div>
+                    </div>
                     <div className="space-y-2">
-                      {p.recursos.map((r, ri) => (
+                      {p.recursos.slice(0, 2).map((r, ri) => (
                         <div key={ri} className="p-3 rounded-xl bg-white border border-[#DDD6FE] space-y-1.5">
                           <div className="font-bold text-sm text-[#1E1040]">{r.nombre}</div>
                           {r.descripcionCorta && <p className="text-xs text-[#6B5FA0]">{r.descripcionCorta}</p>}
@@ -333,19 +340,26 @@ export default function Prioridades() {
                   data-testid={`button-expand-${p.dimensionId}`}
                 >
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                  {isExpanded ? "Ocultar metas mediano/largo" : "Ver metas mediano/largo plazo"}
+                  {isExpanded ? "Ocultar el camino anual" : "📅 Ver el camino para este año"}
                 </button>
               </div>
 
               {isExpanded && (
-                <div className="px-5 pb-5 space-y-3 border-t border-[#EDE9FE] pt-3">
+                <div className="px-5 pb-5 space-y-3 border-t border-[#EDE9FE] pt-4 bg-[#FAF8FF]">
+                  <div className="text-xs font-black text-[#6B5FA0] uppercase tracking-wider mb-3">Tu camino para los próximos meses</div>
                   <div className="p-3 rounded-xl bg-white border border-[#DDD6FE]">
-                    <div className="text-[10px] font-black uppercase text-yellow-700 tracking-wider">Mediano plazo (1-3 años)</div>
-                    <p className="text-sm text-[#1E1040] mt-1">{p.metaMediano}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span>📅</span>
+                      <div className="text-[10px] font-black uppercase text-yellow-700 tracking-wider">Este mes</div>
+                    </div>
+                    <p className="text-sm text-[#1E1040]">{p.metaCorto}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-white border border-[#DDD6FE]">
-                    <div className="text-[10px] font-black uppercase text-[#5B21B6] tracking-wider">Largo plazo (5-10 años)</div>
-                    <p className="text-sm text-[#1E1040] mt-1">{p.metaLargo}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span>🎯</span>
+                      <div className="text-[10px] font-black uppercase text-[#5B21B6] tracking-wider">Dónde querés estar en un año</div>
+                    </div>
+                    <p className="text-sm text-[#1E1040]">{p.metaMediano}</p>
                   </div>
                 </div>
               )}
