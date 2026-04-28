@@ -282,8 +282,6 @@ export default function Prioridades() {
                   </div>
                 </div>
 
-                <p className="text-sm text-[#3D2A8A]">{p.motivo}</p>
-
                 {/* Esta semana */}
                 <div className="p-4 rounded-xl bg-white border-2 border-[#5B21B6]/20 space-y-2">
                   <div className="flex items-center gap-2">
