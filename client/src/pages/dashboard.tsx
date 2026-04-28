@@ -47,6 +47,170 @@ async function fetchResponses() {
   return res.json();
 }
 
+async function fetchTrazabilidad(dniHash: string) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/responses?campaign_id=eq.${CAMPAIGN_ID}&dni_hash=eq.${dniHash}&order=submitted_at.asc`,
+    { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
+  );
+  if (!res.ok) throw new Error("Error al cargar trazabilidad");
+  return res.json();
+}
+
+// ─── Vista de trazabilidad individual ────────────────────────────────────────
+function TrazabilidadView({ response, onBack }: { response: any; onBack: () => void }) {
+  const [historial, setHistorial] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const nombre = getNombrePersona(response);
+
+  useEffect(() => {
+    if (!response.dni_hash) { setLoading(false); return; }
+    fetchTrazabilidad(response.dni_hash)
+      .then(data => { setHistorial(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [response.dni_hash]);
+
+  const colorDot = (c: string) =>
+    c === "rojo" ? "bg-red-500" : c === "amarillo" ? "bg-yellow-500" : "bg-green-500";
+  const colorText = (c: string) =>
+    c === "rojo" ? "text-red-600" : c === "amarillo" ? "text-yellow-700" : "text-green-700";
+
+  return (
+    <div className="min-h-screen bg-[#070A13] text-[#EEF2FF] font-sans">
+      <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" onClick={onBack} className="text-white/50 hover:text-white hover:bg-white/10 gap-2">
+            <ArrowLeft className="w-4 h-4" /> Volver
+          </Button>
+        </div>
+
+        {/* Header */}
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7c5cff] to-[#3b82f6] flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="text-xl font-black">{nombre}</div>
+              <div className="text-xs text-white/40 mt-0.5">
+                {historial.length} diagnóstico{historial.length !== 1 ? "s" : ""} registrado{historial.length !== 1 ? "s" : ""}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+        ) : historial.length === 0 ? (
+          <div className="text-center py-10 text-white/40">Sin historial disponible.</div>
+        ) : (
+          <>
+            {/* Evolución visual por dimensión */}
+            <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
+              <div className="p-5 border-b border-white/10">
+                <h3 className="font-black text-lg">Evolución por dimensión</h3>
+                <p className="text-xs text-white/40 mt-1">Cada columna es un diagnóstico. De izquierda a derecha, del más antiguo al más reciente.</p>
+              </div>
+              <div className="p-5 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="text-left text-xs text-white/40 font-bold pb-3 pr-4 w-32">Dimensión</th>
+                      {historial.map((h, i) => (
+                        <th key={i} className="text-center text-xs text-white/40 font-bold pb-3 px-2 min-w-[80px]">
+                          <div>{new Date(h.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</div>
+                          <div className="text-[9px] text-white/25">#{i + 1}</div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {INSTRUMENT.dimensions.map(d => (
+                      <tr key={d.id}>
+                        <td className="py-3 pr-4">
+                          <div className="flex items-center gap-2">
+                            <span>{d.emoji}</span>
+                            <span className="font-semibold text-xs text-white/70">{d.name}</span>
+                          </div>
+                        </td>
+                        {historial.map((h, i) => {
+                          const sitLab = (() => { try { const p = JSON.parse(typeof h.perfil_contextual === "string" ? h.perfil_contextual : "{}"); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
+                          const scores = calcularScores(h.answers || {}, sitLab);
+                          const score = scores.find(s => s.dimensionId === d.id);
+                          const color = score?.color || "verde";
+                          // Flecha de evolución
+                          let arrow = null;
+                          if (i > 0) {
+                            const prevSitLab = (() => { try { const p = JSON.parse(typeof historial[i-1].perfil_contextual === "string" ? historial[i-1].perfil_contextual : "{}"); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
+                            const prevScores = calcularScores(historial[i-1].answers || {}, prevSitLab);
+                            const prevScore = prevScores.find(s => s.dimensionId === d.id);
+                            const colorOrder = { verde: 0, amarillo: 1, rojo: 2 };
+                            const diff = (colorOrder[color] || 0) - (colorOrder[prevScore?.color || "verde"] || 0);
+                            if (diff < 0) arrow = <span className="text-green-400 text-xs">↑</span>;
+                            else if (diff > 0) arrow = <span className="text-red-400 text-xs">↓</span>;
+                          }
+                          return (
+                            <td key={i} className="py-3 px-2 text-center">
+                              <div className="flex flex-col items-center gap-1">
+                                <div className={`w-4 h-4 rounded-full ${colorDot(color)}`} title={color} />
+                                {arrow}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Timeline */}
+            <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
+              <div className="p-5 border-b border-white/10">
+                <h3 className="font-black text-lg">Timeline de diagnósticos</h3>
+              </div>
+              <div className="divide-y divide-white/5">
+                {historial.map((h, i) => {
+                  const sitLab = (() => { try { const p = JSON.parse(typeof h.perfil_contextual === "string" ? h.perfil_contextual : "{}"); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
+                  const scores = calcularScores(h.answers || {}, sitLab);
+                  const rojas = scores.filter(s => s.color === "rojo").length;
+                  const fecha = new Date(h.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" });
+                  const isLast = i === historial.length - 1;
+                  return (
+                    <div key={i} className={`p-5 ${isLast ? "bg-white/3" : ""}`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <div className="font-bold text-sm">Diagnóstico #{i + 1}</div>
+                          <div className="text-xs text-white/40">{fecha} {isLast ? "· Más reciente" : ""}</div>
+                        </div>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                          rojas >= 2 ? "bg-red-500/20 text-red-400 border-red-500/30" :
+                          rojas === 1 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
+                          "bg-green-500/20 text-green-400 border-green-500/30"
+                        }`}>
+                          {rojas} área{rojas !== 1 ? "s" : ""} crítica{rojas !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {scores.map(s => (
+                          <div key={s.dimensionId} className="flex items-center gap-1.5 text-xs">
+                            <div className={`w-2 h-2 rounded-full ${colorDot(s.color)}`} />
+                            <span className={colorText(s.color)}>{s.dimensionName}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Vista de caso individual ───────────────────────────────────────────────
 // Helper: extrae nombre y apellido del perfil_contextual
 function getNombrePersona(r: any): string {
@@ -243,6 +407,7 @@ export default function Dashboard() {
   const [barrioFilter, setBarrioFilter] = useState("all");
   const [selectedCase, setSelectedCase] = useState<any | null>(null);
   const [showCaseList, setShowCaseList] = useState(false);
+  const [showTrazabilidad, setShowTrazabilidad] = useState(false);
 
   useEffect(() => {
     fetchResponses()
@@ -328,6 +493,7 @@ export default function Dashboard() {
   }, [stats]);
 
   // Vista de caso individual
+  if (selectedCase && showTrazabilidad) return <TrazabilidadView response={selectedCase} onBack={() => { setShowTrazabilidad(false); }} />;
   if (selectedCase) return <CasoIndividual response={selectedCase} onBack={() => setSelectedCase(null)} />;
 
   if (isLoading) return (
@@ -445,6 +611,12 @@ export default function Dashboard() {
                     }`}>
                       {rojas} crítica{rojas !== 1 ? "s" : ""}
                     </span>
+                    <button
+                      onClick={e => { e.stopPropagation(); setSelectedCase(r); setShowTrazabilidad(true); }}
+                      className="text-[10px] text-primary bg-primary/10 border border-primary/20 px-2 py-1 rounded-lg hover:bg-primary/20 transition-colors flex-shrink-0 font-bold"
+                    >
+                      Evolución
+                    </button>
                     <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-primary transition-colors" />
                   </div>
                 );
