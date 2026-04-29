@@ -25,7 +25,7 @@ export interface PlanItem {
   accionesCorto: string[];
   metaMediano: string;
   metaLargo: string;
-  recursos: { nombre: string; descripcionCorta?: string; url?: string; telefono?: string; accion?: string }[];
+  recursos: { nombre: string; descripcionCorta?: string; url?: string; telefono?: string; accion?: string; tipo?: "publico" | "privado" | "ong" }[];
   cuando: string;
   esPrioritaria?: boolean; // área bloqueante según nueva lógica
 }
@@ -103,7 +103,221 @@ const METAS_LARGO: Record<string, string> = {
   red:       "Ser parte activa de la vida cultural y social del barrio, con redes de apoyo sólidas.",
 };
 
-const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: string; url?: string; telefono?: string; accion?: string }[]> = {
+const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: string; url?: string; telefono?: string; accion?: string; tipo?: "publico" | "privado" | "ong" }[]> = {
+  empleo: [
+    {
+      nombre: "Centro de Integración Laboral (CIL)",
+      descripcionCorta: "Sacá turno para hacer tu CV y acceder a programas de empleo. Llevá DNI y CUIL.",
+      url: "https://buenosaires.gob.ar/tramites/centro-de-integracion-laboral",
+      accion: "Sacar turno online", tipo: "publico",
+    },
+    {
+      nombre: "TrabajoBA — Portal de Empleo CABA",
+      descripcionCorta: "Registrate y accedé a ofertas laborales en la Ciudad.",
+      url: "https://trabajoba.buenosaires.gob.ar",
+      accion: "Registrarme gratis", tipo: "publico",
+    },
+    {
+      nombre: "Oportunai — CV y Video CV",
+      descripcionCorta: "Creá tu perfil laboral y video CV gratis para destacarte.",
+      url: "https://oportunai.com",
+      accion: "Crear mi perfil", tipo: "privado",
+    },
+    {
+      nombre: "Formación Profesional CABA — Cursos gratuitos",
+      descripcionCorta: "Más de 3.400 cursos gratuitos en 50+ centros en toda la Ciudad.",
+      url: "https://buenosaires.gob.ar/educacion/agencia-de-habilidades-para-el-futuro/formacion-profesional",
+      accion: "Ver cursos por barrio", tipo: "publico",
+    },
+    {
+      nombre: "Fundación Forge — Formación laboral juvenil",
+      descripcionCorta: "Talleres gratuitos de habilidades laborales para jóvenes de 17 a 25 años.",
+      url: "https://fundacionforge.org.ar",
+      accion: "Ver programas", tipo: "ong",
+    },
+    {
+      nombre: "Junior Achievement Argentina",
+      descripcionCorta: "Programas gratuitos de emprendimiento y empleo para jóvenes.",
+      url: "https://www.jaargentina.org.ar",
+      accion: "Ver programas", tipo: "ong",
+    },
+    {
+      nombre: "Accenture — Becas y capacitación tecnológica",
+      descripcionCorta: "Programa de RSE con cursos gratuitos en tecnología y habilidades digitales.",
+      url: "https://www.accenture.com/ar-es/about/citizenship/skills-to-succeed",
+      accion: "Ver oportunidades", tipo: "privado",
+    },
+  ],
+  educacion: [
+    {
+      nombre: "Plan FinEs — Terminá el secundario gratis",
+      descripcionCorta: "Programa nacional para adultos. Se cursa cerca de tu casa.",
+      url: "https://www.argentina.gob.ar/educacion/fines",
+      accion: "Ver cómo inscribirme", tipo: "publico",
+    },
+    {
+      nombre: "Becas Progresar",
+      descripcionCorta: "Apoyo económico mensual para seguir estudiando o capacitarte.",
+      url: "https://www.argentina.gob.ar/educacion/progresar",
+      accion: "Verificar si califico", tipo: "publico",
+    },
+    {
+      nombre: "Centros de Formación Profesional por barrio",
+      descripcionCorta: "Cursos gratuitos en Agronomía, Balvanera, Flores, Lugano, Palermo y más.",
+      url: "https://buenosaires.gob.ar/educacion/agencia-de-habilidades-para-el-futuro/sedes-de-formacion-profesional",
+      accion: "Buscar el centro más cercano", tipo: "publico",
+    },
+    {
+      nombre: "Cimientos — Becas para estudiantes",
+      descripcionCorta: "ONG que otorga becas y acompañamiento a jóvenes en situación vulnerable.",
+      url: "https://www.cimientos.org",
+      accion: "Ver becas disponibles", tipo: "ong",
+    },
+    {
+      nombre: "Coursera — Cursos online gratuitos",
+      descripcionCorta: "Miles de cursos gratuitos de universidades y empresas líderes.",
+      url: "https://www.coursera.org",
+      accion: "Explorar cursos gratis", tipo: "privado",
+    },
+    {
+      nombre: "Google — Certificados de Carrera",
+      descripcionCorta: "Certificados profesionales gratuitos en tecnología, datos y negocios.",
+      url: "https://grow.google/intl/es-419/google-career-certificates",
+      accion: "Ver certificados", tipo: "privado",
+    },
+  ],
+  salud: [
+    {
+      nombre: "CeSAC — Centro de Salud gratuito en tu barrio",
+      descripcionCorta: "Atención médica, pediatría, salud mental y más. Sin obra social.",
+      url: "https://buenosaires.gob.ar/salud/centros-de-salud-y-hospitales",
+      telefono: "0800-222-5462",
+      accion: "Encontrar el CeSAC más cercano", tipo: "publico",
+    },
+    {
+      nombre: "Programa SUMAR — Cobertura de salud gratuita",
+      descripcionCorta: "Para personas sin obra social. Cubre controles, vacunas y más.",
+      url: "https://www.argentina.gob.ar/salud/sumar",
+      accion: "Inscribirme al SUMAR", tipo: "publico",
+    },
+    {
+      nombre: "Salud Mental — Línea gratuita CABA",
+      descripcionCorta: "Atención y orientación en salud mental las 24hs.",
+      telefono: "0800-333-1665",
+      accion: "Llamar gratis", tipo: "publico",
+    },
+    {
+      nombre: "Médicos del Mundo Argentina",
+      descripcionCorta: "ONG con atención médica gratuita en barrios vulnerables de Buenos Aires.",
+      url: "https://www.medicosdelmundo.org.ar",
+      accion: "Ver puntos de atención", tipo: "ong",
+    },
+    {
+      nombre: "Fundación Garrahan — Salud infantil",
+      descripcionCorta: "Apoyo y recursos para familias con niños con enfermedades complejas.",
+      url: "https://www.fundaciongarrahan.org.ar",
+      accion: "Ver programas", tipo: "ong",
+    },
+  ],
+  vivienda: [
+    {
+      nombre: "Asistencia Habitacional CABA (Subsidio 690)",
+      descripcionCorta: "Para familias en situación de calle o riesgo habitacional.",
+      url: "https://buenosaires.gob.ar/desarrollohumanoyhabitat/inclusion-social-y-atencion-inmediata/asistencia-habitacional",
+      telefono: "0800-333-3190",
+      accion: "Consultar cómo acceder", tipo: "publico",
+    },
+    {
+      nombre: "PROMEBA — Mejoramiento de barrios",
+      descripcionCorta: "Programa nacional para mejoras en infraestructura del hogar.",
+      url: "https://www.argentina.gob.ar/habitat/promeba",
+      accion: "Ver si aplica en mi barrio", tipo: "publico",
+    },
+    {
+      nombre: "Línea 147 — Reclamos de servicios urbanos CABA",
+      descripcionCorta: "Reclamos por agua, gas, electricidad, residuos e iluminación.",
+      telefono: "147",
+      accion: "Hacer un reclamo ahora", tipo: "publico",
+    },
+    {
+      nombre: "TECHO Argentina — Mejoramiento habitacional",
+      descripcionCorta: "ONG con programas de construcción y mejora de viviendas en asentamientos.",
+      url: "https://techo.org/argentina",
+      accion: "Ver programas", tipo: "ong",
+    },
+    {
+      nombre: "Turo — Microcréditos para el hogar",
+      descripcionCorta: "Microcréditos accesibles para mejoras del hogar sin garantías.",
+      url: "https://www.turo.com.ar",
+      accion: "Ver opciones", tipo: "privado",
+    },
+  ],
+  prevision: [
+    {
+      nombre: "ANSES — Turno online",
+      descripcionCorta: "AUH, jubilaciones, Potenciar Trabajo y más. Sacá turno sin salir de casa.",
+      url: "https://www.anses.gob.ar/turnos",
+      telefono: "130",
+      accion: "Sacar turno en ANSES", tipo: "publico",
+    },
+    {
+      nombre: "mi ANSES — Trámites online",
+      descripcionCorta: "Consultá y gestioná tus beneficios desde el celular.",
+      url: "https://mi.anses.gob.ar",
+      accion: "Ingresar a mi ANSES", tipo: "publico",
+    },
+    {
+      nombre: "Fondo de Impacto Social — Microcréditos",
+      descripcionCorta: "Microcréditos para emprendedores y familias de bajos ingresos.",
+      url: "https://www.fondodeimpactosocial.org.ar",
+      accion: "Ver opciones", tipo: "ong",
+    },
+    {
+      nombre: "Mercado Pago — Cuenta gratuita",
+      descripcionCorta: "Abrí tu cuenta digital gratis para cobrar, pagar y ahorrar.",
+      url: "https://www.mercadopago.com.ar",
+      accion: "Abrir cuenta gratis", tipo: "privado",
+    },
+    {
+      nombre: "Ualá — Cuenta y tarjeta sin costo",
+      descripcionCorta: "Cuenta bancaria digital gratuita con tarjeta Mastercard incluida.",
+      url: "https://www.uala.com.ar",
+      accion: "Abrir cuenta gratis", tipo: "privado",
+    },
+  ],
+  red: [
+    {
+      nombre: "Centros Culturales Barriales CABA",
+      descripcionCorta: "Actividades gratuitas de arte, deporte y comunidad en tu barrio.",
+      url: "https://buenosaires.gob.ar/cultura/centros-culturales",
+      accion: "Ver centros cerca mío", tipo: "publico",
+    },
+    {
+      nombre: "Puntos de Encuentro Comunitario",
+      descripcionCorta: "Espacios de participación vecinal y talleres gratuitos.",
+      url: "https://www.argentina.gob.ar/cultura",
+      accion: "Encontrar espacios", tipo: "publico",
+    },
+    {
+      nombre: "Línea 102 — Infancia y Adolescencia",
+      descripcionCorta: "Orientación y apoyo para familias con niños y adolescentes.",
+      telefono: "102",
+      accion: "Llamar gratis", tipo: "publico",
+    },
+    {
+      nombre: "Asociación Civil El Arca",
+      descripcionCorta: "Red comunitaria con talleres, comedores y acompañamiento en barrios de CABA.",
+      url: "https://www.elarca.org.ar",
+      accion: "Ver actividades", tipo: "ong",
+    },
+    {
+      nombre: "Meetup — Grupos y actividades comunitarias",
+      descripcionCorta: "Encontrá grupos de interés, actividades y redes de contacto en tu zona.",
+      url: "https://www.meetup.com/es-ES",
+      accion: "Explorar grupos", tipo: "privado",
+    },
+  ],
+};
   empleo: [
     {
       nombre: "Centro de Integración Laboral (CIL)",
