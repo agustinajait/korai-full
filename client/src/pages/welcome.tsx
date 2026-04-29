@@ -389,11 +389,12 @@ export default function Welcome() {
             ))}
           </div>
           <div className="flex-1" />
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
-            className="flex justify-center">
-            <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "240px", filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))", marginBottom: "-8px" }} />
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-3">
+          <div className="flex flex-col gap-0">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
+              className="flex justify-center">
+              <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "220px", filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-3">
             <div className="flex items-center gap-3 p-4 rounded-2xl border border-[#E9D5FF] bg-[#F5F3FF]">
               <div className="w-11 h-11 rounded-full bg-[#EDE9FE] flex items-center justify-center flex-shrink-0 text-xl">⏱️</div>
               <p style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-sm text-[#1E1040] leading-snug">
@@ -410,6 +411,7 @@ export default function Welcome() {
             </button>
             <p className="text-[10px] text-center" style={{ color: C.textSub }}>🔒 Tu información está protegida</p>
           </motion.div>
+          </div>
         </div>
       </div>
     );
