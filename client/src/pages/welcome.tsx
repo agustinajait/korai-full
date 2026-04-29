@@ -388,9 +388,10 @@ export default function Welcome() {
               </motion.div>
             ))}
           </div>
+          <div className="flex-1" />
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
-            className="flex justify-center flex-1 items-center">
-            <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "260px", filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
+            className="flex justify-center">
+            <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "240px", filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))", marginBottom: "-8px" }} />
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-3">
             <div className="flex items-center gap-3 p-4 rounded-2xl border border-[#E9D5FF] bg-[#F5F3FF]">
