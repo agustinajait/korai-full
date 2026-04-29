@@ -312,6 +312,7 @@ export default function Survey() {
       const v = dimAnswers.filter(ans => ans.value === 'verde').length;
       const n = dimAnswers.length;
 
+      if (n === 0) { perDim[d.id] = { r: 0, a: 0, v: 0, n: 0, color: 'verde', severity: 0, explanation: 'Sin datos.' }; return; }
       const color = (r / n >= 0.5) ? 'rojo' : (a / n >= 0.5 || (r+a)/n >= 0.5) ? 'amarillo' : 'verde';
       const severity = Math.round(((r * 1 + a * 0.5) / n) * 100);
       const worstInd = dimAnswers.find(a => a.value === 'rojo') || dimAnswers.find(a => a.value === 'amarillo');
@@ -482,7 +483,7 @@ export default function Survey() {
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{d.emoji}</span>
                         <div>
-                          <div className="font-bold text-base">{d.name}</div>
+                          <div className="font-bold text-base text-[#1E1040]">{d.name}</div>
                           <div className="text-[10px] text-[#6B5FA0] uppercase">Nivel: {s.color}</div>
                         </div>
                       </div>
