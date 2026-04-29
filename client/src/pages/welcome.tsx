@@ -364,14 +364,16 @@ export default function Welcome() {
   if (mode === "landing") {
     return (
       <div className="min-h-screen w-full flex justify-center" style={{ background: "#F8F7FF" }}>
-        <div className="w-full max-w-sm flex flex-col min-h-screen px-5 pt-12 pb-6 gap-4">
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2">
+        <div className="w-full max-w-sm flex flex-col min-h-screen px-5 pt-10 pb-6">
+          {/* Logo */}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2 mb-6">
             <img src={koraiLogo} alt="KORAI logo" className="w-10 h-10 object-contain" />
             <span style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-3xl font-black tracking-tight text-[#1E1040]">
               KOR<span className="text-[#22C55E]">AI</span>
             </span>
           </motion.div>
-          <div className="space-y-3 mt-6">
+          {/* Textos */}
+          <div className="space-y-3 mb-4">
             {[
               { emoji: "💜", color: "#7C3AED", text: "Queremos conocerte," },
               { emoji: "👂", color: "#0EA5E9", text: "escucharte y acercarte" },
@@ -388,13 +390,14 @@ export default function Welcome() {
               </motion.div>
             ))}
           </div>
+          {/* Espaciador flexible */}
           <div className="flex-1" />
-          <div className="flex flex-col gap-0">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
-              className="flex justify-center">
-              <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "220px", filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-3">
+          {/* Imagen + caja sin gap */}
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
+            className="flex justify-center" style={{ marginBottom: 0 }}>
+            <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "210px", display: "block", filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-3" style={{ marginTop: 0 }}>
             <div className="flex items-center gap-3 p-4 rounded-2xl border border-[#E9D5FF] bg-[#F5F3FF]">
               <div className="w-11 h-11 rounded-full bg-[#EDE9FE] flex items-center justify-center flex-shrink-0 text-xl">⏱️</div>
               <p style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-sm text-[#1E1040] leading-snug">
@@ -411,7 +414,6 @@ export default function Welcome() {
             </button>
             <p className="text-[10px] text-center" style={{ color: C.textSub }}>🔒 Tu información está protegida</p>
           </motion.div>
-          </div>
         </div>
       </div>
     );
