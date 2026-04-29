@@ -363,79 +363,79 @@ export default function Welcome() {
   // ─── LANDING ────────────────────────────────────────────────────────────────
   if (mode === "landing") {
     return (
-      <div className="min-h-screen w-full flex flex-col overflow-hidden" style={{ background: "#FFFFFF" }}>
+      <div className="min-h-screen w-full flex flex-col items-center" style={{ background: "#F8F7FF" }}>
+        <div className="w-full max-w-sm flex flex-col min-h-screen">
 
-        {/* Header — logo */}
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
-          className="flex items-center justify-between px-5 pt-8 pb-2">
-          <div className="flex items-center gap-2">
-            <img src={koraiLogo} alt="KORAI logo" className="w-10 h-10 object-contain" />
-            <span style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-3xl font-black tracking-tight text-[#1E1040]">
-              KOR<span className="text-[#22C55E]">AI</span>
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Textos con íconos — estilo mockup */}
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15, duration: 0.5 }}
-          className="px-6 pt-4 space-y-3">
-          {[
-            { emoji: "💜", color: "#7C3AED", text: "Queremos conocerte," },
-            { emoji: "👂", color: "#0EA5E9", text: "escucharte y acercarte" },
-            { emoji: "👥", color: "#22C55E", text: "oportunidades para vos y tu familia." },
-          ].map((item, i) => (
-            <motion.div key={i} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.1 }}
-              className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-xl"
-                style={{ background: `${item.color}22` }}>
-                {item.emoji}
-              </div>
-              <span style={{ fontFamily: "'Montserrat', sans-serif", color: item.color }}
-                className="text-xl font-black leading-tight">
-                {item.text}
+          {/* Header — logo */}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+            className="flex items-center px-5 pt-8 pb-2">
+            <div className="flex items-center gap-2">
+              <img src={koraiLogo} alt="KORAI logo" className="w-10 h-10 object-contain" />
+              <span style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-3xl font-black tracking-tight text-[#1E1040]">
+                KOR<span className="text-[#22C55E]">AI</span>
               </span>
-            </motion.div>
-          ))}
-        </motion.div>
+            </div>
+          </motion.div>
 
-        {/* Imagen familia */}
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4, duration: 0.6 }}
-          className="flex justify-center items-center flex-1 px-4">
-          <img src={fliaImg} alt="Familia KORAI"
-            className="w-full max-w-xs object-contain"
-            style={{ filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
-        </motion.div>
+          {/* Textos con íconos */}
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15, duration: 0.5 }}
+            className="px-5 pt-4 space-y-3">
+            {[
+              { emoji: "💜", color: "#7C3AED", text: "Queremos conocerte," },
+              { emoji: "👂", color: "#0EA5E9", text: "escucharte y acercarte" },
+              { emoji: "👥", color: "#22C55E", text: "oportunidades para vos y tu familia." },
+            ].map((item, i) => (
+              <motion.div key={i} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.1 }}
+                className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-xl"
+                  style={{ background: `${item.color}22` }}>
+                  {item.emoji}
+                </div>
+                <span style={{ fontFamily: "'Montserrat', sans-serif", color: item.color }}
+                  className="text-xl font-black leading-tight">
+                  {item.text}
+                </span>
+              </motion.div>
+            ))}
+          </motion.div>
 
-        {/* Caja inferior */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}
-          className="px-5 pb-8 space-y-3 w-full max-w-sm mx-auto">
+          {/* Imagen familia */}
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4, duration: 0.6 }}
+            className="flex justify-center items-center flex-1 px-4 py-2">
+            <img src={fliaImg} alt="Familia KORAI"
+              className="w-72 object-contain"
+              style={{ filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
+          </motion.div>
 
-          {/* Info diagnóstico */}
-          <div className="flex items-center gap-3 p-4 rounded-2xl border border-[#E9D5FF] bg-[#F5F3FF]">
-            <div className="w-11 h-11 rounded-full bg-[#EDE9FE] flex items-center justify-center flex-shrink-0 text-xl">⏱️</div>
-            <p style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-sm text-[#1E1040] leading-snug">
-              Es un <span className="font-black text-[#7C3AED]">diagnóstico simple</span> que dura solo{" "}
-              <span className="font-black text-[#22C55E]">unos minutos</span> y nos permite acompañarte mejor según tus necesidades.
+          {/* Caja inferior */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}
+            className="px-5 pb-8 space-y-3">
+            <div className="flex items-center gap-3 p-4 rounded-2xl border border-[#E9D5FF] bg-[#F5F3FF]">
+              <div className="w-11 h-11 rounded-full bg-[#EDE9FE] flex items-center justify-center flex-shrink-0 text-xl">⏱️</div>
+              <p style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-sm text-[#1E1040] leading-snug">
+                Es un <span className="font-black text-[#7C3AED]">diagnóstico simple</span> que dura solo{" "}
+                <span className="font-black text-[#22C55E]">unos minutos</span> y nos permite acompañarte mejor según tus necesidades.
+              </p>
+            </div>
+
+            <Button onClick={() => setMode("form")}
+              className="w-full h-14 text-lg font-black rounded-2xl shadow-lg flex items-center justify-center gap-3"
+              style={{ fontFamily: "'Montserrat', sans-serif", background: "linear-gradient(135deg, #7C3AED, #22C55E)" }}>
+              Comenzar
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+
+            <button onClick={() => setMode("returning")}
+              className="w-full py-1.5 text-xs font-semibold text-center transition-colors"
+              style={{ fontFamily: "'Montserrat', sans-serif", color: C.textSub }}>
+              Ya hice mi diagnóstico → Ver mis resultados
+            </button>
+            <p className="text-[10px] text-center" style={{ color: C.textSub }}>
+              🔒 Tu información está protegida
             </p>
-          </div>
+          </motion.div>
 
-          {/* Botón */}
-          <Button onClick={() => setMode("form")}
-            className="w-full h-14 text-lg font-black rounded-2xl shadow-lg flex items-center justify-center gap-3"
-            style={{ fontFamily: "'Montserrat', sans-serif", background: "linear-gradient(135deg, #7C3AED, #22C55E)" }}>
-            Comenzar
-            <ArrowRight className="w-5 h-5" />
-          </Button>
-
-          <button onClick={() => setMode("returning")}
-            className="w-full py-1.5 text-xs font-semibold text-center transition-colors"
-            style={{ fontFamily: "'Montserrat', sans-serif", color: C.textSub }}>
-            Ya hice mi diagnóstico → Ver mis resultados
-          </button>
-          <p className="text-[10px] text-center" style={{ color: C.textSub }}>
-            🔒 Tu información está protegida
-          </p>
-        </motion.div>
+        </div>
       </div>
     );
   }
