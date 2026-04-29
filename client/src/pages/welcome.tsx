@@ -364,14 +364,14 @@ export default function Welcome() {
   if (mode === "landing") {
     return (
       <div className="min-h-screen w-full flex justify-center" style={{ background: "#F8F7FF" }}>
-        <div className="w-full max-w-sm flex flex-col min-h-screen px-5 py-6 gap-4">
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2">
+        <div className="w-full max-w-sm flex flex-col min-h-screen px-5 pt-12 pb-6 gap-4">
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2">
             <img src={koraiLogo} alt="KORAI logo" className="w-10 h-10 object-contain" />
             <span style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-3xl font-black tracking-tight text-[#1E1040]">
               KOR<span className="text-[#22C55E]">AI</span>
             </span>
           </motion.div>
-          <div className="space-y-3">
+          <div className="space-y-3 mt-6">
             {[
               { emoji: "💜", color: "#7C3AED", text: "Queremos conocerte," },
               { emoji: "👂", color: "#0EA5E9", text: "escucharte y acercarte" },
