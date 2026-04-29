@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Heart, CheckCircle, Phone, ChevronLeft } from "lucide-react";
 import { useState } from "react";
 import { hashDNI } from "@/lib/korai-logic";
+import { ZONAS_BUENOS_AIRES } from "@/lib/instrument";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import oraiMujer from "@/lib/oraiMujer";
@@ -19,18 +20,7 @@ if (typeof document !== "undefined" && !document.getElementById("montserrat-font
   document.head.appendChild(link);
 }
 
-const BARRIOS_CABA = [
-  "Agronomía","Almagro","Balvanera","Barracas","Belgrano","Boedo",
-  "Caballito","Chacarita","Coghlan","Colegiales","Constitución",
-  "Flores","Floresta","La Boca","La Paternal","Liniers","Mataderos",
-  "Monte Castro","Montserrat","Nueva Pompeya","Núñez","Palermo",
-  "Parque Avellaneda","Parque Chacabuco","Parque Chas","Parque Patricios",
-  "Puerto Madero","Recoleta","Retiro","Saavedra","San Cristóbal",
-  "San Nicolás","San Telmo","Tribunales","Versalles","Villa Crespo",
-  "Villa del Parque","Villa Devoto","Villa General Mitre","Villa Lugano",
-  "Villa Luro","Villa Ortúzar","Villa Pueyrredón","Villa Real",
-  "Villa Riachuelo","Villa Santa Rita","Villa Soldati","Villa Urquiza",
-];
+
 
 // Paleta clara
 const C = {
@@ -48,7 +38,7 @@ const C = {
 const CONTEXT_QUESTIONS = [
   {
     id: "edad",
-    emoji: "🎂",
+    emoji: "📋",
     titulo: "¿En qué rango de edad estás?",
     subtitulo: "Nos ayuda a conectarte con programas según tu momento de vida.",
     opciones: [
@@ -364,16 +354,14 @@ export default function Welcome() {
   if (mode === "landing") {
     return (
       <div className="min-h-screen w-full flex justify-center" style={{ background: "#F8F7FF" }}>
-        <div className="w-full max-w-sm flex flex-col min-h-screen px-5 pt-10 pb-6">
-          {/* Logo */}
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2 mb-6">
+        <div className="w-full max-w-sm flex flex-col min-h-screen px-5 pt-12 pb-6 gap-4">
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2">
             <img src={koraiLogo} alt="KORAI logo" className="w-10 h-10 object-contain" />
             <span style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-3xl font-black tracking-tight text-[#1E1040]">
               KOR<span className="text-[#22C55E]">AI</span>
             </span>
           </motion.div>
-          {/* Textos */}
-          <div className="space-y-3 mb-4">
+          <div className="space-y-3 mt-6">
             {[
               { emoji: "💜", color: "#7C3AED", text: "Queremos conocerte," },
               { emoji: "👂", color: "#0EA5E9", text: "escucharte y acercarte" },
@@ -390,14 +378,13 @@ export default function Welcome() {
               </motion.div>
             ))}
           </div>
-          {/* Espaciador flexible */}
           <div className="flex-1" />
-          {/* Imagen + caja sin gap */}
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
-            className="flex justify-center" style={{ marginBottom: 0 }}>
-            <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "210px", display: "block", filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-3" style={{ marginTop: 0 }}>
+          <div className="flex flex-col gap-0">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
+              className="flex justify-center">
+              <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "220px", filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-3">
             <div className="flex items-center gap-3 p-4 rounded-2xl border border-[#E9D5FF] bg-[#F5F3FF]">
               <div className="w-11 h-11 rounded-full bg-[#EDE9FE] flex items-center justify-center flex-shrink-0 text-xl">⏱️</div>
               <p style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-sm text-[#1E1040] leading-snug">
@@ -414,6 +401,7 @@ export default function Welcome() {
             </button>
             <p className="text-[10px] text-center" style={{ color: C.textSub }}>🔒 Tu información está protegida</p>
           </motion.div>
+          </div>
         </div>
       </div>
     );
@@ -465,8 +453,17 @@ export default function Welcome() {
               <SelectTrigger className="h-11 text-sm border-2 rounded-xl" style={{ background: C.bgCard, borderColor: C.border, color: C.text }}>
                 <SelectValue placeholder="Seleccioná tu barrio" />
               </SelectTrigger>
-              <SelectContent className="max-h-60" style={{ background: C.bgCard, borderColor: C.border }}>
-                {BARRIOS_CABA.map(b => <SelectItem key={b} value={b} style={{ color: C.text }}>{b}</SelectItem>)}
+              <SelectContent className="max-h-72" style={{ background: C.bgCard, borderColor: C.border }}>
+                {Object.entries(ZONAS_BUENOS_AIRES).map(([zona, barrios]) => (
+                  <div key={zona}>
+                    <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-wider sticky top-0" style={{ color: C.textSub, background: C.bg }}>
+                      {zona}
+                    </div>
+                    {barrios.map(b => (
+                      <SelectItem key={b} value={b} style={{ color: C.text }}>{b}</SelectItem>
+                    ))}
+                  </div>
+                ))}
               </SelectContent>
             </Select>
           </div>
