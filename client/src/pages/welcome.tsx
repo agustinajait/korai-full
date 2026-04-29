@@ -7,8 +7,9 @@ import { useState } from "react";
 import { hashDNI } from "@/lib/korai-logic";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ZONAS_BUENOS_AIRES } from "@/lib/instrument";
-import oraiMujer from "@/lib/oraiMujer";import koraiLogo from "@/lib/koraiLogo";
+import oraiMujer from "@/lib/oraiMujer";
+import koraiLogo from "@/lib/koraiLogo";
+import fliaImg from "@/lib/fliaImg";
 
 if (typeof document !== "undefined" && !document.getElementById("montserrat-font")) {
   const link = document.createElement("link");
@@ -17,6 +18,19 @@ if (typeof document !== "undefined" && !document.getElementById("montserrat-font
   link.href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap";
   document.head.appendChild(link);
 }
+
+const BARRIOS_CABA = [
+  "Agronomía","Almagro","Balvanera","Barracas","Belgrano","Boedo",
+  "Caballito","Chacarita","Coghlan","Colegiales","Constitución",
+  "Flores","Floresta","La Boca","La Paternal","Liniers","Mataderos",
+  "Monte Castro","Montserrat","Nueva Pompeya","Núñez","Palermo",
+  "Parque Avellaneda","Parque Chacabuco","Parque Chas","Parque Patricios",
+  "Puerto Madero","Recoleta","Retiro","Saavedra","San Cristóbal",
+  "San Nicolás","San Telmo","Tribunales","Versalles","Villa Crespo",
+  "Villa del Parque","Villa Devoto","Villa General Mitre","Villa Lugano",
+  "Villa Luro","Villa Ortúzar","Villa Pueyrredón","Villa Real",
+  "Villa Riachuelo","Villa Santa Rita","Villa Soldati","Villa Urquiza",
+];
 
 // Paleta clara
 const C = {
@@ -34,7 +48,7 @@ const C = {
 const CONTEXT_QUESTIONS = [
   {
     id: "edad",
-    emoji: "📋",
+    emoji: "🎂",
     titulo: "¿En qué rango de edad estás?",
     subtitulo: "Nos ayuda a conectarte con programas según tu momento de vida.",
     opciones: [
@@ -349,64 +363,78 @@ export default function Welcome() {
   // ─── LANDING ────────────────────────────────────────────────────────────────
   if (mode === "landing") {
     return (
-      <div className="min-h-screen w-full flex flex-col overflow-hidden" style={{ background: C.bg }}>
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-          className="flex flex-col items-center pt-10 pb-2">
+      <div className="min-h-screen w-full flex flex-col overflow-hidden" style={{ background: "#FFFFFF" }}>
+
+        {/* Header — logo */}
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+          className="flex items-center justify-between px-5 pt-8 pb-2">
           <div className="flex items-center gap-2">
-            <img src={koraiLogo} alt="KORAI logo" className="w-9 h-9 object-contain" />
-            <span style={{ fontFamily: "'Montserrat', sans-serif", color: C.text }} className="text-3xl font-black tracking-tight">KORAI</span>
+            <img src={koraiLogo} alt="KORAI logo" className="w-10 h-10 object-contain" />
+            <span style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-3xl font-black tracking-tight text-[#1E1040]">
+              KOR<span className="text-[#22C55E]">AI</span>
+            </span>
           </div>
-          <p style={{ fontFamily: "'Montserrat', sans-serif", color: C.textSub }} className="text-xs mt-1">Tu asistente de bienestar comunitario</p>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, duration: 0.6 }}
-          className="flex justify-center items-center flex-1 px-4">
-          <img src={oraiMujer} alt="KORAI ilustración" className="w-64 h-64 object-contain" style={{ filter: "drop-shadow(0 4px 24px rgba(91,33,182,0.15))" }} />
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.5 }}
-          className="flex flex-col items-center px-5 pb-8 gap-3 w-full max-w-sm mx-auto">
-          <div className="text-center">
-            <h2 style={{ fontFamily: "'Montserrat', sans-serif", color: C.text }} className="text-xl font-black leading-tight">
-              Estás a punto de comenzar.
-            </h2>
-            <Heart className="w-3.5 h-3.5 mx-auto mt-1" style={{ color: C.primary }} />
-          </div>
-
-          <div className="space-y-2 w-full">
-            {[
-              { icon: CheckCircle, text: "No hay respuestas correctas o incorrectas." },
-              { icon: Heart, text: "Contanos cómo estás." },
-            ].map(({ icon: Icon, text }, i) => (
-              <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + i * 0.1 }}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border shadow-sm"
-                style={{ background: C.bgCard, borderColor: C.border }}>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: C.primaryLight }}>
-                  <Icon className="w-3.5 h-3.5" style={{ color: C.primary }} />
-                </div>
-                <p style={{ fontFamily: "'Montserrat', sans-serif", color: C.text }} className="text-xs font-semibold text-left">{text}</p>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="w-full space-y-2 pt-1">
-            <Button onClick={() => setMode("form")}
-              className="w-full h-12 text-base font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2"
-              style={{ fontFamily: "'Montserrat', sans-serif", background: C.primary }}>
-              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                <ArrowRight className="w-3.5 h-3.5" />
+        {/* Textos con íconos — estilo mockup */}
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15, duration: 0.5 }}
+          className="px-6 pt-4 space-y-3">
+          {[
+            { emoji: "💜", color: "#7C3AED", text: "Queremos conocerte," },
+            { emoji: "👂", color: "#0EA5E9", text: "escucharte y acercarte" },
+            { emoji: "👥", color: "#22C55E", text: "oportunidades para vos y tu familia." },
+          ].map((item, i) => (
+            <motion.div key={i} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.1 }}
+              className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-xl"
+                style={{ background: `${item.color}22` }}>
+                {item.emoji}
               </div>
-              Comenzar diagnóstico
-            </Button>
-            <button onClick={() => setMode("returning")}
-              className="w-full py-1.5 text-xs font-semibold transition-colors"
-              style={{ fontFamily: "'Montserrat', sans-serif", color: C.textSub }}>
-              Ya hice mi diagnóstico → Ver mis resultados
-            </button>
-            <p className="text-[10px] text-center" style={{ color: C.textSub }}>
-              🔒 Tu información es confidencial · Menos de 3 minutos
+              <span style={{ fontFamily: "'Montserrat', sans-serif", color: item.color }}
+                className="text-xl font-black leading-tight">
+                {item.text}
+              </span>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Imagen familia */}
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4, duration: 0.6 }}
+          className="flex justify-center items-center flex-1 px-4">
+          <img src={fliaImg} alt="Familia KORAI"
+            className="w-full max-w-xs object-contain"
+            style={{ filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
+        </motion.div>
+
+        {/* Caja inferior */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }}
+          className="px-5 pb-8 space-y-3 w-full max-w-sm mx-auto">
+
+          {/* Info diagnóstico */}
+          <div className="flex items-center gap-3 p-4 rounded-2xl border border-[#E9D5FF] bg-[#F5F3FF]">
+            <div className="w-11 h-11 rounded-full bg-[#EDE9FE] flex items-center justify-center flex-shrink-0 text-xl">⏱️</div>
+            <p style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-sm text-[#1E1040] leading-snug">
+              Es un <span className="font-black text-[#7C3AED]">diagnóstico simple</span> que dura solo{" "}
+              <span className="font-black text-[#22C55E]">unos minutos</span> y nos permite acompañarte mejor según tus necesidades.
             </p>
           </div>
+
+          {/* Botón */}
+          <Button onClick={() => setMode("form")}
+            className="w-full h-14 text-lg font-black rounded-2xl shadow-lg flex items-center justify-center gap-3"
+            style={{ fontFamily: "'Montserrat', sans-serif", background: "linear-gradient(135deg, #7C3AED, #22C55E)" }}>
+            Comenzar
+            <ArrowRight className="w-5 h-5" />
+          </Button>
+
+          <button onClick={() => setMode("returning")}
+            className="w-full py-1.5 text-xs font-semibold text-center transition-colors"
+            style={{ fontFamily: "'Montserrat', sans-serif", color: C.textSub }}>
+            Ya hice mi diagnóstico → Ver mis resultados
+          </button>
+          <p className="text-[10px] text-center" style={{ color: C.textSub }}>
+            🔒 Tu información está protegida
+          </p>
         </motion.div>
       </div>
     );
@@ -453,22 +481,13 @@ export default function Welcome() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider" style={{ color: C.textSub }}>Zona / Barrio</label>
+            <label className="text-xs font-bold uppercase tracking-wider" style={{ color: C.textSub }}>Barrio</label>
             <Select onValueChange={setNeighborhood}>
               <SelectTrigger className="h-11 text-sm border-2 rounded-xl" style={{ background: C.bgCard, borderColor: C.border, color: C.text }}>
-                <SelectValue placeholder="Seleccioná tu zona o barrio" />
+                <SelectValue placeholder="Seleccioná tu barrio" />
               </SelectTrigger>
-              <SelectContent className="max-h-72" style={{ background: C.bgCard, borderColor: C.border }}>
-                {Object.entries(ZONAS_BUENOS_AIRES).map(([zona, barrios]) => (
-                  <div key={zona}>
-                    <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-wider" style={{ color: C.textSub, background: C.bg }}>
-                      {zona}
-                    </div>
-                    {barrios.map(b => (
-                      <SelectItem key={b} value={b} style={{ color: C.text }}>{b}</SelectItem>
-                    ))}
-                  </div>
-                ))}
+              <SelectContent className="max-h-60" style={{ background: C.bgCard, borderColor: C.border }}>
+                {BARRIOS_CABA.map(b => <SelectItem key={b} value={b} style={{ color: C.text }}>{b}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
