@@ -133,7 +133,7 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
                           </div>
                         </td>
                         {historial.map((h, i) => {
-                          const sitLab = (() => { try { const p = JSON.parse(typeof h.perfil_contextual === "string" ? h.perfil_contextual : "{}"); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
+                          const sitLab = (() => { try { const p = (() => { const raw = h.perfil_contextual; return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); })(); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
                           const scores = calcularScores(h.answers || {}, sitLab);
                           const score = scores.find(s => s.dimensionId === d.id);
                           const color = score?.color || "verde";
@@ -171,7 +171,7 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
               </div>
               <div className="divide-y divide-white/5">
                 {historial.map((h, i) => {
-                  const sitLab = (() => { try { const p = JSON.parse(typeof h.perfil_contextual === "string" ? h.perfil_contextual : "{}"); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
+                  const sitLab = (() => { try { const p = (() => { const raw = h.perfil_contextual; return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); })(); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
                   const scores = calcularScores(h.answers || {}, sitLab);
                   const rojas = scores.filter(s => s.color === "rojo").length;
                   const fecha = new Date(h.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" });
@@ -215,19 +215,21 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
 // Helper: extrae nombre y apellido del perfil_contextual
 function getNombrePersona(r: any): string {
   try {
-    const p = JSON.parse(typeof r.perfil_contextual === "string" ? r.perfil_contextual : "{}");
-    const nombre = p?.nombre || p?.demographics?.nombre || "";
-    const apellido = p?.apellido || p?.demographics?.apellido || "";
+    const raw = r.perfil_contextual;
+    // Supabase puede devolver string JSON o objeto directo
+    const p = typeof raw === "string" ? JSON.parse(raw) :
+              typeof raw === "object" && raw !== null ? raw : {};
+    const nombre = p?.nombre || p?.demographics?.nombre || p?.name || "";
+    const apellido = p?.apellido || p?.demographics?.apellido || p?.lastName || "";
     if (nombre || apellido) return `${nombre} ${apellido}`.trim();
   } catch {}
-  // Fallback: dni_real si existe
   if (r.dni_real) return `DNI ${r.dni_real}`;
   return `Caso #${r.id?.slice(0, 6) || "—"}`;
 }
 
 function CasoIndividual({ response, onBack }: { response: any; onBack: () => void }) {
   const answers = response.answers as Record<string, string>;
-  const sitLab = (() => { try { const p = JSON.parse(typeof response.perfil_contextual === "string" ? response.perfil_contextual : "{}"); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
+  const sitLab = (() => { try { const p = (() => { const raw = response.perfil_contextual; return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); })(); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
   const scores = calcularScores(answers, sitLab);
   const plan = generatePlanDesdeScores(answers, 6, sitLab);
   const barrio = response.territorio?.barrio || "Sin barrio";
@@ -576,7 +578,7 @@ export default function Dashboard() {
             </div>
             <div className="divide-y divide-white/5 max-h-[600px] overflow-y-auto">
               {filtered.map((r, i) => {
-                const sitLabR = (() => { try { const p = JSON.parse(typeof r.perfil_contextual === "string" ? r.perfil_contextual : "{}"); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
+                const sitLabR = (() => { try { const p = (() => { const raw = r.perfil_contextual; return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); })(); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
                 const scores = calcularScores(r.answers || {}, sitLabR);
                 const rojas = scores.filter(s => s.color === "rojo").length;
                 const barrio = r.territorio?.barrio || "Sin barrio";
