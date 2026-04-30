@@ -206,18 +206,8 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
       telefono: "0800-333-1665",
       accion: "Llamar gratis", tipo: "publico",
     },
-    {
-      nombre: "Médicos del Mundo Argentina",
-      descripcionCorta: "ONG con atención médica gratuita en barrios vulnerables de Buenos Aires.",
-      url: "https://www.medicosdelmundo.org.ar",
-      accion: "Ver puntos de atención", tipo: "ong",
-    },
-    {
-      nombre: "Médicos Sin Fronteras — Argentina",
-      descripcionCorta: "Atención médica de emergencia y orientación para personas en situación vulnerable.",
-      url: "https://www.msf.org.ar",
-      accion: "Ver puntos de atención", tipo: "ong",
-    },
+
+
   ],
   vivienda: [
     {
@@ -266,18 +256,8 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
       url: "https://www.came.org.ar/microcreditos",
       accion: "Ver microcréditos", tipo: "privado",
     },
-    {
-      nombre: "Mercado Pago — Cuenta gratuita",
-      descripcionCorta: "Abrí tu cuenta digital gratis para cobrar, pagar y ahorrar.",
-      url: "https://www.mercadopago.com.ar",
-      accion: "Abrir cuenta gratis", tipo: "privado",
-    },
-    {
-      nombre: "Ualá — Cuenta y tarjeta sin costo",
-      descripcionCorta: "Cuenta bancaria digital gratuita con tarjeta Mastercard incluida.",
-      url: "https://www.uala.com.ar",
-      accion: "Abrir cuenta gratis", tipo: "privado",
-    },
+
+
   ],
   red: [
     {
@@ -304,12 +284,7 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
       url: "https://www.elarca.org.ar",
       accion: "Ver actividades", tipo: "ong",
     },
-    {
-      nombre: "Cáritas Argentina — Apoyo comunitario",
-      descripcionCorta: "Red de apoyo comunitario con comedores, talleres y asistencia en barrios de todo el país.",
-      url: "https://www.caritas.org.ar/encontra-caritas",
-      accion: "Encontrar Cáritas cerca", tipo: "ong",
-    },
+
   ],
 };
 
