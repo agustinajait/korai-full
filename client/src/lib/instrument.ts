@@ -36,7 +36,7 @@ export const INSTRUMENT = {
     { id: "empleo_04", dimension: "empleo", label: "Lo que gano me alcanza para cubrir lo básico del mes", soloSi: "tengo_trabajo" },
     // Si NO tiene trabajo (4 preguntas)
     { id: "empleo_05", dimension: "empleo", label: "Tengo alguna entrada de dinero, aunque sea irregular", soloSi: "no_tengo_trabajo" },
-    { id: "empleo_06", dimension: "empleo", label: "Estoy buscando trabajo o changas activamente", soloSi: "no_tengo_trabajo" },
+    { id: "empleo_06", dimension: "empleo", label: "Tengo claro cómo buscar trabajo o conseguir changas y estoy en esa búsqueda", soloSi: "no_tengo_trabajo" },
     { id: "empleo_07", dimension: "empleo", label: "Tengo un oficio, habilidad o experiencia que puedo convertir en trabajo", soloSi: "no_tengo_trabajo" },
     { id: "empleo_08", dimension: "empleo", label: "Puedo empezar a trabajar si surge una oportunidad", soloSi: "no_tengo_trabajo" },
 
@@ -44,7 +44,7 @@ export const INSTRUMENT = {
     { id: "prevision_01", dimension: "prevision", label: "Podría afrontar un gasto inesperado sin caer en deuda" },
     { id: "prevision_02", dimension: "prevision", label: "Puedo organizarme para saber en qué se va la plata cada mes" },
     { id: "prevision_03", dimension: "prevision", label: "Puedo manejar mis deudas o directamente no tengo deudas" },
-    { id: "prevision_04", dimension: "prevision", label: "Tengo DNI, cuenta bancaria o billetera virtual para cobrar y hacer trámites" },
+    { id: "prevision_04", dimension: "prevision", label: "Tengo cuenta bancaria o billetera virtual para cobrar y hacer trámites" },
     { id: "prevision_05", dimension: "prevision", label: "En mi hogar puedo tomar decisiones sin violencia ni control económico" },
     { id: "prevision_06", dimension: "prevision", label: "Puedo pagar o sostener los gastos fijos del hogar (alquiler, servicios, transporte)" },
 
