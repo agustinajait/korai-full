@@ -174,23 +174,17 @@ function ContextQuestion({
 
 // ─── Pantalla de transición antes del survey ──────────────────────────────────
 function TransitionScreen({ onStart }: { onStart: () => void }) {
-  const [whatsappActivado, setWhatsappActivado] = useState(false);
-
-  const activarWhatsapp = () => {
-    const texto = encodeURIComponent("join receive-these");
-    window.open(`https://wa.me/14155238886?text=${texto}`, "_blank");
-    setTimeout(() => setWhatsappActivado(true), 1500);
-  };
-
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-5 pb-10 pt-10"
       style={{ background: C.bg }}>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
         className="w-full max-w-sm flex flex-col items-center text-center gap-6">
 
+        {/* Ilustración */}
         <motion.img src={oraiMujer} alt="KORAI" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.2 }} className="w-52 h-52 object-contain" />
 
+        {/* Texto principal */}
         <div className="space-y-3">
           <h2 className="text-2xl font-black leading-tight" style={{ fontFamily: "'Montserrat', sans-serif", color: C.text }}>
             Ahora vamos a lo que realmente importa.
@@ -222,35 +216,6 @@ function TransitionScreen({ onStart }: { onStart: () => void }) {
             </motion.div>
           ))}
         </div>
-
-        {/* Paso WhatsApp */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
-          className="w-full rounded-2xl border-2 p-4 space-y-3"
-          style={{ background: whatsappActivado ? "#F0FDF4" : "#F5F3FF", borderColor: whatsappActivado ? "#22C55E" : C.borderBtn }}>
-          <div className="flex items-center gap-2">
-            <span className="text-xl">{whatsappActivado ? "✅" : "📲"}</span>
-            <p className="text-sm font-black text-left" style={{ color: C.text }}>
-              {whatsappActivado ? "¡WhatsApp activado! Tu plan te va a llegar al terminar." : "Activá WhatsApp para recibir tu plan"}
-            </p>
-          </div>
-          {!whatsappActivado && (
-            <>
-              <p className="text-xs text-left" style={{ color: C.textSub }}>
-                Tocá el botón, se abre WhatsApp con un mensaje listo. Solo tocá <strong>Enviar</strong> y listo.
-              </p>
-              <button onClick={activarWhatsapp}
-                className="w-full py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2"
-                style={{ background: "#25D366" }}>
-                📲 Activar WhatsApp
-              </button>
-              <button onClick={() => setWhatsappActivado(true)}
-                className="w-full text-xs underline"
-                style={{ color: C.textSub }}>
-                Ya lo hice, continuar
-              </button>
-            </>
-          )}
-        </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="w-full space-y-2">
           <Button onClick={onStart}

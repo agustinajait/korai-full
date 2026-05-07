@@ -64,7 +64,7 @@ function generarMensaje2(plan: any[], context: any, profundizacion: any): string
   });
 
   msg += `---\nEn 7 días te vamos a preguntar cómo te fue 💪\n`;
-  msg += `_Korai — korai-full.vercel.app_`;
+  msg += `_Korai — app.korai.lat_`;
   return msg;
 }
 
@@ -92,19 +92,18 @@ export default function Confirmar() {
         setNombre(context.nombre || response.dni_real || "");
         setEstado("ok");
 
-        // Enviar WhatsApp desde número de KORAI via Twilio
+        // Abrir WhatsApp con Mensaje 2 al instante
         const mensaje = generarMensaje2(plan, context, profundizacion);
-        const telefono = (context.telefono || response.telefono || "").replace(/\D/g, "");
+        const encoded = encodeURIComponent(mensaje);
+        const telefono = context.telefono?.replace(/\D/g, "");
+        let url: string;
         if (telefono && telefono.length >= 8) {
-          fetch(`${SUPABASE_URL}/functions/v1/send_whatsapp`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ telefono, mensaje }),
-          }).catch(err => console.error("Error enviando WhatsApp:", err));
+          const numero = telefono.startsWith("54") ? telefono : `54${telefono}`;
+          url = `https://wa.me/${numero}?text=${encoded}`;
+        } else {
+          url = `https://wa.me/?text=${encoded}`;
         }
+        setTimeout(() => window.open(url, "_blank"), 800);
       })
       .catch(() => setEstado("error"));
   }, []);
@@ -154,23 +153,19 @@ export default function Confirmar() {
                 const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
                 const profundizacion = (() => { try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; } })();
                 const mensaje = generarMensaje2(plan, context, profundizacion);
-                const telefono = (context.telefono || "").replace(/\D/g, "");
+                const encoded = encodeURIComponent(mensaje);
+                const telefono = context.telefono?.replace(/\D/g, "");
+                let url = `https://wa.me/?text=${encoded}`;
                 if (telefono && telefono.length >= 8) {
-                  fetch(`${SUPABASE_URL}/functions/v1/send_whatsapp`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                    },
-                    body: JSON.stringify({ telefono, mensaje }),
-                  }).catch(err => console.error("Error enviando WhatsApp:", err));
+                  const numero = telefono.startsWith("54") ? telefono : `54${telefono}`;
+                  url = `https://wa.me/${numero}?text=${encoded}`;
                 }
+                window.open(url, "_blank");
               }}
               className="w-full h-12 font-bold rounded-2xl bg-[#5B21B6] text-white flex items-center justify-center gap-2"
             >
-              📲 Reenviar mi plan por WhatsApp
+              📲 Abrir mi plan en WhatsApp
             </Button>
-            <p className="text-xs text-[#9B8EC4]">El mensaje se envía desde KORAI a tu WhatsApp.</p>
 
             <button
               onClick={() => setLocation("/prioridades")}
