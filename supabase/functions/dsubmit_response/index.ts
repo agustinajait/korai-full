@@ -315,7 +315,7 @@ const days_since_last = computed.daysSinceLast;
       dni_real: dni.trim(),
       answers,
       territorio,
-      perfil_contextual,
+      perfil_contextual: perfil_contextual ?? "",
       submitted_at: now.toISOString(),
       diagnostic_type,
       days_since_last,

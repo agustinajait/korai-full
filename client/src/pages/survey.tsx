@@ -22,6 +22,7 @@ async function submitToSupabase(payload: {
   answers: Record<string, string>;
   territorio: { ciudad: string; barrio: string };
   texto_abierto: string;
+  telefono?: string;
   profundizacion?: Record<string, any>;
 }) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/dsubmit_response`, {
@@ -35,6 +36,7 @@ async function submitToSupabase(payload: {
       dni: payload.dni,
       answers: payload.answers,
       territorio: payload.territorio,
+      telefono: payload.telefono || "",
       perfil_contextual: JSON.stringify({
         comentario: payload.texto_abierto || "",
         profundizacion: payload.profundizacion || {},
@@ -413,6 +415,7 @@ export default function Survey() {
           barrio: context.neighborhood || "",
         },
         texto_abierto: comment,
+        telefono: context.telefono || "",
         profundizacion,
       });
 

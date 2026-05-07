@@ -15,6 +15,8 @@ export interface Indicator {
   invert?: boolean;
   // Si está definido, solo se muestra cuando situacion_laboral coincide
   soloSi?: "tengo_trabajo" | "no_tengo_trabajo";
+  // Si true, solo se muestra cuando hay niños o adolescentes a cargo
+  soloSiNinos?: boolean;
 }
 
 export const INSTRUMENT = {
@@ -66,13 +68,13 @@ export const INSTRUMENT = {
     { id: "salud_05", dimension: "salud", label: "Mis dientes no me generan problemas para comer, hablar o trabajar" },
     { id: "salud_06", dimension: "salud", label: "Tengo la vista sana o con el control/anteojos que necesito" },
     { id: "salud_07", dimension: "salud", label: "Puedo cuidar mi higiene personal y la de mi hogar" },
-    { id: "salud_08", dimension: "salud", label: "Si tengo niños a cargo, tienen vacunas y controles al día" },
+    { id: "salud_08", dimension: "salud", label: "Si tengo niños a cargo, tienen vacunas y controles al día", soloSiNinos: true },
 
     // ─── EDUCACIÓN ────────────────────────────────────────────────────────────
     { id: "educacion_01", dimension: "educacion", label: "Puedo leer, escribir y manejarme con trámites y mensajes importantes" },
     { id: "educacion_02", dimension: "educacion", label: "Manejo WhatsApp, mail, formularios u otras herramientas digitales básicas" },
     { id: "educacion_03", dimension: "educacion", label: "Tengo conocimientos o habilidades que hoy me ayudan a conseguir oportunidades" },
-    { id: "educacion_04", dimension: "educacion", label: "Si hay chicos en el hogar, pueden sostener la escuela todos los días" },
+    { id: "educacion_04", dimension: "educacion", label: "Si hay chicos en el hogar, pueden sostener la escuela todos los días", soloSiNinos: true },
     { id: "educacion_05", dimension: "educacion", label: "Tengo cerca una escuela, curso o centro de formación accesible" },
     { id: "educacion_06", dimension: "educacion", label: "Podría capacitarme o terminar estudios si tuviera la oportunidad" },
     { id: "educacion_07", dimension: "educacion", label: "Tengo celular, datos o internet para estudiar o capacitarme" },
@@ -88,12 +90,13 @@ export const INSTRUMENT = {
   ] as Indicator[]
 };
 
-export function getActiveIndicatorsSafe(situacionLaboral?: string): typeof INSTRUMENT.indicators {
+export function getActiveIndicatorsSafe(situacionLaboral?: string, personasCargo?: string): typeof INSTRUMENT.indicators {
   const tieneTabajo = situacionLaboral === "tengo_trabajo";
+  const tieneNinos = personasCargo === "ninos" || personasCargo === "ambos";
   return INSTRUMENT.indicators.filter(ind => {
-    if (!ind.soloSi) return true;
-    if (ind.soloSi === "tengo_trabajo") return tieneTabajo;
-    if (ind.soloSi === "no_tengo_trabajo") return !tieneTabajo;
+    if (ind.soloSi === "tengo_trabajo" && !tieneTabajo) return false;
+    if (ind.soloSi === "no_tengo_trabajo" && tieneTabajo) return false;
+    if (ind.soloSiNinos && !tieneNinos) return false;
     return true;
   });
 }

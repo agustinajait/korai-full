@@ -11,17 +11,17 @@ const CAMPAIGN_ID = "53813f5a-3613-4faf-8ca1-b369e4e908cb";
 
 const PROGRAMAS_CABA: Record<string, { nombre: string; descripcion: string; url?: string; contacto?: string }[]> = {
   empleo: [
-    { nombre: "Portal Empleo", descripcion: "Bolsa de trabajo del Ministerio de Trabajo", url: "https://www.portalempleo.gob.ar" },
-    { nombre: "Oportunai", descripcion: "Creá tu perfil laboral y video CV", url: "https://oportunai.com" },
+    { nombre: "CIL — Centro de Integración Laboral", descripcion: "Sacá turno para hacer tu CV y acceder a programas de empleo", url: "https://formulario-sigeci.buenosaires.gob.ar/InicioTramiteComun?idPrestacion=1422" },
+    { nombre: "TrabajoBA — Portal de Empleo CABA", descripcion: "Registrate y accedé a ofertas laborales en la Ciudad", url: "https://trabajoba.buenosaires.gob.ar" },
     { nombre: "Potenciar Trabajo", descripcion: "Programa de empleo y capacitación", url: "https://www.argentina.gob.ar/desarrollosocial/potenciartrabajo" },
   ],
   educacion: [
     { nombre: "Plan FinEs", descripcion: "Terminá el secundario gratuitamente", url: "https://www.argentina.gob.ar/educacion/fines" },
     { nombre: "Becas Progresar", descripcion: "Apoyo económico para seguir estudiando", url: "https://www.argentina.gob.ar/educacion/progresar" },
-    { nombre: "CENS", descripcion: "Educación secundaria para adultos en CABA", url: "https://buenosaires.gob.ar/educacion" },
+    { nombre: "CENS — Secundario para adultos CABA", descripcion: "Educación secundaria para adultos en CABA", url: "https://buenosaires.gob.ar/educacion/nivel-medio/adultos-2000" },
   ],
   salud: [
-    { nombre: "CAPS", descripcion: "Atención médica gratuita en tu barrio", url: "https://buenosaires.gob.ar/salud/caps", contacto: "0800-222-5462" },
+    { nombre: "CAPS — Atención médica gratuita", descripcion: "Encontrá el centro de salud más cercano a tu domicilio", url: "https://buenosaires.gob.ar/salud/centros-de-salud-y-hospitales", contacto: "0800-222-5462" },
     { nombre: "Programa SUMAR", descripcion: "Cobertura de salud gratuita sin obra social", url: "https://www.argentina.gob.ar/salud/sumar" },
   ],
   vivienda: [
@@ -33,8 +33,8 @@ const PROGRAMAS_CABA: Record<string, { nombre: string; descripcion: string; url?
     { nombre: "Potenciar Trabajo", descripcion: "Programa de empleo y capacitación", url: "https://www.argentina.gob.ar/desarrollosocial/potenciartrabajo" },
   ],
   red: [
-    { nombre: "Centros Culturales Barriales", descripcion: "Actividades comunitarias gratuitas", url: "https://buenosaires.gob.ar/cultura" },
-    { nombre: "Puntos de Cultura", descripcion: "Red de organizaciones culturales", url: "https://www.argentina.gob.ar/cultura" },
+    { nombre: "Centros Culturales Barriales CABA", descripcion: "Actividades gratuitas de arte, deporte y comunidad", url: "https://buenosaires.gob.ar/cultura/centros-culturales" },
+    { nombre: "Puntos de Cultura", descripcion: "Red de organizaciones culturales", url: "https://www.argentina.gob.ar/cultura/puntos-de-cultura" },
   ],
 };
 

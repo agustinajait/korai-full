@@ -108,14 +108,14 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
     {
       nombre: "Centro de Integración Laboral (CIL)",
       descripcionCorta: "Sacá turno para hacer tu CV y acceder a programas de empleo. Llevá DNI y CUIL.",
-      url: "https://buenosaires.gob.ar/tramites/centro-de-integracion-laboral",
-      accion: "Sacar turno online", tipo: "publico",
+      url: "https://formulario-sigeci.buenosaires.gob.ar/InicioTramiteComun?idPrestacion=1422",
+      accion: "Sacar turno online ahora", tipo: "publico",
     },
     {
       nombre: "TrabajoBA — Portal de Empleo CABA",
       descripcionCorta: "Registrate y accedé a ofertas laborales en la Ciudad.",
       url: "https://trabajoba.buenosaires.gob.ar",
-      accion: "Registrarme gratis", tipo: "publico",
+      accion: "Registrarme y buscar trabajo", tipo: "publico",
     },
     {
       nombre: "LinkedIn — Perfil profesional gratuito",
@@ -126,8 +126,8 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
     {
       nombre: "Formación Profesional CABA — Cursos gratuitos",
       descripcionCorta: "Más de 3.400 cursos gratuitos en 50+ centros en toda la Ciudad.",
-      url: "https://buenosaires.gob.ar/educacion/agencia-de-habilidades-para-el-futuro/formacion-profesional",
-      accion: "Ver cursos por barrio", tipo: "publico",
+      url: "https://buenosaires.gob.ar/educacion/agencia-de-habilidades-para-el-futuro/sedes-de-formacion-profesional",
+      accion: "Buscar cursos cerca de mi barrio", tipo: "publico",
     },
     {
       nombre: "Fundación Forge — Beca Tu Futuro",
@@ -152,14 +152,14 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
     {
       nombre: "Plan FinEs — Terminá el secundario gratis",
       descripcionCorta: "Programa nacional para adultos. Se cursa cerca de tu casa.",
-      url: "https://www.argentina.gob.ar/educacion/fines",
-      accion: "Ver cómo inscribirme", tipo: "publico",
+      url: "https://www.argentina.gob.ar/educacion/fines/inscripcion",
+      accion: "Inscribirme al FinEs", tipo: "publico",
     },
     {
       nombre: "Becas Progresar",
       descripcionCorta: "Apoyo económico mensual para seguir estudiando o capacitarte.",
-      url: "https://www.argentina.gob.ar/educacion/progresar",
-      accion: "Verificar si califico", tipo: "publico",
+      url: "https://www.argentina.gob.ar/educacion/progresar/requisitos",
+      accion: "Ver si califico ahora", tipo: "publico",
     },
     {
       nombre: "Centros de Formación Profesional por barrio",
@@ -197,8 +197,8 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
     {
       nombre: "Programa SUMAR — Cobertura de salud gratuita",
       descripcionCorta: "Para personas sin obra social. Cubre controles, vacunas y más.",
-      url: "https://www.argentina.gob.ar/salud/sumar",
-      accion: "Inscribirme al SUMAR", tipo: "publico",
+      url: "https://www.argentina.gob.ar/salud/sumar/como-afiliarse",
+      accion: "Afiliarme al SUMAR ahora", tipo: "publico",
     },
     {
       nombre: "Salud Mental — Línea gratuita CABA",
@@ -215,7 +215,7 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
       descripcionCorta: "Para familias en situación de calle o riesgo habitacional.",
       url: "https://buenosaires.gob.ar/desarrollohumanoyhabitat/inclusion-social-y-atencion-inmediata/asistencia-habitacional",
       telefono: "0800-333-3190",
-      accion: "Consultar cómo acceder", tipo: "publico",
+      accion: "Llamar o consultar cómo acceder", tipo: "publico",
     },
     {
       nombre: "PROMEBA — Mejoramiento de barrios",
@@ -240,9 +240,9 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
     {
       nombre: "ANSES — Turno online",
       descripcionCorta: "AUH, jubilaciones, Potenciar Trabajo y más. Sacá turno sin salir de casa.",
-      url: "https://www.anses.gob.ar/turnos",
+      url: "https://turnos.anses.gob.ar",
       telefono: "130",
-      accion: "Sacar turno en ANSES", tipo: "publico",
+      accion: "Sacar turno en ANSES ahora", tipo: "publico",
     },
     {
       nombre: "mi ANSES — Trámites online",
@@ -264,13 +264,13 @@ const RECURSOS_MUNICIPALES: Record<string, { nombre: string; descripcionCorta?: 
       nombre: "Centros Culturales Barriales CABA",
       descripcionCorta: "Actividades gratuitas de arte, deporte y comunidad en tu barrio.",
       url: "https://buenosaires.gob.ar/cultura/centros-culturales",
-      accion: "Ver centros cerca mío", tipo: "publico",
+      accion: "Ver centros cerca de mí", tipo: "publico",
     },
     {
       nombre: "Puntos de Encuentro Comunitario",
       descripcionCorta: "Espacios de participación vecinal y talleres gratuitos.",
-      url: "https://www.argentina.gob.ar/cultura",
-      accion: "Encontrar espacios", tipo: "publico",
+      url: "https://www.argentina.gob.ar/cultura/puntos-de-cultura",
+      accion: "Buscar espacios en mi zona", tipo: "publico",
     },
     {
       nombre: "Línea 102 — Infancia y Adolescencia",
