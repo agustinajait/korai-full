@@ -92,18 +92,19 @@ export default function Confirmar() {
         setNombre(context.nombre || response.dni_real || "");
         setEstado("ok");
 
-        // Abrir WhatsApp con Mensaje 2 al instante
+        // Enviar plan por WhatsApp via Twilio
         const mensaje = generarMensaje2(plan, context, profundizacion);
-        const encoded = encodeURIComponent(mensaje);
-        const telefono = context.telefono?.replace(/\D/g, "");
-        let url: string;
+        const telefono = (context.telefono || response.telefono || "").replace(/\D/g, "");
         if (telefono && telefono.length >= 8) {
-          const numero = telefono.startsWith("54") ? telefono : `54${telefono}`;
-          url = `https://wa.me/${numero}?text=${encoded}`;
-        } else {
-          url = `https://wa.me/?text=${encoded}`;
+          fetch(`${SUPABASE_URL}/functions/v1/send_whatsapp`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ telefono, mensaje }),
+          }).catch(err => console.error("Error enviando WhatsApp:", err));
         }
-        setTimeout(() => window.open(url, "_blank"), 800);
       })
       .catch(() => setEstado("error"));
   }, []);
@@ -138,10 +139,10 @@ export default function Confirmar() {
                 ¡Genial{nombre ? `, ${nombre}` : ""}! 🙌
               </h1>
               <p className="text-[#6B5FA0] text-sm leading-relaxed">
-                Tu confirmación quedó registrada. En un momento se abre WhatsApp con tu plan para las próximas 2 semanas.
+                Tu confirmación quedó registrada. En un momento te llega el plan por WhatsApp al número que ingresaste.
               </p>
               <p className="text-[#9B8EC4] text-xs mt-2">
-                Si WhatsApp no se abre automáticamente, tocá el botón de abajo.
+                Si no te llegó en unos segundos, tocá el botón de abajo.
               </p>
             </div>
 
@@ -153,18 +154,21 @@ export default function Confirmar() {
                 const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
                 const profundizacion = (() => { try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; } })();
                 const mensaje = generarMensaje2(plan, context, profundizacion);
-                const encoded = encodeURIComponent(mensaje);
-                const telefono = context.telefono?.replace(/\D/g, "");
-                let url = `https://wa.me/?text=${encoded}`;
+                const telefono = (context.telefono || "").replace(/\D/g, "");
                 if (telefono && telefono.length >= 8) {
-                  const numero = telefono.startsWith("54") ? telefono : `54${telefono}`;
-                  url = `https://wa.me/${numero}?text=${encoded}`;
+                  fetch(`${SUPABASE_URL}/functions/v1/send_whatsapp`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                    },
+                    body: JSON.stringify({ telefono, mensaje }),
+                  }).catch(err => console.error("Error enviando WhatsApp:", err));
                 }
-                window.open(url, "_blank");
               }}
               className="w-full h-12 font-bold rounded-2xl bg-[#5B21B6] text-white flex items-center justify-center gap-2"
             >
-              📲 Abrir mi plan en WhatsApp
+              📲 Reenviar mi plan por WhatsApp
             </Button>
 
             <button
