@@ -22,6 +22,8 @@ async function submitToSupabase(payload: {
   answers: Record<string, string>;
   territorio: { ciudad: string; barrio: string };
   texto_abierto: string;
+  nombre?: string;
+  apellido?: string;
   telefono?: string;
   profundizacion?: Record<string, any>;
 }) {
@@ -38,6 +40,9 @@ async function submitToSupabase(payload: {
       territorio: payload.territorio,
       telefono: payload.telefono || "",
       perfil_contextual: JSON.stringify({
+        nombre: payload.nombre || "",
+        apellido: payload.apellido || "",
+        telefono: payload.telefono || "",
         comentario: payload.texto_abierto || "",
         profundizacion: payload.profundizacion || {},
       }),
@@ -280,6 +285,7 @@ export default function Survey() {
 
   const [isPending, setIsPending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [diagnosticType, setDiagnosticType] = useState<string | null>(null);
 
   // ─── Estado profundización ────────────────────────────────────────────────────
   const [showProfundizacion, setShowProfundizacion] = useState(false);
@@ -407,7 +413,7 @@ export default function Survey() {
     try {
       const dni = context.dni || `anonimo-${Date.now()}`;
 
-      await submitToSupabase({
+      const result = await submitToSupabase({
         dni,
         answers,
         territorio: {
@@ -415,9 +421,16 @@ export default function Survey() {
           barrio: context.neighborhood || "",
         },
         texto_abierto: comment,
+        nombre: context.nombre || "",
+        apellido: context.apellido || "",
         telefono: context.telefono || "",
         profundizacion,
       });
+
+      // Avisar si ya hizo el diagnóstico antes
+      if (result?.diagnostic_type) {
+        setDiagnosticType(result.diagnostic_type);
+      }
 
       localStorage.setItem("korai_user_answers", JSON.stringify(answers));
       localStorage.setItem("korai_profundizacion", JSON.stringify(profundizacion));
@@ -476,6 +489,17 @@ export default function Survey() {
                 Este es el resultado de tu autodiagnóstico. Tu mirada es fundamental para entender tu realidad.
               </p>
             </header>
+
+            {/* Aviso diagnóstico repetido */}
+            {diagnosticType === "follow_up_early" && (
+              <div className="p-4 rounded-2xl bg-yellow-50 border border-yellow-300 flex items-start gap-3">
+                <span className="text-xl">🔄</span>
+                <div>
+                  <p className="text-sm font-black text-yellow-800">Ya hiciste un diagnóstico recientemente</p>
+                  <p className="text-xs text-yellow-700 mt-0.5">Este nuevo registro quedó guardado y se suma a tu historial de evolución.</p>
+                </div>
+              </div>
+            )}
 
             <div className="grid sm:grid-cols-2 gap-4">
               {INSTRUMENT.dimensions.map(d => {
