@@ -198,41 +198,67 @@ export default function Prioridades() {
   }, []);
 
   const handleWhatsApp = async () => {
-    // Registrar aceptación en Supabase silenciosamente
     const dniHash = localStorage.getItem("korai_user_dni_hash_v1") || "";
+    const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
+    const telefono = context.telefono?.replace(/\D/g, "");
+  
+    // 1. Registrar aceptación en Supabase
     if (dniHash) {
       try {
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/responses?campaign_id=eq.${CAMPAIGN_ID}&dni_hash=eq.${dniHash}&order=submitted_at.desc&limit=1`,
+          `${SUPABASE_URL}/rest/v1/responses?campaign_id=eq.53813f5a-3613-4faf-8ca1-b369e4e908cb&dni_hash=eq.${dniHash}&order=submitted_at.desc&limit=1`,
           { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
         );
         const data = await res.json();
         if (data && data.length > 0) {
-          await fetch(
-            `${SUPABASE_URL}/rest/v1/responses?id=eq.${data[0].id}`,
-            {
-              method: "PATCH",
-              headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                "Content-Type": "application/json",
-                "Prefer": "return=minimal",
-              },
-              body: JSON.stringify({
-                acepto_seguimiento: true,
-                fecha_aceptacion: new Date().toISOString(),
-              }),
-            }
-          );
+          await fetch(`${SUPABASE_URL}/rest/v1/responses?id=eq.${data[0].id}`, {
+            method: "PATCH",
+            headers: {
+              "apikey": SUPABASE_ANON_KEY,
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+              "Content-Type": "application/json",
+              "Prefer": "return=minimal",
+            },
+            body: JSON.stringify({ acepto_seguimiento: true, fecha_aceptacion: new Date().toISOString() }),
+          });
         }
       } catch (e) {
         console.warn("No se pudo registrar aceptación:", e);
       }
     }
-    // Abrir WhatsApp con mensaje unificado
-    usarWhatsAppMensaje1(plan);
+  
+    // 2. Llamar Edge Function send_whatsapp
+    if (!telefono || telefono.length < 8) {
+      usarWhatsAppMensaje1(plan); // fallback si no hay teléfono
+      return;
+    }
+  
+    try {
+      const mensaje = generarMensaje1(plan);
+  
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/send_whatsapp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ telefono, mensaje }), // ← parámetros exactos que espera la función
+      });
+  
+      const result = await res.json();
+      console.log("send_whatsapp result:", result);
+  
+      if (!res.ok) {
+        throw new Error(result.error || "Error en Edge Function");
+      }
+  
+      alert("¡Mensaje enviado por WhatsApp! 📲");
+  
+    } catch (e) {
+      console.error("Error llamando send_whatsapp:", e);
+      usarWhatsAppMensaje1(plan); // fallback a wa.me
+    }
   };
-
   const toggleExpanded = (dimId: string) => {
     setExpandedItems(prev => ({ ...prev, [dimId]: !prev[dimId] }));
   };
