@@ -449,23 +449,21 @@ export default function Welcome() {
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider" style={{ color: C.textSub }}>Barrio</label>
-            <Select onValueChange={setNeighborhood}>
-              <SelectTrigger className="h-11 text-sm border-2 rounded-xl" style={{ background: C.bgCard, borderColor: C.border, color: C.text }}>
-                <SelectValue placeholder="Seleccioná tu barrio" />
-              </SelectTrigger>
-              <SelectContent className="max-h-72" style={{ background: C.bgCard, borderColor: C.border }}>
-                {Object.entries(ZONAS_BUENOS_AIRES).map(([zona, barrios]) => (
-                  <div key={zona}>
-                    <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-wider sticky top-0" style={{ color: C.textSub, background: C.bg }}>
-                      {zona}
-                    </div>
-                    {barrios.map(b => (
-                      <SelectItem key={b} value={b} style={{ color: C.text }}>{b}</SelectItem>
-                    ))}
-                  </div>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              value={neighborhood}
+              onChange={e => setNeighborhood(e.target.value)}
+              className="w-full h-11 text-sm border-2 rounded-xl px-3 appearance-none"
+              style={{ background: C.bgCard, borderColor: C.border, color: neighborhood ? C.text : C.textSub, fontFamily: "inherit" }}
+            >
+              <option value="" disabled>Seleccioná tu barrio</option>
+              {Object.entries(ZONAS_BUENOS_AIRES).map(([zona, barrios]) => (
+                <optgroup key={zona} label={zona}>
+                  {barrios.map(b => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-1.5">
