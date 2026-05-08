@@ -47,6 +47,21 @@ async function fetchResponses() {
   return res.json();
 }
 
+async function deleteResponse(id: string) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/responses?id=eq.${id}`,
+    {
+      method: "DELETE",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Prefer": "return=minimal",
+      },
+    }
+  );
+  if (!res.ok) throw new Error("Error al eliminar diagnóstico");
+}
+
 async function fetchTrazabilidad(dniHash: string) {
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/responses?campaign_id=eq.${CAMPAIGN_ID}&dni_hash=eq.${dniHash}&order=submitted_at.asc`,
@@ -410,6 +425,20 @@ export default function Dashboard() {
   const [selectedCase, setSelectedCase] = useState<any | null>(null);
   const [showCaseList, setShowCaseList] = useState(false);
   const [showTrazabilidad, setShowTrazabilidad] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await deleteResponse(id);
+      setResponses(prev => prev.filter(r => r.id !== id));
+    } catch (e) {
+      alert("Error al eliminar. Intentá de nuevo.");
+    }
+    setDeletingId(null);
+    setConfirmDeleteId(null);
+  };
 
   useEffect(() => {
     fetchResponses()
@@ -632,6 +661,31 @@ export default function Dashboard() {
                     >
                       Evolución
                     </button>
+                    {/* Botón eliminar */}
+                    {confirmDeleteId === r.id ? (
+                      <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleDelete(r.id)}
+                          disabled={deletingId === r.id}
+                          className="text-[10px] text-white bg-red-500 px-2 py-1 rounded-lg hover:bg-red-600 transition-colors font-bold"
+                        >
+                          {deletingId === r.id ? "..." : "Confirmar"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="text-[10px] text-white/40 bg-white/5 px-2 py-1 rounded-lg hover:bg-white/10 transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={e => { e.stopPropagation(); setConfirmDeleteId(r.id); }}
+                        className="text-[10px] text-red-400/60 bg-red-500/5 border border-red-500/20 px-2 py-1 rounded-lg hover:bg-red-500/20 hover:text-red-400 transition-colors flex-shrink-0"
+                      >
+                        🗑
+                      </button>
+                    )}
                     <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-primary transition-colors flex-shrink-0" />
                   </div>
                 );
