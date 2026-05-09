@@ -99,7 +99,7 @@ function generarMensaje2(plan: PlanItem[]): string {
   });
 
   msg += `---\nEn 7 días te vamos a preguntar cómo te fue 💪\n`;
-  msg += `_Korai — korai-full.vercel.app_`;
+  msg += `_Korai — app.korai.lat_`;
   return msg;
 }
 
@@ -135,7 +135,7 @@ function usarWhatsAppMensaje1(plan: PlanItem[]) {
   });
 
   msg += `En 7 días te vamos a preguntar cómo te fue 💪\n`;
-  msg += `_Korai — korai-full.vercel.app_`;
+  msg += `_Korai — app.korai.lat_`;
 
   const encoded = encodeURIComponent(msg);
   const telefono = context.telefono?.replace(/\D/g, "");
