@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { CheckCircle, Loader2 } from "lucide-react";
@@ -8,6 +8,14 @@ import { generatePlanDesdeScores } from "@/lib/korai-logic";
 const SUPABASE_URL = "https://jgqqkgfppovkbwklctol.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4";
 const CAMPAIGN_ID = "53813f5a-3613-4faf-8ca1-b369e4e908cb";
+
+function normalizarNumero(telefono: string): string {
+  const digits = telefono.replace(/\D/g, "");
+  if (digits.startsWith("549")) return digits;
+  if (digits.startsWith("54")) return `549${digits.slice(2)}`;
+  if (digits.startsWith("9")) return `54${digits}`;
+  return `549${digits}`;
+}
 
 function normalizarNumero(telefono: string): string {
   const digits = telefono.replace(/\D/g, "");
@@ -49,7 +57,7 @@ function generarMensaje2(plan: any[], context: any, profundizacion: any): string
   const criticas = plan.filter((p: any) => p.nivelColor === "rojo").slice(0, 2);
   const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
 
-  let msg = `Perfecto${nombre ? ` ${nombre}` : ""} 🙌 Acá está tu plan para las próximas 2 semanas:\n\n`;
+  let msg = `Perfecto${nombre ? ` ${nombre}` : ""} ðŸ™Œ AcÃ¡ estÃ¡ tu plan para las prÃ³ximas 2 semanas:\n\n`;
 
   areas.forEach((p: any) => {
     msg += `${p.emoji} *${p.dimensionName}*\n`;
@@ -57,20 +65,20 @@ function generarMensaje2(plan: any[], context: any, profundizacion: any): string
       msg += `${i + 1}. ${a}\n`;
     });
     const r = p.recursos?.[0];
-    if (r?.telefono) msg += `📞 ${r.nombre}: ${r.telefono}\n`;
-    else if (r?.url) msg += `🔗 ${r.nombre}: ${r.url}\n`;
+    if (r?.telefono) msg += `ðŸ“ž ${r.nombre}: ${r.telefono}\n`;
+    else if (r?.url) msg += `ðŸ”— ${r.nombre}: ${r.url}\n`;
 
     if (p.dimensionId === "empleo" && profundizacion?.emp_disponibilidad !== "no") {
-      msg += `🔗 Sacá turno en el CIL: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
+      msg += `ðŸ”— SacÃ¡ turno en el CIL: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
     }
     if (p.dimensionId === "salud" && profundizacion?.sal_cobertura === "no") {
-      msg += `📞 SUMAR (sin obra social): 0800-222-5462\n`;
+      msg += `ðŸ“ž SUMAR (sin obra social): 0800-222-5462\n`;
     }
     msg += "\n";
   });
 
-  msg += `---\nEn 7 días te vamos a preguntar cómo te fue 💪\n`;
-  msg += `_Korai — app.korai.lat_`;
+  msg += `---\nEn 7 dÃ­as te vamos a preguntar cÃ³mo te fue ðŸ’ª\n`;
+  msg += `_Korai â€” app.korai.lat_`;
   return msg;
 }
 
@@ -128,7 +136,7 @@ export default function Confirmar() {
         {estado === "cargando" && (
           <>
             <Loader2 className="w-12 h-12 animate-spin text-[#5B21B6]" />
-            <p className="text-[#6B5FA0] text-sm">Registrando tu confirmación...</p>
+            <p className="text-[#6B5FA0] text-sm">Registrando tu confirmaciÃ³n...</p>
           </>
         )}
 
@@ -145,13 +153,13 @@ export default function Confirmar() {
 
             <div className="space-y-2">
               <h1 className="text-2xl font-black text-[#1E1040]">
-                ¡Genial{nombre ? `, ${nombre}` : ""}! 🙌
+                Â¡Genial{nombre ? `, ${nombre}` : ""}! ðŸ™Œ
               </h1>
               <p className="text-[#6B5FA0] text-sm leading-relaxed">
-                Tu confirmación quedó registrada. En un momento te llega el plan por WhatsApp al número que ingresaste.
+                Tu confirmaciÃ³n quedÃ³ registrada. En un momento te llega el plan por WhatsApp al nÃºmero que ingresaste.
               </p>
               <p className="text-[#9B8EC4] text-xs mt-2">
-                Si no te llegó en unos segundos, tocá el botón de abajo.
+                Si no te llegÃ³ en unos segundos, tocÃ¡ el botÃ³n de abajo.
               </p>
             </div>
 
@@ -170,24 +178,24 @@ export default function Confirmar() {
               }}
               className="w-full h-12 font-bold rounded-2xl bg-[#5B21B6] text-white flex items-center justify-center gap-2"
             >
-              📲 Reenviar mi plan por WhatsApp
+              ðŸ“² Reenviar mi plan por WhatsApp
             </Button>
 
             <button
               onClick={() => setLocation("/prioridades")}
               className="text-xs text-[#9B8EC4] hover:text-[#5B21B6] transition-colors"
             >
-              Ver mi plan en la app →
+              Ver mi plan en la app â†’
             </button>
           </>
         )}
 
         {estado === "error" && (
           <>
-            <div className="text-5xl">😕</div>
+            <div className="text-5xl">ðŸ˜•</div>
             <div className="space-y-2">
               <h1 className="text-xl font-black text-[#1E1040]">No pudimos confirmar</h1>
-              <p className="text-[#6B5FA0] text-sm">El link puede haber expirado. Volvé a tu diagnóstico.</p>
+              <p className="text-[#6B5FA0] text-sm">El link puede haber expirado. VolvÃ© a tu diagnÃ³stico.</p>
             </div>
             <Button onClick={() => setLocation("/")} className="bg-[#5B21B6] text-white rounded-2xl h-12 w-full font-bold">
               Volver al inicio
@@ -198,3 +206,4 @@ export default function Confirmar() {
     </div>
   );
 }
+
