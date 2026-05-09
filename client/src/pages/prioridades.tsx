@@ -43,129 +43,68 @@ const DIM_NOMBRES: Record<string, string> = {
   red: "Red / Vínculos",
 };
 
-const SUPABASE_URL = "https://jgqqkgfppovkbwklctol.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4";
-
-// ─── MENSAJE 1: Bienvenida + áreas críticas + link de confirmación ─────────
-function generarMensaje1(plan: PlanItem[]): string {
-  const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-  const nombre = context.nombre ? context.nombre : "";
-  const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
-  const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
-  const areasTexto = areas.map(p => p.dimensionName).join(" y ");
-
-  // Link de confirmación — lleva a app.korai.lat/confirmar?dni=HASH
-  const dniHash = localStorage.getItem("korai_user_dni_hash_v1") || "";
-  const linkConfirmar = `https://app.korai.lat/confirmar?h=${dniHash}`;
-
-  let msg = `Hola${nombre ? ` ${nombre}` : ""} 👋 Soy Korai, tu asistente de bienestar.\n\n`;
-  msg += `Terminaste tu diagnóstico y detectamos que hoy podrías necesitar apoyo principalmente en *${areasTexto}*.\n\n`;
-  msg += `Tenemos un plan concreto con pasos para estas próximas dos semanas que puede ayudarte.\n\n`;
-  msg += `¿Querés que te lo compartamos?\n\n`;
-  msg += `👉 Tocá acá para decir que sí:\n${linkConfirmar}\n\n`;
-  msg += `_Tu información es confidencial y está protegida._ 🔒`;
-  return msg;
-}
-
-// ─── MENSAJE 2: Plan de las próximas 2 semanas ────────────────────────────
-function generarMensaje2(plan: PlanItem[]): string {
-  const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-  const profundizacion = (() => { try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; } })();
-  const nombre = context.nombre ? context.nombre : "";
-  const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
-  const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
-
-  let msg = `Perfecto${nombre ? ` ${nombre}` : ""} 🙌 Acá está tu plan para las próximas 2 semanas:\n\n`;
-
-  areas.forEach(p => {
-    msg += `${p.emoji} *${p.dimensionName}*\n`;
-    p.accionesCorto.slice(0, 2).forEach((a, i) => {
-      msg += `${i + 1}. ${a}\n`;
-    });
-    // Recurso más relevante
-    const r = p.recursos[0];
-    if (r) {
-      if (r.telefono) msg += `📞 ${r.nombre}: ${r.telefono}\n`;
-      else if (r.url) msg += `🔗 ${r.nombre}: ${r.url}\n`;
-    }
-    // Personalización según profundización
-    if (p.dimensionId === "empleo" && profundizacion.emp_disponibilidad !== "no") {
-      msg += `🔗 Sacá turno en el CIL: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
-    }
-    if (p.dimensionId === "salud" && profundizacion.sal_cobertura === "no") {
-      msg += `📞 SUMAR (sin obra social): 0800-222-5462\n`;
-    }
-    msg += "\n";
-  });
-
-  msg += `---\nEn 7 días te vamos a preguntar cómo te fue 💪\n`;
-  msg += `_Korai — app.korai.lat_`;
-  return msg;
-}
-
-// ─── Handler: Mensaje 1 ───────────────────────────────────────────────────
-function usarWhatsAppMensaje1(plan: PlanItem[]) {
-  const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-  const profundizacion = (() => { try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; } })();
-  const nombre = context.nombre || "";
-  const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
-  const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
-  const areasTexto = areas.map(p => p.dimensionName).join(" y ");
-
-  let msg = `Hola${nombre ? ` ${nombre}` : ""} 👋 Soy Korai, tu asistente de bienestar.\n\n`;
-  msg += `Terminaste tu diagnóstico y detectamos que hoy podrías necesitar apoyo en *${areasTexto}*.\n\n`;
-  msg += `🗓️ *Tu plan para las próximas 2 semanas:*\n\n`;
-
-  areas.forEach(p => {
-    msg += `${p.emoji} *${p.dimensionName}*\n`;
-    p.accionesCorto.slice(0, 2).forEach((a, i) => {
-      msg += `${i + 1}. ${a}\n`;
-    });
-    const r = p.recursos?.[0];
-    if (r?.telefono) msg += `📞 ${r.nombre}: ${r.telefono}\n`;
-    else if (r?.url) msg += `🔗 ${r.nombre}: ${r.url}\n`;
-
-    if (p.dimensionId === "empleo" && profundizacion?.emp_disponibilidad !== "no") {
-      msg += `🔗 Turno CIL: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
-    }
-    if (p.dimensionId === "salud" && profundizacion?.sal_cobertura === "no") {
-      msg += `📞 SUMAR (sin obra social): 0800-222-5462\n`;
-    }
-    msg += "\n";
-  });
-
-  msg += `En 7 días te vamos a preguntar cómo te fue 💪\n`;
-  msg += `_Korai — app.korai.lat_`;
-
-  const encoded = encodeURIComponent(msg);
-  const telefono = context.telefono?.replace(/\D/g, "");
-  let url = `https://wa.me/?text=${encoded}`;
-  if (telefono && telefono.length >= 8) {
-    const numero = telefono.startsWith("54") ? telefono : `54${telefono}`;
-    url = `https://wa.me/${numero}?text=${encoded}`;
-  }
-  window.open(url, "_blank");
-}
-
-// ─── Handler: Mensaje 2 (se llama desde /confirmar) ──────────────────────
-function usarWhatsAppMensaje2(plan: PlanItem[]) {
-  const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-  const mensaje = generarMensaje2(plan);
-  const encoded = encodeURIComponent(mensaje);
-  const telefono = context.telefono?.replace(/\D/g, "");
-  let url: string;
-  if (telefono && telefono.length >= 8) {
-    const numero = telefono.startsWith("54") ? telefono : `54${telefono}`;
-    url = `https://wa.me/${numero}?text=${encoded}`;
-  } else {
-    url = `https://wa.me/?text=${encoded}`;
-  }
-  window.open(url, "_blank");
-}
-
-// Mantener compatibilidad con código existente
 function generarMensajeWhatsApp(plan: PlanItem[]): string {
-  return generarMensaje1(plan);
+  const profundizacion = (() => { try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; } })();
+  const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
+  const nombre = context.nombre ? context.nombre : "";
+
+  // Áreas prioritarias (máx 2 rojas, luego amarillas)
+  const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
+  const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
+
+  // Convertir áreas a texto natural
+  const areasTexto = areas.map(p => p.dimensionName.toLowerCase()).join(" y ");
+
+  // Mensaje inicial personalizado
+  let msg = `Hola${nombre ? ` ${nombre}` : ""}, ¿cómo estás? 👋 Soy Korai.\n\n`;
+  msg += `Vimos tu diagnóstico y detectamos que hoy podrías necesitar apoyo en *${areasTexto}*.\n\n`;
+  msg += `Te vamos a acompañar y acercarte oportunidades.\n\n`;
+
+  // Recursos personalizados según profundización
+  msg += `📋 *Opciones concretas para vos:*\n\n`;
+
+  areas.forEach(p => {
+    msg += `${p.emoji} *${p.dimensionName}*\n`;
+
+    // Personalización según respuestas de profundización
+    if (p.dimensionId === "empleo") {
+      if (profundizacion.emp_disponibilidad && profundizacion.emp_disponibilidad !== "no") {
+        msg += `👉 Sacá turno en el CIL para hacer tu CV: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
+        msg += `👉 Registrate en TrabajoBA: trabajoba.buenosaires.gob.ar\n`;
+      } else {
+        msg += `👉 Cursos gratuitos de formación: buenosaires.gob.ar/educacion/formacion-profesional\n`;
+      }
+    }
+    if (p.dimensionId === "salud") {
+      msg += `👉 Centro de salud gratuito: 0800-222-5462\n`;
+      if (profundizacion.sal_cobertura === "no") {
+        msg += `👉 Programa SUMAR (sin obra social): argentina.gob.ar/salud/sumar\n`;
+      }
+    }
+    if (p.dimensionId === "vivienda") {
+      msg += `👉 Reclamos de servicios: Llamá al 147\n`;
+      if (profundizacion.viv_riesgo === "si") {
+        msg += `👉 Asistencia habitacional urgente: 0800-333-3190\n`;
+      }
+    }
+    if (p.dimensionId === "prevision" || p.dimensionId === "ingresos") {
+      msg += `👉 ANSES — Turno online: anses.gob.ar/turnos · Tel: 130\n`;
+    }
+    if (p.dimensionId === "educacion") {
+      if (profundizacion.edu_secundario === "no") {
+        msg += `👉 Plan FinEs (secundario gratis): argentina.gob.ar/educacion/fines\n`;
+      } else {
+        msg += `👉 Cursos gratuitos por barrio: buenosaires.gob.ar/educacion/formacion-profesional\n`;
+      }
+    }
+    if (p.dimensionId === "red") {
+      msg += `👉 Centros culturales barriales: buenosaires.gob.ar/cultura/centros-culturales\n`;
+    }
+    msg += "\n";
+  });
+
+  msg += `---\n🌱 korai-full.vercel.app`;
+  return msg;
 }
 
 export default function Prioridades() {
@@ -197,68 +136,27 @@ export default function Prioridades() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleWhatsApp = async () => {
-    const dniHash = localStorage.getItem("korai_user_dni_hash_v1") || "";
+  const handleWhatsApp = () => {
+    const mensaje = generarMensajeWhatsApp(plan);
+    const encoded = encodeURIComponent(mensaje);
+
+    // Leer teléfono del contexto
     const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-    const telefono = context.telefono?.replace(/\D/g, "");
-  
-    // 1. Registrar aceptación en Supabase
-    if (dniHash) {
-      try {
-        const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/responses?campaign_id=eq.53813f5a-3613-4faf-8ca1-b369e4e908cb&dni_hash=eq.${dniHash}&order=submitted_at.desc&limit=1`,
-          { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
-        );
-        const data = await res.json();
-        if (data && data.length > 0) {
-          await fetch(`${SUPABASE_URL}/rest/v1/responses?id=eq.${data[0].id}`, {
-            method: "PATCH",
-            headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-              "Content-Type": "application/json",
-              "Prefer": "return=minimal",
-            },
-            body: JSON.stringify({ acepto_seguimiento: true, fecha_aceptacion: new Date().toISOString() }),
-          });
-        }
-      } catch (e) {
-        console.warn("No se pudo registrar aceptación:", e);
-      }
+    const telefono = context.telefono?.replace(/\D/g, ""); // solo dígitos
+
+    let url: string;
+    if (telefono && telefono.length >= 8) {
+      // Si tiene código de país (empieza con 54 para Argentina o con +)
+      const numero = telefono.startsWith("54") ? telefono : `54${telefono}`;
+      url = `https://wa.me/${numero}?text=${encoded}`;
+    } else {
+      // Sin número → abre WhatsApp para que el usuario elija
+      url = `https://wa.me/?text=${encoded}`;
     }
-  
-    // 2. Llamar Edge Function send_whatsapp
-    if (!telefono || telefono.length < 8) {
-      usarWhatsAppMensaje1(plan); // fallback si no hay teléfono
-      return;
-    }
-  
-    try {
-      const mensaje = generarMensaje1(plan);
-  
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/send_whatsapp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ telefono, mensaje }), // ← parámetros exactos que espera la función
-      });
-  
-      const result = await res.json();
-      console.log("send_whatsapp result:", result);
-  
-      if (!res.ok) {
-        throw new Error(result.error || "Error en Edge Function");
-      }
-  
-      alert("¡Mensaje enviado por WhatsApp! 📲");
-  
-    } catch (e) {
-      console.error("Error llamando send_whatsapp:", e);
-      usarWhatsAppMensaje1(plan); // fallback a wa.me
-    }
+
+    window.open(url, "_blank");
   };
+
   const toggleExpanded = (dimId: string) => {
     setExpandedItems(prev => ({ ...prev, [dimId]: !prev[dimId] }));
   };
