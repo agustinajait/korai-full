@@ -9,8 +9,15 @@ const SUPABASE_URL = "https://jgqqkgfppovkbwklctol.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4";
 const CAMPAIGN_ID = "53813f5a-3613-4faf-8ca1-b369e4e908cb";
 
+function normalizarNumero(telefono: string): string {
+  const digits = telefono.replace(/\D/g, "");
+  if (digits.startsWith("549")) return digits;
+  if (digits.startsWith("54")) return `549${digits.slice(2)}`;
+  if (digits.startsWith("9")) return `54${digits}`;
+  return `549${digits}`;
+}
+
 async function registrarAceptacion(dniHash: string) {
-  // Buscar la respuesta más reciente de este usuario
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/responses?campaign_id=eq.${CAMPAIGN_ID}&dni_hash=eq.${dniHash}&order=submitted_at.desc&limit=1`,
     { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
@@ -20,7 +27,6 @@ async function registrarAceptacion(dniHash: string) {
 
   const response = data[0];
 
-  // Actualizar con acepto_seguimiento = true
   await fetch(
     `${SUPABASE_URL}/rest/v1/responses?id=eq.${response.id}`,
     {
@@ -68,6 +74,18 @@ function generarMensaje2(plan: any[], context: any, profundizacion: any): string
   return msg;
 }
 
+function enviarWhatsApp(telefono: string, mensaje: string) {
+  const numeroNormalizado = normalizarNumero(telefono);
+  return fetch(`${SUPABASE_URL}/functions/v1/send_whatsapp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({ telefono: numeroNormalizado, mensaje }),
+  });
+}
+
 export default function Confirmar() {
   const [_, setLocation] = useLocation();
   const [estado, setEstado] = useState<"cargando" | "ok" | "error">("cargando");
@@ -83,7 +101,6 @@ export default function Confirmar() {
       .then(response => {
         if (!response) { setEstado("error"); return; }
 
-        // Recuperar contexto y plan
         const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
         const profundizacion = (() => { try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; } })();
         const planRaw = localStorage.getItem("korai_user_plan_v1");
@@ -92,18 +109,10 @@ export default function Confirmar() {
         setNombre(context.nombre || response.dni_real || "");
         setEstado("ok");
 
-        // Enviar plan por WhatsApp via Twilio
         const mensaje = generarMensaje2(plan, context, profundizacion);
         const telefono = (context.telefono || response.telefono || "").replace(/\D/g, "");
         if (telefono && telefono.length >= 8) {
-          fetch(`${SUPABASE_URL}/functions/v1/send_whatsapp`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ telefono, mensaje }),
-          }).catch(err => console.error("Error enviando WhatsApp:", err));
+          enviarWhatsApp(telefono, mensaje).catch(err => console.error("Error enviando WhatsApp:", err));
         }
       })
       .catch(() => setEstado("error"));
@@ -156,14 +165,7 @@ export default function Confirmar() {
                 const mensaje = generarMensaje2(plan, context, profundizacion);
                 const telefono = (context.telefono || "").replace(/\D/g, "");
                 if (telefono && telefono.length >= 8) {
-                  fetch(`${SUPABASE_URL}/functions/v1/send_whatsapp`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-                    },
-                    body: JSON.stringify({ telefono, mensaje }),
-                  }).catch(err => console.error("Error enviando WhatsApp:", err));
+                  enviarWhatsApp(telefono, mensaje).catch(err => console.error("Error reenviando WhatsApp:", err));
                 }
               }}
               className="w-full h-12 font-bold rounded-2xl bg-[#5B21B6] text-white flex items-center justify-center gap-2"
