@@ -54,9 +54,9 @@ function generarMensaje1(plan: PlanItem[]): string {
   const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
   const areasTexto = areas.map(p => p.dimensionName).join(" y ");
 
-  // Link de confirmación — lleva a korai-full.vercel.app/confirmar?dni=HASH
+  // Link de confirmación — lleva a app.korai.lat/confirmar?dni=HASH
   const dniHash = localStorage.getItem("korai_user_dni_hash_v1") || "";
-  const linkConfirmar = `https://korai-full.vercel.app/confirmar?h=${dniHash}`;
+  const linkConfirmar = `https://app.korai.lat/confirmar?h=${dniHash}`;
 
   let msg = `Hola${nombre ? ` ${nombre}` : ""} 👋 Soy Korai, tu asistente de bienestar.\n\n`;
   msg += `Terminaste tu diagnóstico y detectamos que hoy podrías necesitar apoyo principalmente en *${areasTexto}*.\n\n`;
