@@ -309,6 +309,7 @@ export default function Welcome() {
       nombre: nombre.trim(),
       apellido: apellido.trim(),
       dni: dni.trim() || `usuario-${Date.now()}`,
+        telefono: telefono.trim(),
       telefono: telefono.trim(),
       demographics: {
         dniHash,
@@ -545,4 +546,5 @@ export default function Welcome() {
     </div>
   );
 }
+
 
