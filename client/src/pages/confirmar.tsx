@@ -12,7 +12,10 @@ const CAMPAIGN_ID = "53813f5a-3613-4faf-8ca1-b369e4e908cb";
 function normalizarNumero(telefono: string): string {
   const digits = telefono.replace(/\D/g, "");
   if (digits.startsWith("549")) return digits;
-  if (digits.startsWith("54")) return `549${digits.slice(2)}`
+  if (digits.startsWith("54")) return `549${digits.slice(2)}`;
+  if (digits.startsWith("9")) return `54${digits}`;
+  return `549${digits}`;
+}
 
 async function registrarAceptacion(dniHash: string) {
   const res = await fetch(
@@ -195,6 +198,7 @@ export default function Confirmar() {
     </div>
   );
 }
+
 
 
 
