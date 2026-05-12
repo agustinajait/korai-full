@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -11,6 +11,8 @@ import Dashboard from "@/pages/dashboard";
 import AdminLogin from "@/pages/admin-login";
 import Prioridades from "@/pages/prioridades";
 import Metas from "@/pages/metas";
+import Confirmar from "@/pages/confirmar";
+import Privacidad from "@/pages/privacidad";
 import { Loader2 } from "lucide-react";
 
 function ProtectedDashboard() {
@@ -35,6 +37,8 @@ function Router() {
       <Route path="/metas" component={Metas} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/dashboard" component={ProtectedDashboard} />
+      <Route path="/confirmar" component={Confirmar} />
+      <Route path="/privacidad" component={Privacidad} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -52,3 +56,5 @@ function App() {
 }
 
 export default App;
+
+
