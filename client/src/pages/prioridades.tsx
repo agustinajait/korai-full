@@ -5,42 +5,42 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, Clock, AlertTriangle, CheckCircle2, ChevronRight, ChevronDown, ExternalLink, MessageCircle } from "lucide-react";
 import { generatePlanDesdeScores, type PlanItem, type Sello } from "@/lib/korai-logic";
 
-// Programas reales por dimensión para el mensaje de WhatsApp
+// Programas reales por dimensiÃ³n para el mensaje de WhatsApp
 const PROGRAMAS_WA: Record<string, { nombre: string; detalle: string }[]> = {
   empleo: [
     { nombre: "Portal Empleo", detalle: "portalempleo.gob.ar" },
-    { nombre: "Oportunai", detalle: "Creá tu CV y video CV · oportunai.com" },
+    { nombre: "Oportunai", detalle: "CreÃ¡ tu CV y video CV Â· oportunai.com" },
     { nombre: "Potenciar Trabajo", detalle: "argentina.gob.ar/desarrollosocial/potenciartrabajo" },
   ],
   educacion: [
-    { nombre: "Plan FinEs", detalle: "Terminá el secundario gratis · argentina.gob.ar/educacion/fines" },
-    { nombre: "Becas Progresar", detalle: "Apoyo económico · argentina.gob.ar/educacion/progresar" },
+    { nombre: "Plan FinEs", detalle: "TerminÃ¡ el secundario gratis Â· argentina.gob.ar/educacion/fines" },
+    { nombre: "Becas Progresar", detalle: "Apoyo econÃ³mico Â· argentina.gob.ar/educacion/progresar" },
   ],
   salud: [
-    { nombre: "CAPS (Centro de Salud gratuito)", detalle: "0800-222-5462 · buenosaires.gob.ar/salud/caps" },
-    { nombre: "Programa SUMAR", detalle: "Cobertura gratuita · argentina.gob.ar/salud/sumar" },
+    { nombre: "CAPS (Centro de Salud gratuito)", detalle: "0800-222-5462 Â· buenosaires.gob.ar/salud/caps" },
+    { nombre: "Programa SUMAR", detalle: "Cobertura gratuita Â· argentina.gob.ar/salud/sumar" },
   ],
   vivienda: [
-    { nombre: "Subsidio Habitacional 690", detalle: "Para familias en riesgo · buenosaires.gob.ar" },
-    { nombre: "PROMEBA", detalle: "Mejoramiento de barrios · argentina.gob.ar/habitat/promeba" },
+    { nombre: "Subsidio Habitacional 690", detalle: "Para familias en riesgo Â· buenosaires.gob.ar" },
+    { nombre: "PROMEBA", detalle: "Mejoramiento de barrios Â· argentina.gob.ar/habitat/promeba" },
   ],
   ingresos: [
-    { nombre: "ANSES", detalle: "AUH y prestaciones · anses.gob.ar · Tel: 130" },
-    { nombre: "Portal Empleo", detalle: "Oportunidades laborales · portalempleo.gob.ar" },
+    { nombre: "ANSES", detalle: "AUH y prestaciones Â· anses.gob.ar Â· Tel: 130" },
+    { nombre: "Portal Empleo", detalle: "Oportunidades laborales Â· portalempleo.gob.ar" },
   ],
   red: [
-    { nombre: "Centros Culturales Barriales", detalle: "Actividades gratuitas · buenosaires.gob.ar/cultura" },
+    { nombre: "Centros Culturales Barriales", detalle: "Actividades gratuitas Â· buenosaires.gob.ar/cultura" },
     { nombre: "Puntos de Cultura", detalle: "argentina.gob.ar/cultura" },
   ],
 };
 
 const DIM_NOMBRES: Record<string, string> = {
   empleo: "Empleo",
-  educacion: "Educación",
+  educacion: "EducaciÃ³n",
   salud: "Salud",
   vivienda: "Vivienda",
   ingresos: "Ingresos",
-  red: "Red / Vínculos",
+  red: "Red / VÃ­nculos",
 };
 
 function generarMensajeWhatsApp(plan: PlanItem[]): string {
@@ -48,62 +48,62 @@ function generarMensajeWhatsApp(plan: PlanItem[]): string {
   const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
   const nombre = context.nombre ? context.nombre : "";
 
-  // Áreas prioritarias (máx 2 rojas, luego amarillas)
+  // Ãreas prioritarias (mÃ¡x 2 rojas, luego amarillas)
   const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
   const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
 
-  // Convertir áreas a texto natural
+  // Convertir Ã¡reas a texto natural
   const areasTexto = areas.map(p => p.dimensionName.toLowerCase()).join(" y ");
 
   // Mensaje inicial personalizado
-  let msg = `Hola${nombre ? ` ${nombre}` : ""}, ¿cómo estás? 👋 Soy Korai.\n\n`;
-  msg += `Vimos tu diagnóstico y detectamos que hoy podrías necesitar apoyo en *${areasTexto}*.\n\n`;
-  msg += `Te vamos a acompañar y acercarte oportunidades.\n\n`;
+  let msg = `Hola${nombre ? ` ${nombre}` : ""}, Â¿cÃ³mo estÃ¡s? ðŸ‘‹ Soy Korai.\n\n`;
+  msg += `Vimos tu diagnÃ³stico y detectamos que hoy podrÃ­as necesitar apoyo en *${areasTexto}*.\n\n`;
+  msg += `Te vamos a acompaÃ±ar y acercarte oportunidades.\n\n`;
 
-  // Recursos personalizados según profundización
-  msg += `📋 *Opciones concretas para vos:*\n\n`;
+  // Recursos personalizados segÃºn profundizaciÃ³n
+  msg += `ðŸ“‹ *Opciones concretas para vos:*\n\n`;
 
   areas.forEach(p => {
     msg += `${p.emoji} *${p.dimensionName}*\n`;
 
-    // Personalización según respuestas de profundización
+    // PersonalizaciÃ³n segÃºn respuestas de profundizaciÃ³n
     if (p.dimensionId === "empleo") {
       if (profundizacion.emp_disponibilidad && profundizacion.emp_disponibilidad !== "no") {
-        msg += `👉 Sacá turno en el CIL para hacer tu CV: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
-        msg += `👉 Registrate en TrabajoBA: trabajoba.buenosaires.gob.ar\n`;
+        msg += `ðŸ‘‰ SacÃ¡ turno en el CIL para hacer tu CV: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
+        msg += `ðŸ‘‰ Registrate en TrabajoBA: trabajoba.buenosaires.gob.ar\n`;
       } else {
-        msg += `👉 Cursos gratuitos de formación: buenosaires.gob.ar/educacion/formacion-profesional\n`;
+        msg += `ðŸ‘‰ Cursos gratuitos de formaciÃ³n: buenosaires.gob.ar/educacion/formacion-profesional\n`;
       }
     }
     if (p.dimensionId === "salud") {
-      msg += `👉 Centro de salud gratuito: 0800-222-5462\n`;
+      msg += `ðŸ‘‰ Centro de salud gratuito: 0800-222-5462\n`;
       if (profundizacion.sal_cobertura === "no") {
-        msg += `👉 Programa SUMAR (sin obra social): argentina.gob.ar/salud/sumar\n`;
+        msg += `ðŸ‘‰ Programa SUMAR (sin obra social): argentina.gob.ar/salud/sumar\n`;
       }
     }
     if (p.dimensionId === "vivienda") {
-      msg += `👉 Reclamos de servicios: Llamá al 147\n`;
+      msg += `ðŸ‘‰ Reclamos de servicios: LlamÃ¡ al 147\n`;
       if (profundizacion.viv_riesgo === "si") {
-        msg += `👉 Asistencia habitacional urgente: 0800-333-3190\n`;
+        msg += `ðŸ‘‰ Asistencia habitacional urgente: 0800-333-3190\n`;
       }
     }
     if (p.dimensionId === "prevision" || p.dimensionId === "ingresos") {
-      msg += `👉 ANSES — Turno online: anses.gob.ar/turnos · Tel: 130\n`;
+      msg += `ðŸ‘‰ ANSES â€” Turno online: anses.gob.ar/turnos Â· Tel: 130\n`;
     }
     if (p.dimensionId === "educacion") {
       if (profundizacion.edu_secundario === "no") {
-        msg += `👉 Plan FinEs (secundario gratis): argentina.gob.ar/educacion/fines\n`;
+        msg += `ðŸ‘‰ Plan FinEs (secundario gratis): argentina.gob.ar/educacion/fines\n`;
       } else {
-        msg += `👉 Cursos gratuitos por barrio: buenosaires.gob.ar/educacion/formacion-profesional\n`;
+        msg += `ðŸ‘‰ Cursos gratuitos por barrio: buenosaires.gob.ar/educacion/formacion-profesional\n`;
       }
     }
     if (p.dimensionId === "red") {
-      msg += `👉 Centros culturales barriales: buenosaires.gob.ar/cultura/centros-culturales\n`;
+      msg += `ðŸ‘‰ Centros culturales barriales: buenosaires.gob.ar/cultura/centros-culturales\n`;
     }
     msg += "\n";
   });
 
-  msg += `---\n🌱 korai-full.vercel.app`;
+  msg += `---\nðŸŒ± korai-full.vercel.app`;
   return msg;
 }
 
@@ -131,30 +131,16 @@ export default function Prioridades() {
     const selloRaw = localStorage.getItem("korai_user_sello_v1");
     if (selloRaw) setSello(JSON.parse(selloRaw));
 
-    // Mostrar banner de WhatsApp después de 1.5 segundos
+    // Mostrar banner de WhatsApp despuÃ©s de 1.5 segundos
     const timer = setTimeout(() => setShowWhatsAppBanner(true), 1500);
     return () => clearTimeout(timer);
   }, []);
 
   const handleWhatsApp = () => {
-    const mensaje = generarMensajeWhatsApp(plan);
-    const encoded = encodeURIComponent(mensaje);
-
-    // Leer teléfono del contexto
-    const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-    const telefono = context.telefono?.replace(/\D/g, ""); // solo dígitos
-
-    let url: string;
-    if (telefono && telefono.length >= 8) {
-      // Si tiene código de país (empieza con 54 para Argentina o con +)
-      const numero = telefono.startsWith("54") ? telefono : `54${telefono}`;
-      url = `https://wa.me/${numero}?text=${encoded}`;
-    } else {
-      // Sin número → abre WhatsApp para que el usuario elija
-      url = `https://wa.me/?text=${encoded}`;
-    }
-
-    window.open(url, "_blank");
+    const dniHash = localStorage.getItem("korai_user_dni_hash_v1") || "";
+    const msg = dniHash ? `plan:${dniHash}` : "Hola, quiero mi plan Korai";
+    const encoded = encodeURIComponent(msg);
+    window.open(`https://wa.me/5491161210313?text=${encoded}`, "_blank");
   };
 
   const toggleExpanded = (dimId: string) => {
@@ -174,8 +160,8 @@ export default function Prioridades() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 space-y-4 bg-[#F4F0FF]">
         <AlertTriangle className="w-12 h-12 text-yellow-700" />
-        <h2 className="text-xl font-bold text-center" data-testid="text-no-prioridades">Necesitás completar el diagnóstico primero</h2>
-        <p className="text-[#6B5FA0] text-center text-sm">Completá la encuesta para ver tu plan personalizado.</p>
+        <h2 className="text-xl font-bold text-center" data-testid="text-no-prioridades">NecesitÃ¡s completar el diagnÃ³stico primero</h2>
+        <p className="text-[#6B5FA0] text-center text-sm">CompletÃ¡ la encuesta para ver tu plan personalizado.</p>
         <Button onClick={() => setLocation("/")} data-testid="button-go-home">
           Ir al Inicio
         </Button>
@@ -197,7 +183,7 @@ export default function Prioridades() {
           </div>
           <div>
             <h1 className="text-2xl font-black text-[#1E1040]" data-testid="text-prioridades-title">TU PLAN</h1>
-            <p className="text-xs text-[#6B5FA0]">Qué podés hacer esta semana y tu camino para este año</p>
+            <p className="text-xs text-[#6B5FA0]">QuÃ© podÃ©s hacer esta semana y tu camino para este aÃ±o</p>
           </div>
         </div>
       </div>
@@ -231,7 +217,7 @@ export default function Prioridades() {
               <MessageCircle className="w-5 h-5 text-[#25D366]" />
             </div>
             <div>
-              <div className="font-bold text-sm text-[#1E1040]">Recibí tu plan por WhatsApp</div>
+              <div className="font-bold text-sm text-[#1E1040]">RecibÃ­ tu plan por WhatsApp</div>
               <div className="text-xs text-[#6B5FA0]">Con los recursos y programas disponibles para vos en CABA</div>
             </div>
           </div>
@@ -285,8 +271,8 @@ export default function Prioridades() {
                 {/* Esta semana */}
                 <div className="p-4 rounded-xl bg-white border-2 border-[#5B21B6]/20 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-base">📌</span>
-                    <div className="text-xs font-black uppercase text-[#5B21B6] tracking-wider">Qué podés hacer esta semana</div>
+                    <span className="text-base">ðŸ“Œ</span>
+                    <div className="text-xs font-black uppercase text-[#5B21B6] tracking-wider">QuÃ© podÃ©s hacer esta semana</div>
                   </div>
                   <div className="space-y-2 pt-1">
                     {p.accionesCorto.slice(0, 2).map((a, ai) => (
@@ -302,8 +288,8 @@ export default function Prioridades() {
                 {p.recursos.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-base">🔗</span>
-                      <div className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Dónde ir o a quién llamar</div>
+                      <span className="text-base">ðŸ”—</span>
+                      <div className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">DÃ³nde ir o a quiÃ©n llamar</div>
                     </div>
                     <div className="space-y-2">
                       {p.recursos.slice(0, 2).map((r, ri) => (
@@ -316,13 +302,13 @@ export default function Prioridades() {
                                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5B21B6] bg-[#EDE9FE] px-3 py-1.5 rounded-lg hover:bg-[#DDD6FE] transition-colors"
                                 data-testid={`link-recurso-${p.dimensionId}-${ri}`}>
                                 <ExternalLink className="w-3 h-3" />
-                                {r.accion || "Ver más"}
+                                {r.accion || "Ver mÃ¡s"}
                               </a>
                             )}
                             {r.telefono && (
                               <a href={`tel:${r.telefono}`}
                                 className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
-                                📞 Llamar al {r.telefono}
+                                ðŸ“ž Llamar al {r.telefono}
                               </a>
                             )}
                           </div>
@@ -338,24 +324,24 @@ export default function Prioridades() {
                   data-testid={`button-expand-${p.dimensionId}`}
                 >
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                  {isExpanded ? "Ocultar el camino anual" : "📅 Ver el camino para este año"}
+                  {isExpanded ? "Ocultar el camino anual" : "ðŸ“… Ver el camino para este aÃ±o"}
                 </button>
               </div>
 
               {isExpanded && (
                 <div className="px-5 pb-5 space-y-3 border-t border-[#EDE9FE] pt-4 bg-[#FAF8FF]">
-                  <div className="text-xs font-black text-[#6B5FA0] uppercase tracking-wider mb-3">Tu camino para los próximos meses</div>
+                  <div className="text-xs font-black text-[#6B5FA0] uppercase tracking-wider mb-3">Tu camino para los prÃ³ximos meses</div>
                   <div className="p-3 rounded-xl bg-white border border-[#DDD6FE]">
                     <div className="flex items-center gap-2 mb-1">
-                      <span>📅</span>
+                      <span>ðŸ“…</span>
                       <div className="text-[10px] font-black uppercase text-yellow-700 tracking-wider">Este mes</div>
                     </div>
                     <p className="text-sm text-[#1E1040]">{p.metaCorto}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-white border border-[#DDD6FE]">
                     <div className="flex items-center gap-2 mb-1">
-                      <span>🎯</span>
-                      <div className="text-[10px] font-black uppercase text-[#5B21B6] tracking-wider">Dónde querés estar en un año</div>
+                      <span>ðŸŽ¯</span>
+                      <div className="text-[10px] font-black uppercase text-[#5B21B6] tracking-wider">DÃ³nde querÃ©s estar en un aÃ±o</div>
                     </div>
                     <p className="text-sm text-[#1E1040]">{p.metaMediano}</p>
                   </div>
@@ -390,7 +376,7 @@ export default function Prioridades() {
           onClick={() => setLocation("/survey")}
           className="flex-1 h-11 border-[#DDD6FE] bg-white/80"
         >
-          Ver mi diagnóstico
+          Ver mi diagnÃ³stico
         </Button>
         <Button
           variant="outline"
@@ -411,3 +397,4 @@ export default function Prioridades() {
     </div>
   );
 }
+
