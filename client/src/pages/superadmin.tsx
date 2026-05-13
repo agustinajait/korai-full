@@ -717,6 +717,24 @@ export default function Superadmin() {
           </div>
         )}
 
+        
+        {showCaseList && (
+          <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden mb-4">
+            <div className="p-5 border-b border-white/10">
+              <h3 className="font-black text-lg mb-3">Usuarios registrados</h3>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none" />
+            </div>
+            <div className="divide-y divide-white/5 max-h-96 overflow-y-auto">
+              {filtered.map((r, i) => { const nombre = getNombrePersona(r); const telefono = getTelefono(r); const dni = getDni(r); const barrio = r.territorio?.barrio || "Sin barrio"; return (
+                <div key={r.id || i} className="flex items-center gap-3 px-5 py-3">
+                  <div className="flex-1 min-w-0"><div className="font-bold text-sm text-white truncate">{nombre}</div><div className="text-xs text-white/40">{barrio}{dni ? " · DNI: " + dni : ""}</div></div>
+                  {telefono && (<button onClick={() => window.open("https://wa.me/549" + telefono.replace(/\D/g,"") + "?text=" + encodeURIComponent("Hola " + nombre + "! Soy Korai. Tu plan esta en app.korai.lat"), "_blank")} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg font-bold">WhatsApp</button>)}
+                </div>
+              );})}
+            </div>
+          </div>
+        )}
+
         {/* Filtro por barrio */}
         <div className="flex items-center gap-3 flex-wrap">
           <MapPin className="w-4 h-4 text-primary" />
