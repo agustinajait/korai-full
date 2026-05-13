@@ -204,9 +204,9 @@ export default function Superadmin() {
                 const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
                 const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
                 const areasTexto = areas.map(p => p.dimensionName).join(" y ");
-                let msg = "Hola " + nombre + "! Soy Korai, tu asistente de bienestar.\n\nDetectamos que podrias necesitar apoyo en " + areasTexto + ".\n\nTu plan:\n\n";
+                let msg = "app.korai.lat\n\nHola " + nombre + "! Soy Korai, tu asistente de bienestar.\nDetectamos que podrias necesitar apoyo en " + areasTexto + ".\n\nTu plan:\n\n";
                 areas.forEach(p => { msg += p.emoji + " " + p.dimensionName + "\n"; p.accionesCorto.slice(0,2).forEach((a,i) => { msg += (i+1) + ". " + a + "\n"; }); const rec = p.recursos?.[0]; if (rec?.url) msg += "Recurso: " + rec.nombre + ": " + rec.url + "\n"; msg += "\n"; });
-                msg = "Korai - app.korai.lat\n\n" + msg + "\nEn 7 dias te vamos a contactar.";
+                msg += "\nEn 7 dias te vamos a contactar.";
                 return (
                   <div key={r.id || i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/5 transition-colors">
                     <div className="flex-1 min-w-0">
