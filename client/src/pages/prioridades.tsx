@@ -145,7 +145,13 @@ export default function Prioridades() {
     const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
     const areasTexto = areas.map((p: any) => p.dimensionName).join(" y ");
     let msg = `Hola Korai! Termine mi diagnostico.${nombre}\nDNI: ${dni}\n\nMi plan prioriza: ${areasTexto}\n\n`;
-    areas.forEach((p: any) => { msg += `${p.emoji} ${p.dimensionName}: ${p.accionesCorto[0]}\n`; });
+    areas.forEach((p: any) => {
+      msg += `${p.emoji} ${p.dimensionName}: ${p.accionesCorto[0]}\n`;
+      const r = p.recursos?.[0];
+      if (r?.url) msg += `🔗 ${r.nombre}: ${r.url}\n`;
+      else if (r?.telefono) msg += `📞 ${r.nombre}: ${r.telefono}\n`;
+      msg += "\n";
+    });
     const encoded = encodeURIComponent(msg);
     window.open(`https://wa.me/5491161210313?text=${encoded}`, "_blank");
   };
@@ -404,6 +410,8 @@ export default function Prioridades() {
     </div>
   );
 }
+
+
 
 
 
