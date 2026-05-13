@@ -140,7 +140,12 @@ export default function Prioridades() {
     const dniHash = localStorage.getItem("korai_user_dni_hash_v1") || "";
     const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
     const nombre = context.nombre ? ` Mi nombre es ${context.nombre}.` : "";
-    const msg = `Hola Korai! Termine mi diagnostico.${nombre} Me gustaria recibir mi plan personalizado.`;
+    const dni = context.dni || "";
+    const criticas = plan.filter((p: any) => p.nivelColor === "rojo").slice(0, 2);
+    const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
+    const areasTexto = areas.map((p: any) => p.dimensionName).join(" y ");
+    let msg = `Hola Korai! Termine mi diagnostico.${nombre}\nDNI: ${dni}\n\nMi plan prioriza: ${areasTexto}\n\n`;
+    areas.forEach((p: any) => { msg += `${p.emoji} ${p.dimensionName}: ${p.accionesCorto[0]}\n`; });
     const encoded = encodeURIComponent(msg);
     window.open(`https://wa.me/5491161210313?text=${encoded}`, "_blank");
   };
@@ -399,5 +404,6 @@ export default function Prioridades() {
     </div>
   );
 }
+
 
 
