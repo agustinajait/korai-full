@@ -444,6 +444,10 @@ export default function Superadmin() {
   const [selectedCase, setSelectedCase] = useState<any | null>(null);
   const [showCaseList, setShowCaseList] = useState(false);
   const [showTrazabilidad, setShowTrazabilidad] = useState(false);
+  const [showCaseList, setShowCaseList] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showCaseList, setShowCaseList] = useState(false);
+  const [search, setSearch] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -597,10 +601,10 @@ export default function Superadmin() {
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
-              onClick={() => setShowCaseList(!showCaseList)}
+              onClick={() => setShowCaseList(s => !s)}
               className="text-[#EEF2FF] hover:bg-white/10 text-sm gap-2"
             >
-              <Users className="w-4 h-4" /> {showCaseList ? "Ver resumen" : "Ver casos individuales"}
+              <Users className="w-4 h-4" /> {showCaseList ? "Ver resumen" : showCaseList ? "Ver resumen" : "Ver usuarios"}
             </Button>
             <Link href="/">
               <Button variant="ghost" className="text-[#EEF2FF] hover:bg-white/10 text-sm">Diagnóstico ciudadano</Button>
