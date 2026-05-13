@@ -15,16 +15,21 @@ export default function AdminLogin() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password.trim()) {
-      setError("Ingresá la contraseña");
+      setError("Ingresa la contrasena");
       return;
     }
     setError("");
     setLoading(true);
     if (password === "korai2025") {
       localStorage.setItem("korai_admin_auth", "true");
+      localStorage.setItem("korai_admin_role", "cliente");
       setLocation("/dashboard");
+    } else if (password === "Camilo2016#") {
+      localStorage.setItem("korai_admin_auth", "true");
+      localStorage.setItem("korai_admin_role", "superadmin");
+      setLocation("/superadmin");
     } else {
-      setError("Contraseña incorrecta");
+      setError("Contrasena incorrecta");
     }
     setLoading(false);
   };
@@ -52,7 +57,7 @@ export default function AdminLogin() {
             <ShieldCheck className="w-8 h-8 text-primary" />
           </motion.div>
           <h1 className="text-2xl font-black tracking-tight">Panel Admin</h1>
-          <p className="text-sm text-muted-foreground mt-1">Ingresá la contraseña para acceder al dashboard</p>
+          <p className="text-sm text-muted-foreground mt-1">Ingresa la contrasena para acceder al dashboard</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -63,7 +68,7 @@ export default function AdminLogin() {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => { setPassword(e.target.value); setError(""); }}
-              placeholder="Contraseña de admin"
+              placeholder="Contrasena de admin"
               className="w-full h-12 pl-11 pr-12 rounded-xl bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all placeholder:text-muted-foreground"
               autoFocus
             />
