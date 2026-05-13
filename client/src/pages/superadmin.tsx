@@ -216,10 +216,9 @@ export default function Superadmin() {
                     <div className="flex items-center gap-1">{scores.map(s => <div key={s.dimensionId} className={`w-2.5 h-2.5 rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} />)}</div>
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${rojas >= 2 ? "bg-red-500/20 text-red-400 border-red-500/30" : rojas === 1 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-green-500/20 text-green-400 border-green-500/30"}`}>{rojas} criticas</span>
                     {telefono && (
-                      <button onClick={() => window.open("https://wa.me/549" + telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(msg), "_blank")} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1">
-                        <MessageCircle className="w-3 h-3" /> WA
-                      </button>
+                      <button onClick={() => window.open("https://wa.me/549" + telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(msg), "_blank")} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WA</button>
                     )}
+                    <button onClick={() => { navigator.clipboard.writeText(msg); alert("Plan copiado!"); }} className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-3 py-1.5 rounded-lg font-bold">Copiar</button>
                     {confirmDeleteId === r.id ? (
                       <div className="flex gap-1">
                         <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} className="text-[10px] text-white bg-red-500 px-2 py-1 rounded-lg font-bold">{deletingId === r.id ? "..." : "Confirmar"}</button>
