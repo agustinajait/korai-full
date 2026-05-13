@@ -415,6 +415,25 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
 }
 
 // ─── Dashboard principal ─────────────────────────────────────────────────────
+
+function getNombrePersona(r) {
+  try {
+    const raw = r.perfil_contextual;
+    const p = typeof raw === 'string' ? JSON.parse(raw) : (typeof raw === 'object' && raw !== null ? raw : {});
+    const nombre = p?.nombre || p?.demographics?.nombre || '';
+    const apellido = p?.apellido || p?.demographics?.apellido || '';
+    if (nombre || apellido) return (nombre + ' ' + apellido).trim();
+  } catch {}
+  if (r.dni_real) return 'DNI ' + r.dni_real;
+  return 'Caso #' + (r.id ? r.id.slice(0, 6) : '-');
+}
+function getDni(r) {
+  try { const raw = r.perfil_contextual; const p = typeof raw === 'string' ? JSON.parse(raw) : (raw || {}); return p?.dni || r.dni_real || ''; } catch { return r.dni_real || ''; }
+}
+function getTelefono(r) {
+  try { const raw = r.perfil_contextual; const p = typeof raw === 'string' ? JSON.parse(raw) : (raw || {}); return p?.telefono || ''; } catch { return ''; }
+}
+
 export default function Superadmin() {
   const [, setLocation] = useLocation();
   const [responses, setResponses] = useState<any[]>([]);
