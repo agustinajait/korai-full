@@ -13,6 +13,7 @@ import Prioridades from "@/pages/prioridades";
 import Metas from "@/pages/metas";
 import Confirmar from "@/pages/confirmar";
 import Privacidad from "@/pages/privacidad";
+import Superadmin from "@/pages/superadmin";
 import { Loader2 } from "lucide-react";
 
 function ProtectedDashboard() {
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/dashboard" component={ProtectedDashboard} />
       <Route path="/confirmar" component={Confirmar} />
       <Route path="/privacidad" component={Privacidad} />
+      <Route path="/superadmin" component={Superadmin} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -56,5 +58,7 @@ function App() {
 }
 
 export default App;
+
+
 
 
