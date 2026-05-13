@@ -145,6 +145,7 @@ export default function Prioridades() {
     const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
     const areasTexto = areas.map((p: any) => p.dimensionName).join(" y ");
     let msg = `Hola Korai! Termine mi diagnostico.${nombre}\nDNI: ${dni}\n\nMi plan prioriza: ${areasTexto}\n\n`;
+    msg += "Mientras tanto podes ver tu plan completo en: https://app.korai.lat\n\nEn 7 dias te volvemos a contactar para ver como vas. 💪\n\n";
     areas.forEach((p: any) => {
       msg += `${p.emoji} ${p.dimensionName}: ${p.accionesCorto[0]}\n`;
       const r = p.recursos?.[0];
@@ -410,6 +411,7 @@ export default function Prioridades() {
     </div>
   );
 }
+
 
 
 
