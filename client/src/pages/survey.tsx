@@ -436,7 +436,7 @@ export default function Survey() {
       localStorage.setItem("korai_profundizacion", JSON.stringify(profundizacion));
       localStorage.removeItem("korai_user_plan_v1");
 
-      const plan = generatePlanDesdeScores(answers);
+      const plan = generatePlanDesdeScores(answers, 5, situacionLaboral);
       localStorage.setItem("korai_user_plan_v1", JSON.stringify(plan));
 
       queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
@@ -453,7 +453,7 @@ export default function Survey() {
 
   // Después del comentario: detectar áreas rojas y activar profundización
   const handleAfterComment = () => {
-    const scores = calcularScores(answers);
+    const scores = calcularScores(answers, situacionLaboral);
     const prioritarias = getPrioridadesBloqueantes(scores);
     if (prioritarias.length > 0) {
       setProfundizacionDims(prioritarias.map(p => p.dimensionId));
