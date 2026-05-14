@@ -490,7 +490,7 @@ export default function Survey() {
     const ny = 60 + 42 * Math.sin(rad);
 
     return (
-      <div style={{ minHeight: "100vh", maxHeight: "100vh", overflow: "hidden", background: "#f0eef8", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" }}>
+      <div style={{ minHeight: "100vh", maxHeight: "100vh", overflow: "hidden", background: "#f0eef8", display: "flex", flexDirection: "column", fontFamily: "Montserrat, system-ui, sans-serif" }}>
         {/* Header */}
         <div style={{ background: "#5c40c0", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <h1 style={{ color: "white", fontWeight: 900, fontSize: "18px", margin: 0 }}>Mi diagnóstico</h1>

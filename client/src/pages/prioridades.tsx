@@ -90,7 +90,7 @@ export default function Prioridades() {
 
   if (plan.length === 0) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", background: "#f0eef8", fontFamily: "system-ui, sans-serif" }}>
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", background: "#f0eef8", fontFamily: "Montserrat, system-ui, sans-serif" }}>
         <AlertTriangle style={{ width: "48px", height: "48px", color: "#f59e0b", marginBottom: "16px" }} />
         <h2 style={{ textAlign: "center", color: "#1e1040", fontWeight: 800, fontSize: "18px", marginBottom: "8px" }}>Necesitas completar el diagnostico primero</h2>
         <p style={{ color: "#6b5fa0", textAlign: "center", fontSize: "14px", marginBottom: "20px" }}>Completa la encuesta para ver tu plan personalizado.</p>
@@ -114,7 +114,7 @@ export default function Prioridades() {
   const recursos = RECURSOS_EXTRA[item.dimensionId] || [];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f0eef8", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#f0eef8", display: "flex", flexDirection: "column", fontFamily: "Montserrat, system-ui, sans-serif" }}>
       {/* Header */}
       <div style={{ background: "#5c40c0", padding: "14px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
         <h1 style={{ color: "white", fontWeight: 900, fontSize: "17px", margin: 0 }}>Mi plan de accion</h1>
