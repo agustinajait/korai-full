@@ -232,7 +232,8 @@ export default function Prioridades() {
           <MessageCircle style={{ width: "20px", height: "20px" }} />
           Recibir info de {item.dimensionName} por WhatsApp
         </button>
-        <p style={{ textAlign: "center", fontSize: "11px", color: "#9b8ec4", margin: "0 0 16px" }}>Te mandamos cada paso directo a tu celular</p>
+        <p style={{ textAlign: "center", fontSize: "11px", color: "#9b8ec4", margin: "0 0 12px" }}>Te mandamos cada paso directo a tu celular</p>
+        <button onClick={() => setLocation("/survey")} style={{ width: "100%", height: "44px", borderRadius: "14px", border: "2px solid #5c40c0", background: "white", color: "#5c40c0", fontWeight: 700, fontSize: "14px", cursor: "pointer", marginBottom: "16px" }}>Ver mi diagnostico completo</button>
 
       </div>
     </div>
