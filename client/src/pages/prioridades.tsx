@@ -52,7 +52,9 @@ const MOTIVO_COLOR: Record<string, Record<string, string>> = {
 export default function Prioridades() {
   const [, setLocation] = useLocation();
   const [plan, setPlan] = useState<PlanItem[]>([]);
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const savedIdx = parseInt(localStorage.getItem("korai_plan_start_idx") || "0");
+  localStorage.removeItem("korai_plan_start_idx");
+  const [currentIdx, setCurrentIdx] = useState(savedIdx);
 
   useEffect(() => {
     const cached = localStorage.getItem("korai_user_plan_v1");

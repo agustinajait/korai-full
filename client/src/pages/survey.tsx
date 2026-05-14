@@ -548,7 +548,7 @@ export default function Survey() {
                 const badgeBg = color === "rojo" ? "#ff6b6b" : color === "amarillo" ? "#ffd166" : "#34d399";
                 const label = color === "rojo" ? "urgente" : color === "amarillo" ? "atención" : "bien";
                 return (
-                  <div key={d.id} style={{ background: "white", borderRadius: "16px", border: `2px solid ${borderColor}`, padding: "12px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+                  <div key={d.id} onClick={() => { const plan = JSON.parse(localStorage.getItem("korai_user_plan_v1") || "[]"); const idx = plan.findIndex(p => p.dimensionId === d.id); if (idx >= 0) { localStorage.setItem("korai_plan_start_idx", idx.toString()); setLocation("/prioridades"); } }} style={{ background: "white", borderRadius: "16px", border: `2px solid ${borderColor}`, padding: "12px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", cursor: "pointer", transition: "transform 0.1s", activeOpacity: 0.8 }}>
                     <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: circleColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{d.emoji}</div>
                     <p style={{ margin: 0, fontSize: "11px", fontWeight: 700, color: "#1e1040", textAlign: "center", lineHeight: "1.2" }}>{d.name}</p>
                     <span style={{ background: badgeBg, color: "white", fontSize: "10px", fontWeight: 800, padding: "2px 8px", borderRadius: "20px" }}>{label}</span>
