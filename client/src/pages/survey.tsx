@@ -479,6 +479,115 @@ export default function Survey() {
   }
 
   if (showResultsScreen && results) {
+    const urgentes = INSTRUMENT.dimensions.filter(d => results.perDim[d.id]?.color === "rojo").length;
+    const atencion = INSTRUMENT.dimensions.filter(d => results.perDim[d.id]?.color === "amarillo").length;
+    const bien = INSTRUMENT.dimensions.filter(d => results.perDim[d.id]?.color === "verde").length;
+    const total = INSTRUMENT.dimensions.length;
+    const puntaje = Math.round(((bien * 2 + atencion) / (total * 2)) * 100);
+    const needleAngle = -90 + (puntaje / 100) * 180;
+    const rad = (needleAngle * Math.PI) / 180;
+    const nx = 60 + 42 * Math.cos(rad);
+    const ny = 60 + 42 * Math.sin(rad);
+
+    return (
+      <div style={{ minHeight: "100vh", maxHeight: "100vh", overflow: "hidden", background: "#f0eef8", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" }}>
+        {/* Header */}
+        <div style={{ background: "#5c40c0", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <h1 style={{ color: "white", fontWeight: 900, fontSize: "18px", margin: 0 }}>Mi diagnóstico</h1>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "14px", maxWidth: "420px", margin: "0 auto", width: "100%" }}>
+
+          {diagnosticType === "follow_up_early" && (
+            <div style={{ background: "#fffbeb", border: "1px solid #fcd34d", borderRadius: "14px", padding: "10px 14px", display: "flex", gap: "8px", alignItems: "flex-start" }}>
+              <span style={{ fontSize: "16px" }}>🔄</span>
+              <p style={{ margin: 0, fontSize: "12px", color: "#92400e", fontWeight: 700 }}>Ya hiciste un diagnóstico recientemente. Este se suma a tu historial.</p>
+            </div>
+          )}
+
+          {/* Gauge card */}
+          <div style={{ background: "white", borderRadius: "20px", padding: "18px", boxShadow: "0 2px 12px rgba(92,64,192,0.08)", border: "1px solid #e8e4f5" }}>
+            <p style={{ textAlign: "center", fontWeight: 800, fontSize: "15px", color: "#1e1040", margin: "0 0 12px" }}>Resumen de tu bienestar</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <svg viewBox="0 0 120 70" style={{ width: "130px", height: "80px" }}>
+                  <path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#ff6b6b" strokeWidth="12" strokeLinecap="round" />
+                  <path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#ffd166" strokeWidth="12" strokeLinecap="round" strokeDasharray="52 105" />
+                  <path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#34d399" strokeWidth="12" strokeLinecap="round" strokeDasharray="35 105" />
+                  <line x1="60" y1="60" x2={nx} y2={ny} stroke="#5c40c0" strokeWidth="3" strokeLinecap="round" />
+                  <circle cx="60" cy="60" r="5" fill="#5c40c0" />
+                </svg>
+                <p style={{ margin: 0, fontSize: "11px", color: "#7c5cbb", fontWeight: 700, marginTop: "-4px" }}>Estás en camino</p>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#ff6b6b", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 900, fontSize: "14px", flexShrink: 0 }}>{urgentes}</div>
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#ef4444" }}>Áreas urgentes</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#ffd166", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 900, fontSize: "14px", flexShrink: 0 }}>{atencion}</div>
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#d97706" }}>Requieren atención</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#34d399", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 900, fontSize: "14px", flexShrink: 0 }}>{bien}</div>
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#059669" }}>Vas bien</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Areas grid */}
+          <div>
+            <p style={{ fontWeight: 800, fontSize: "15px", color: "#1e1040", margin: "0 0 10px" }}>Tus áreas</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
+              {INSTRUMENT.dimensions.map(d => {
+                const s = results.perDim[d.id];
+                const color = s?.color || "verde";
+                const circleColor = color === "rojo" ? "#ff6b6b" : color === "amarillo" ? "#ffd166" : "#34d399";
+                const borderColor = color === "rojo" ? "#ff6b6b" : color === "amarillo" ? "#ffd166" : "#34d399";
+                const badgeBg = color === "rojo" ? "#ff6b6b" : color === "amarillo" ? "#ffd166" : "#34d399";
+                const label = color === "rojo" ? "urgente" : color === "amarillo" ? "atención" : "bien";
+                return (
+                  <div key={d.id} style={{ background: "white", borderRadius: "16px", border: `2px solid ${borderColor}`, padding: "12px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: circleColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{d.emoji}</div>
+                    <p style={{ margin: 0, fontSize: "11px", fontWeight: 700, color: "#1e1040", textAlign: "center", lineHeight: "1.2" }}>{d.name}</p>
+                    <span style={{ background: badgeBg, color: "white", fontSize: "10px", fontWeight: 800, padding: "2px 8px", borderRadius: "20px" }}>{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div
+            onClick={() => setLocation("/prioridades")}
+            data-testid="button-go-prioridades"
+            style={{ background: "#5c40c0", borderRadius: "16px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer" }}
+          >
+            <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Target className="w-5 h-5 text-white" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, color: "white", fontWeight: 900, fontSize: "15px" }}>Ver mi plan de acción</p>
+              <p style={{ margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "11px" }}>No estás solo/a — hay recursos para vos</p>
+            </div>
+            <span style={{ color: "white", fontSize: "22px", fontWeight: 300 }}>›</span>
+          </div>
+
+          <button
+            onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
+            style={{ background: "none", border: "none", color: "#9b8ec4", fontSize: "12px", cursor: "pointer", padding: "4px" }}
+          >
+            Salir
+          </button>
+
+        </div>
+      </div>
+    );
+  }
+
+  // ─── pantalla anterior (reemplazada - NO BORRAR el bloque if original) ───
+  if (false && showResultsScreen && results) {
     return (
       <div className="min-h-screen pt-20 pb-10 px-4 max-w-6xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500 bg-[#F4F0FF]">
         <div className="flex flex-col md:flex-row gap-8">
