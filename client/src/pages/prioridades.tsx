@@ -1,118 +1,58 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Clock, AlertTriangle, CheckCircle2, ChevronRight, ChevronDown, ExternalLink, MessageCircle } from "lucide-react";
-import { generatePlanDesdeScores, type PlanItem, type Sello } from "@/lib/korai-logic";
+import { AlertTriangle, ExternalLink, MessageCircle } from "lucide-react";
+import { generatePlanDesdeScores, type PlanItem } from "@/lib/korai-logic";
 
-// Programas reales por dimensiÃƒÂ³n para el mensaje de WhatsApp
-const PROGRAMAS_WA: Record<string, { nombre: string; detalle: string }[]> = {
+const RECURSOS_EXTRA: Record<string, { nombre: string; descripcion: string; url?: string; telefono?: string; accion: string }[]> = {
   empleo: [
-    { nombre: "Portal Empleo", detalle: "portalempleo.gob.ar" },
-    { nombre: "Oportunai", detalle: "CreÃƒÂ¡ tu CV y video CV Ã‚Â· oportunai.com" },
-    { nombre: "Potenciar Trabajo", detalle: "argentina.gob.ar/desarrollosocial/potenciartrabajo" },
+    { nombre: "Centro de Integracion Laboral (CIL)", descripcion: "Saca turno para hacer tu CV y acceder a programas de empleo. Lleva DNI y CUIL.", url: "https://formulario-sigeci.buenosaires.gob.ar/InicioTramiteComun?idPrestacion=1422", accion: "Sacar turno online ahora" },
+    { nombre: "TrabajoBA - Portal de Empleo CABA", descripcion: "Registrate y accede a ofertas laborales en la Ciudad.", url: "https://trabajoba.buenosaires.gob.ar", accion: "Registrarme y buscar trabajo" },
   ],
   educacion: [
-    { nombre: "Plan FinEs", detalle: "TerminÃƒÂ¡ el secundario gratis Ã‚Â· argentina.gob.ar/educacion/fines" },
-    { nombre: "Becas Progresar", detalle: "Apoyo econÃƒÂ³mico Ã‚Â· argentina.gob.ar/educacion/progresar" },
+    { nombre: "Plan FinEs", descripcion: "Termina el secundario gratis. Hay sedes en tu barrio.", url: "https://www.argentina.gob.ar/educacion/fines", accion: "Ver sedes cercanas" },
+    { nombre: "Becas Progresar", descripcion: "Apoyo economico para seguir estudiando.", url: "https://www.argentina.gob.ar/educacion/progresar", accion: "Ver si califico" },
   ],
   salud: [
-    { nombre: "CAPS (Centro de Salud gratuito)", detalle: "0800-222-5462 Ã‚Â· buenosaires.gob.ar/salud/caps" },
-    { nombre: "Programa SUMAR", detalle: "Cobertura gratuita Ã‚Â· argentina.gob.ar/salud/sumar" },
+    { nombre: "CeSAC - Centro de Salud gratuito", descripcion: "Atencion medica gratuita cerca de tu casa.", url: "https://buenosaires.gob.ar/salud/centros-de-salud-y-hospitales", telefono: "0800-222-5462", accion: "Encontrar el mas cercano" },
+    { nombre: "Programa SUMAR", descripcion: "Cobertura de salud gratuita si no tenes obra social.", url: "https://www.argentina.gob.ar/salud/sumar", accion: "Inscribirme gratis" },
   ],
   vivienda: [
-    { nombre: "Subsidio Habitacional 690", detalle: "Para familias en riesgo Ã‚Â· buenosaires.gob.ar" },
-    { nombre: "PROMEBA", detalle: "Mejoramiento de barrios Ã‚Â· argentina.gob.ar/habitat/promeba" },
+    { nombre: "IVC - Instituto de Vivienda", descripcion: "Programas de mejora, alquiler y escrituracion social.", url: "https://buenosaires.gob.ar/habitat/programas-habitacionales", accion: "Ver programas disponibles" },
+    { nombre: "Centro de Gestion y Participacion", descripcion: "Orientacion social y tramites cerca de tu casa.", url: "https://buenosaires.gob.ar/cgp", accion: "Encontrar el mas cercano" },
   ],
   ingresos: [
-    { nombre: "ANSES", detalle: "AUH y prestaciones Ã‚Â· anses.gob.ar Ã‚Â· Tel: 130" },
-    { nombre: "Portal Empleo", detalle: "Oportunidades laborales Ã‚Â· portalempleo.gob.ar" },
+    { nombre: "ANSES - Turno online", descripcion: "AUH, jubilaciones, Potenciar Trabajo y mas. Saca turno sin salir de casa.", url: "https://turnos.anses.gob.ar", accion: "Sacar turno en ANSES" },
+    { nombre: "mi ANSES - Tramites online", descripcion: "Consulta y gestiona tus beneficios desde el celular.", url: "https://mi.anses.gob.ar", accion: "Ingresar a mi ANSES" },
   ],
   red: [
-    { nombre: "Centros Culturales Barriales", detalle: "Actividades gratuitas Ã‚Â· buenosaires.gob.ar/cultura" },
-    { nombre: "Puntos de Cultura", detalle: "argentina.gob.ar/cultura" },
+    { nombre: "Centros de Inclusion Social", descripcion: "Espacios de encuentro, talleres y actividades comunitarias gratuitas.", url: "https://buenosaires.gob.ar/desarrollohumanoyhabitat/centros-de-inclusion-social", accion: "Buscar centro cercano" },
+    { nombre: "Red de Apoyo Comunitario", descripcion: "Voluntarios y organizaciones que pueden acompanarte.", url: "https://buenosaires.gob.ar/cultura/centros-culturales", accion: "Conectar con la red" },
   ],
 };
 
-const DIM_NOMBRES: Record<string, string> = {
-  empleo: "Empleo",
-  educacion: "EducaciÃƒÂ³n",
-  salud: "Salud",
-  vivienda: "Vivienda",
-  ingresos: "Ingresos",
-  red: "Red / VÃƒÂ­nculos",
+const MOTIVO_COLOR: Record<string, Record<string, string>> = {
+  rojo: {
+    empleo: "Tu situacion laboral necesita atencion urgente. Hay oportunidades concretas que podrias estar perdiendo.",
+    educacion: "Tu nivel educativo puede estar limitando tus oportunidades. Hay programas gratuitos que pueden ayudarte.",
+    salud: "Tu situacion de salud necesita atencion urgente. Hay servicios gratuitos disponibles para vos.",
+    vivienda: "Tu situacion habitacional tiene aspectos que necesitan atencion urgente. Hay riesgos o inestabilidades que pueden afectar tu bienestar y el de tu familia.",
+    ingresos: "Tu situacion de prevision social y economica necesita atencion urgente. Puede que no estes accediendo a beneficios o protecciones a las que tenes derecho.",
+    red: "Tu red de vinculos y apoyo social es debil o inexistente. Tener personas o espacios de contencion es clave para el bienestar y para salir adelante.",
+  },
+  amarillo: {
+    empleo: "Tu situacion laboral tiene aspectos que requieren atencion. Hay oportunidades concretas que podes aprovechar para mejorar tu estabilidad en el empleo.",
+    educacion: "Hay aspectos de tu situacion educativa que pueden mejorar. Existen programas que pueden ayudarte a avanzar.",
+    salud: "Tu situacion de salud requiere atencion. Es importante que tomes medidas preventivas.",
+    vivienda: "Tu situacion habitacional tiene aspectos que requieren atencion. Hay programas que pueden ayudarte.",
+    ingresos: "Tu situacion economica requiere atencion. Hay beneficios disponibles que quizas no estas aprovechando.",
+    red: "Tu red de vinculos podria fortalecerse. Conectarte con tu comunidad puede mejorar mucho tu bienestar.",
+  },
 };
 
-function generarMensajeWhatsApp(plan: PlanItem[]): string {
-  const profundizacion = (() => { try { return JSON.parse(localStorage.getItem("korai_profundizacion") || "{}"); } catch { return {}; } })();
-  const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-  const nombre = context.nombre ? context.nombre : "";
-
-  // ÃƒÂreas prioritarias (mÃƒÂ¡x 2 rojas, luego amarillas)
-  const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
-  const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
-
-  // Convertir ÃƒÂ¡reas a texto natural
-  const areasTexto = areas.map(p => p.dimensionName.toLowerCase()).join(" y ");
-
-  // Mensaje inicial personalizado
-  let msg = `Hola${nombre ? ` ${nombre}` : ""}, Ã‚Â¿cÃƒÂ³mo estÃƒÂ¡s? Ã°Å¸â€˜â€¹ Soy Korai.\n\n`;
-  msg += `Vimos tu diagnÃƒÂ³stico y detectamos que hoy podrÃƒÂ­as necesitar apoyo en *${areasTexto}*.\n\n`;
-  msg += `Te vamos a acompaÃƒÂ±ar y acercarte oportunidades.\n\n`;
-
-  // Recursos personalizados segÃƒÂºn profundizaciÃƒÂ³n
-  msg += `Ã°Å¸â€œâ€¹ *Opciones concretas para vos:*\n\n`;
-
-  areas.forEach(p => {
-    msg += `${p.emoji} *${p.dimensionName}*\n`;
-
-    // PersonalizaciÃƒÂ³n segÃƒÂºn respuestas de profundizaciÃƒÂ³n
-    if (p.dimensionId === "empleo") {
-      if (profundizacion.emp_disponibilidad && profundizacion.emp_disponibilidad !== "no") {
-        msg += `Ã°Å¸â€˜â€° SacÃƒÂ¡ turno en el CIL para hacer tu CV: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
-        msg += `Ã°Å¸â€˜â€° Registrate en TrabajoBA: trabajoba.buenosaires.gob.ar\n`;
-      } else {
-        msg += `Ã°Å¸â€˜â€° Cursos gratuitos de formaciÃƒÂ³n: buenosaires.gob.ar/educacion/formacion-profesional\n`;
-      }
-    }
-    if (p.dimensionId === "salud") {
-      msg += `Ã°Å¸â€˜â€° Centro de salud gratuito: 0800-222-5462\n`;
-      if (profundizacion.sal_cobertura === "no") {
-        msg += `Ã°Å¸â€˜â€° Programa SUMAR (sin obra social): argentina.gob.ar/salud/sumar\n`;
-      }
-    }
-    if (p.dimensionId === "vivienda") {
-      msg += `Ã°Å¸â€˜â€° Reclamos de servicios: LlamÃƒÂ¡ al 147\n`;
-      if (profundizacion.viv_riesgo === "si") {
-        msg += `Ã°Å¸â€˜â€° Asistencia habitacional urgente: 0800-333-3190\n`;
-      }
-    }
-    if (p.dimensionId === "prevision" || p.dimensionId === "ingresos") {
-      msg += `Ã°Å¸â€˜â€° ANSES Ã¢â‚¬â€ Turno online: anses.gob.ar/turnos Ã‚Â· Tel: 130\n`;
-    }
-    if (p.dimensionId === "educacion") {
-      if (profundizacion.edu_secundario === "no") {
-        msg += `Ã°Å¸â€˜â€° Plan FinEs (secundario gratis): argentina.gob.ar/educacion/fines\n`;
-      } else {
-        msg += `Ã°Å¸â€˜â€° Cursos gratuitos por barrio: buenosaires.gob.ar/educacion/formacion-profesional\n`;
-      }
-    }
-    if (p.dimensionId === "red") {
-      msg += `Ã°Å¸â€˜â€° Centros culturales barriales: buenosaires.gob.ar/cultura/centros-culturales\n`;
-    }
-    msg += "\n";
-  });
-
-  msg += `---\nÃ°Å¸Å’Â± korai-full.vercel.app`;
-  return msg;
-}
-
 export default function Prioridades() {
-  const [_, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const [plan, setPlan] = useState<PlanItem[]>([]);
-  const [sello, setSello] = useState<Sello | null>(null);
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
-  const [showWhatsAppBanner, setShowWhatsAppBanner] = useState(false);
+  const [currentIdx, setCurrentIdx] = useState(0);
 
   useEffect(() => {
     const cached = localStorage.getItem("korai_user_plan_v1");
@@ -127,293 +67,174 @@ export default function Prioridades() {
         localStorage.setItem("korai_user_plan_v1", JSON.stringify(generated));
       }
     }
-
-    const selloRaw = localStorage.getItem("korai_user_sello_v1");
-    if (selloRaw) setSello(JSON.parse(selloRaw));
-
-    // Mostrar banner de WhatsApp despuÃƒÂ©s de 1.5 segundos
-    const timer = setTimeout(() => setShowWhatsAppBanner(true), 1500);
-    return () => clearTimeout(timer);
   }, []);
 
-  const handleWhatsApp = () => {
-    const dniHash = localStorage.getItem("korai_user_dni_hash_v1") || "";
+  const handleWhatsApp = (item?: PlanItem) => {
     const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
     const nombre = context.nombre ? ` Mi nombre es ${context.nombre}.` : "";
-    const dni = context.dni || "";
-    const criticas = plan.filter((p: any) => p.nivelColor === "rojo").slice(0, 2);
-    const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
-    const areasTexto = areas.map((p: any) => p.dimensionName).join(" y ");
-    let msg = `Hola Korai! Termine mi diagnostico.${nombre}\nDNI: ${dni}\n\nMi plan prioriza: ${areasTexto}\n\n`;
-    msg += "Mientras tanto podes ver tu plan completo en: https://app.korai.lat\n\nEn 7 dias te volvemos a contactar para ver como vas. 💪\n\n";
-    areas.forEach((p: any) => {
+    const dni = context.dni ? `\nDNI: ${context.dni}` : "";
+    const items = item ? [item] : plan.slice(0, 2);
+    const areaName = items.map(p => p.dimensionName).join(" y ");
+    let msg = `Hola Korai! Termine mi diagnostico.${nombre}${dni}\n\nMi plan prioriza: ${areaName}\n\n`;
+    items.forEach(p => {
       msg += `${p.emoji} ${p.dimensionName}: ${p.accionesCorto[0]}\n`;
       const r = p.recursos?.[0];
-      if (r?.url) msg += `🔗 ${r.nombre}: ${r.url}\n`;
-      else if (r?.telefono) msg += `📞 ${r.nombre}: ${r.telefono}\n`;
+      if (r?.url) msg += `Recurso: ${r.nombre}: ${r.url}\n`;
       msg += "\n";
     });
-    const encoded = encodeURIComponent(msg);
-    window.open(`https://wa.me/5491161210313?text=${encoded}`, "_blank");
+    msg += `En 7 dias te volvemos a contactar. Korai - app.korai.lat`;
+    window.open(`https://wa.me/5491161210313?text=${encodeURIComponent(msg)}`, "_blank");
   };
-
-  const toggleExpanded = (dimId: string) => {
-    setExpandedItems(prev => ({ ...prev, [dimId]: !prev[dimId] }));
-  };
-
-  const colorBorder = (c: string) =>
-    c === "rojo" ? "border-red-300" : c === "amarillo" ? "border-yellow-300" : "border-green-500/30";
-  const colorBg = (c: string) =>
-    c === "rojo" ? "bg-red-50" : c === "amarillo" ? "bg-yellow-50" : "bg-green-50";
-  const colorText = (c: string) =>
-    c === "rojo" ? "text-red-600" : c === "amarillo" ? "text-yellow-700" : "text-green-700";
-  const colorBadgeBg = (c: string) =>
-    c === "rojo" ? "bg-red-500/20" : c === "amarillo" ? "bg-yellow-500/20" : "bg-green-500/20";
 
   if (plan.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 space-y-4 bg-[#F4F0FF]">
-        <AlertTriangle className="w-12 h-12 text-yellow-700" />
-        <h2 className="text-xl font-bold text-center" data-testid="text-no-prioridades">NecesitÃƒÂ¡s completar el diagnÃƒÂ³stico primero</h2>
-        <p className="text-[#6B5FA0] text-center text-sm">CompletÃƒÂ¡ la encuesta para ver tu plan personalizado.</p>
-        <Button onClick={() => setLocation("/")} data-testid="button-go-home">
-          Ir al Inicio
-        </Button>
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", background: "#f0eef8", fontFamily: "system-ui, sans-serif" }}>
+        <AlertTriangle style={{ width: "48px", height: "48px", color: "#f59e0b", marginBottom: "16px" }} />
+        <h2 style={{ textAlign: "center", color: "#1e1040", fontWeight: 800, fontSize: "18px", marginBottom: "8px" }}>Necesitas completar el diagnostico primero</h2>
+        <p style={{ color: "#6b5fa0", textAlign: "center", fontSize: "14px", marginBottom: "20px" }}>Completa la encuesta para ver tu plan personalizado.</p>
+        <button onClick={() => setLocation("/")} style={{ background: "#5c40c0", color: "white", border: "none", borderRadius: "12px", padding: "12px 24px", fontWeight: 700, fontSize: "14px", cursor: "pointer" }}>
+          Ir al inicio
+        </button>
       </div>
     );
   }
 
+  const item = plan[currentIdx];
+  if (!item) return null;
+
+  const color = item.nivelColor;
+  const headerColor = color === "rojo" ? "#ff6b6b" : color === "amarillo" ? "#ffd166" : "#34d399";
+  const textOnHeader = color === "amarillo" ? "#7c5200" : "white";
+  const dotActiveColor = (c: string) => c === "rojo" ? "#ff6b6b" : c === "amarillo" ? "#ffd166" : "#34d399";
+  const nextItem = plan[currentIdx + 1];
+  const isLast = currentIdx === plan.length - 1;
+  const motivo = MOTIVO_COLOR[color]?.[item.dimensionId] || item.motivo;
+  const recursos = RECURSOS_EXTRA[item.dimensionId] || [];
+
   return (
-    <div className="min-h-screen pt-6 pb-10 px-4 max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500 bg-[#F4F0FF]">
-
+    <div style={{ minHeight: "100vh", background: "#f0eef8", display: "flex", flexDirection: "column", fontFamily: "system-ui, sans-serif" }}>
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={() => setLocation("/survey")} data-testid="button-back-results">
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary/20">
-            <Target className="w-6 h-6 text-[#5B21B6]" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-[#1E1040]" data-testid="text-prioridades-title">TU PLAN</h1>
-            <p className="text-xs text-[#6B5FA0]">QuÃƒÂ© podÃƒÂ©s hacer esta semana y tu camino para este aÃƒÂ±o</p>
-          </div>
-        </div>
+      <div style={{ background: "#5c40c0", padding: "14px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <h1 style={{ color: "white", fontWeight: 900, fontSize: "17px", margin: 0 }}>Mi plan de accion</h1>
+        <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "12px", margin: "2px 0 0" }}>Area {currentIdx + 1} de {plan.length}</p>
       </div>
 
-      {/* Sello */}
-      {sello && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3 p-3 rounded-2xl bg-[#EDE9FE] border border-[#C4B5FD]"
-        >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 to-orange-500 flex items-center justify-center text-lg border-2 border-white/20">
-            <CheckCircle2 className="w-5 h-5 text-[#1E1040]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-black text-[#5B21B6] uppercase tracking-wider">{sello.texto || sello.municipio}</div>
-            <div className="text-[10px] text-[#6B5FA0]">ID: {sello.idParticipacion} | {sello.fecha}</div>
-          </div>
-        </motion.div>
-      )}
+      {/* Dots */}
+      <div style={{ display: "flex", gap: "8px", padding: "12px 20px 8px", justifyContent: "center" }}>
+        {plan.map((p, i) => (
+          <div
+            key={i}
+            onClick={() => setCurrentIdx(i)}
+            style={{
+              width: i === currentIdx ? "28px" : "10px",
+              height: "10px",
+              borderRadius: "20px",
+              background: i === currentIdx ? dotActiveColor(p.nivelColor) : i < currentIdx ? dotActiveColor(p.nivelColor) + "99" : "#d1c9e8",
+              cursor: "pointer",
+              transition: "all 0.3s",
+            }}
+          />
+        ))}
+      </div>
 
-      {/* Banner WhatsApp */}
-      {showWhatsAppBanner && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="p-5 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/30 flex flex-col sm:flex-row items-start sm:items-center gap-4"
-        >
-          <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-full bg-[#25D366]/20 flex items-center justify-center flex-shrink-0">
-              <MessageCircle className="w-5 h-5 text-[#25D366]" />
+      {/* Content */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 16px" }}>
+
+        {/* Area card */}
+        <div style={{ background: "white", borderRadius: "20px", overflow: "hidden", marginBottom: "12px", boxShadow: "0 2px 12px rgba(92,64,192,0.08)", border: `2px solid ${headerColor}` }}>
+          {/* Card header */}
+          <div style={{ background: headerColor, padding: "16px 20px", display: "flex", alignItems: "center", gap: "14px" }}>
+            <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", flexShrink: 0 }}>
+              {item.emoji}
             </div>
-            <div>
-              <div className="font-bold text-sm text-[#1E1040]">RecibÃƒÂ­ tu plan por WhatsApp</div>
-              <div className="text-xs text-[#6B5FA0]">Con los recursos y programas disponibles para vos en CABA</div>
-            </div>
-          </div>
-          <Button
-            onClick={handleWhatsApp}
-            className="bg-[#25D366] hover:bg-[#20c45a] text-[#1E1040] font-bold rounded-xl h-11 px-5 flex-shrink-0 w-full sm:w-auto"
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Enviar a mi WhatsApp
-          </Button>
-        </motion.div>
-      )}
-
-      {/* Plan items */}
-      <div className="space-y-4">
-        {plan.map((p, i) => {
-          const isExpanded = !!expandedItems[p.dimensionId];
-          return (
-            <motion.div
-              key={p.dimensionId}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className={`rounded-2xl border ${colorBorder(p.nivelColor)} ${colorBg(p.nivelColor)} overflow-hidden`}
-              data-testid={`card-prioridad-${p.rank}`}
-            >
-              <div className="p-5 space-y-3">
-                <div className="flex items-start justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${colorBadgeBg(p.nivelColor)} ${colorText(p.nivelColor)}`}>
-                      #{p.rank}
-                    </div>
-                    <div>
-                      <div className="font-bold text-base text-[#1E1040] flex items-center gap-2 flex-wrap">
-                        <span>{p.emoji}</span>
-                        <span>{p.titulo}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${colorBadgeBg(p.nivelColor)} ${colorText(p.nivelColor)} ${colorBorder(p.nivelColor)}`}>
-                      {p.nivelColor}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className={`w-3 h-3 ${colorText(p.nivelColor)}`} />
-                      <span className={`text-[10px] font-bold ${colorText(p.nivelColor)}`}>{p.cuando}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Esta semana */}
-                <div className="p-4 rounded-xl bg-white border-2 border-[#5B21B6]/20 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">Ã°Å¸â€œÅ’</span>
-                    <div className="text-xs font-black uppercase text-[#5B21B6] tracking-wider">QuÃƒÂ© podÃƒÂ©s hacer esta semana</div>
-                  </div>
-                  <div className="space-y-2 pt-1">
-                    {p.accionesCorto.slice(0, 2).map((a, ai) => (
-                      <div key={ai} className="flex items-start gap-2 p-2 rounded-lg bg-[#F4F0FF]">
-                        <span className="text-[#5B21B6] font-black text-sm mt-0.5">{ai + 1}.</span>
-                        <p className="text-sm text-[#1E1040] font-medium">{a}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Recursos */}
-                {p.recursos.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base">Ã°Å¸â€â€”</span>
-                      <div className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">DÃƒÂ³nde ir o a quiÃƒÂ©n llamar</div>
-                    </div>
-                    <div className="space-y-2">
-                      {p.recursos.slice(0, 2).map((r, ri) => (
-                        <div key={ri} className="p-3 rounded-xl bg-white border border-[#DDD6FE] space-y-1.5">
-                          <div className="font-bold text-sm text-[#1E1040]">{r.nombre}</div>
-                          {r.descripcionCorta && <p className="text-xs text-[#6B5FA0]">{r.descripcionCorta}</p>}
-                          <div className="flex gap-2 flex-wrap pt-0.5">
-                            {r.url && (
-                              <a href={r.url} target="_blank" rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5B21B6] bg-[#EDE9FE] px-3 py-1.5 rounded-lg hover:bg-[#DDD6FE] transition-colors"
-                                data-testid={`link-recurso-${p.dimensionId}-${ri}`}>
-                                <ExternalLink className="w-3 h-3" />
-                                {r.accion || "Ver mÃƒÂ¡s"}
-                              </a>
-                            )}
-                            {r.telefono && (
-                              <a href={`tel:${r.telefono}`}
-                                className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
-                                Ã°Å¸â€œÅ¾ Llamar al {r.telefono}
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => toggleExpanded(p.dimensionId)}
-                  className="flex items-center gap-1.5 text-xs text-[#6B5FA0] hover:text-[#1E1040] transition-colors pt-1"
-                  data-testid={`button-expand-${p.dimensionId}`}
-                >
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                  {isExpanded ? "Ocultar el camino anual" : "Ã°Å¸â€œâ€¦ Ver el camino para este aÃƒÂ±o"}
-                </button>
+            <div style={{ flex: 1 }}>
+              <h2 style={{ margin: 0, color: textOnHeader, fontWeight: 900, fontSize: "20px" }}>{item.dimensionName}</h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                <span style={{ background: "rgba(255,255,255,0.9)", color: headerColor, fontSize: "11px", fontWeight: 800, padding: "2px 10px", borderRadius: "20px", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: headerColor, display: "inline-block", border: "1px solid rgba(0,0,0,0.15)" }} />
+                  {color === "rojo" ? "URGENTE" : color === "amarillo" ? "ATENCION" : "BIEN"}
+                </span>
+                <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "12px", fontWeight: 600 }}>{item.cuando}</span>
               </div>
+            </div>
+            <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: "10px", padding: "4px 10px", color: textOnHeader, fontWeight: 800, fontSize: "13px" }}>#{currentIdx + 1}</div>
+          </div>
 
-              {isExpanded && (
-                <div className="px-5 pb-5 space-y-3 border-t border-[#EDE9FE] pt-4 bg-[#FAF8FF]">
-                  <div className="text-xs font-black text-[#6B5FA0] uppercase tracking-wider mb-3">Tu camino para los prÃƒÂ³ximos meses</div>
-                  <div className="p-3 rounded-xl bg-white border border-[#DDD6FE]">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span>Ã°Å¸â€œâ€¦</span>
-                      <div className="text-[10px] font-black uppercase text-yellow-700 tracking-wider">Este mes</div>
-                    </div>
-                    <p className="text-sm text-[#1E1040]">{p.metaCorto}</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-white border border-[#DDD6FE]">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span>Ã°Å¸Å½Â¯</span>
-                      <div className="text-[10px] font-black uppercase text-[#5B21B6] tracking-wider">DÃƒÂ³nde querÃƒÂ©s estar en un aÃƒÂ±o</div>
-                    </div>
-                    <p className="text-sm text-[#1E1040]">{p.metaMediano}</p>
-                  </div>
+          {/* Motivo */}
+          <div style={{ margin: "14px 16px", borderLeft: `4px solid ${headerColor}`, paddingLeft: "12px" }}>
+            <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: 800, color: color === "rojo" ? "#ef4444" : color === "amarillo" ? "#d97706" : "#059669", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              {color === "rojo" ? "Por que esta en rojo?" : color === "amarillo" ? "Por que esta en amarillo?" : "Por que esta en verde?"}
+            </p>
+            <p style={{ margin: 0, fontSize: "13px", color: "#374151", lineHeight: 1.5 }}>{motivo}</p>
+          </div>
+
+          {/* Acciones */}
+          <div style={{ padding: "0 16px 14px" }}>
+            <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: 800, color: "#5c40c0", textTransform: "uppercase", letterSpacing: "0.5px" }}>Que podes hacer hoy</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {item.accionesCorto.slice(0, 2).map((a, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                  <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: headerColor, display: "flex", alignItems: "center", justifyContent: "center", color: textOnHeader, fontWeight: 800, fontSize: "13px", flexShrink: 0 }}>{i + 1}</div>
+                  <p style={{ margin: 0, fontSize: "13px", color: "#374151", lineHeight: 1.5, paddingTop: "4px" }}>{a}</p>
                 </div>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
+              ))}
+            </div>
+          </div>
 
-      {/* Botones finales */}
-      <div className="flex gap-3 pt-4 flex-wrap">
-        <Button
-          onClick={handleWhatsApp}
-          className="flex-1 h-12 bg-[#25D366] hover:bg-[#20c45a] text-[#1E1040] font-bold rounded-xl"
-        >
-          <MessageCircle className="w-4 h-4 mr-2" />
-          Recibir por WhatsApp
-        </Button>
-        <Button
-          onClick={() => setLocation("/metas")}
-          className="flex-1 h-12 bg-[#5B21B6] font-bold rounded-xl"
-          data-testid="button-go-metas"
-        >
-          Ver mis Metas <ChevronRight className="ml-1 w-4 h-4" />
-        </Button>
-      </div>
+          {/* Recursos */}
+          {recursos.length > 0 && (
+            <div style={{ padding: "0 16px 16px" }}>
+              <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: 800, color: "#5c40c0", textTransform: "uppercase", letterSpacing: "0.5px" }}>Donde ir o a quien llamar</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {recursos.map((r, i) => (
+                  <div key={i} style={{ background: "#f8f7ff", borderRadius: "12px", padding: "12px" }}>
+                    <p style={{ margin: "0 0 4px", fontWeight: 700, fontSize: "13px", color: "#1e1040" }}>{r.nombre}</p>
+                    <p style={{ margin: "0 0 8px", fontSize: "12px", color: "#6b7280", lineHeight: 1.4 }}>{r.descripcion}</p>
+                    {r.url && (
+                      <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "white", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "6px 12px", fontSize: "12px", color: "#5c40c0", fontWeight: 600, textDecoration: "none" }}>
+                        <ExternalLink style={{ width: "12px", height: "12px" }} />
+                        {r.accion}
+                      </a>
+                    )}
+                    {r.telefono && <p style={{ margin: "6px 0 0", fontSize: "12px", color: "#6b7280" }}>Tel: {r.telefono}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
-      <div className="flex gap-3">
-        <Button
-          variant="outline"
-          onClick={() => setLocation("/survey")}
-          className="flex-1 h-11 border-[#DDD6FE] bg-white/80"
+        {/* Nav buttons */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
+          <button
+            onClick={() => setCurrentIdx(i => Math.max(0, i - 1))}
+            disabled={currentIdx === 0}
+            style={{ flex: 1, height: "48px", borderRadius: "14px", border: `2px solid ${currentIdx === 0 ? "#d1c9e8" : "#5c40c0"}`, background: "white", color: currentIdx === 0 ? "#c4b5fd" : "#5c40c0", fontWeight: 700, fontSize: "14px", cursor: currentIdx === 0 ? "not-allowed" : "pointer" }}
+          >
+            ← Anterior
+          </button>
+          <button
+            onClick={() => {
+              if (isLast) setLocation("/metas");
+              else setCurrentIdx(i => i + 1);
+            }}
+            style={{ flex: 1, height: "48px", borderRadius: "14px", border: "none", background: isLast ? "#34d399" : "#5c40c0", color: "white", fontWeight: 700, fontSize: "14px", cursor: "pointer" }}
+          >
+            {isLast ? "✓ Listo" : `Siguiente → ${nextItem?.dimensionName || ""}`}
+          </button>
+        </div>
+
+        {/* WhatsApp button */}
+        <button
+          onClick={() => handleWhatsApp(item)}
+          style={{ width: "100%", height: "52px", borderRadius: "14px", border: "none", background: "#25D366", color: "white", fontWeight: 800, fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "6px" }}
         >
-          Ver mi diagnÃƒÂ³stico
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => setLocation("/")}
-          className="flex-1 h-11 border-[#DDD6FE] bg-white/80"
-          data-testid="button-go-inicio"
-        >
-          Inicio
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
-          className="flex-1 h-11 border-red-500/20 bg-red-500/5 text-red-600 hover:bg-red-50"
-        >
-          Salir
-        </Button>
+          <MessageCircle style={{ width: "20px", height: "20px" }} />
+          Recibir info de {item.dimensionName} por WhatsApp
+        </button>
+        <p style={{ textAlign: "center", fontSize: "11px", color: "#9b8ec4", margin: "0 0 16px" }}>Te mandamos cada paso directo a tu celular</p>
+
       </div>
     </div>
   );
 }
-
-
-
-
-
-
