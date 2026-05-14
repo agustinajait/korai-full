@@ -21,10 +21,10 @@ if (typeof document !== "undefined" && !document.getElementById("montserrat-font
 }
 
 const C = {
-  bg:        "#F4F0FF",
+  bg:        "#f0eef8",
   bgCard:    "#FFFFFF",
-  primary:   "#5B21B6",
-  primaryLight: "#EDE9FE",
+  primary:   "#5c40c0",
+  primaryLight: "#ede9fe",
   text:      "#1E1040",
   textSub:   "#6B5FA0",
   border:    "#DDD6FE",
