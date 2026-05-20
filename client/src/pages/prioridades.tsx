@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { AlertTriangle, ExternalLink, MessageCircle } from "lucide-react";
 import { generatePlanDesdeScores, type PlanItem } from "@/lib/korai-logic";
+import { getRecursosPorBarrio } from "@/lib/recursos-por-zona";
 
 const RECURSOS_EXTRA: Record<string, { nombre: string; descripcion: string; url?: string; telefono?: string; accion: string }[]> = {
   empleo: [
@@ -52,6 +53,8 @@ const MOTIVO_COLOR: Record<string, Record<string, string>> = {
 export default function Prioridades() {
   const [, setLocation] = useLocation();
   const [plan, setPlan] = useState<PlanItem[]>([]);
+  const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
+  const barrio = context.neighborhood || "";
   const savedIdx = parseInt(localStorage.getItem("korai_plan_start_idx") || "0");
   localStorage.removeItem("korai_plan_start_idx");
   const [currentIdx, setCurrentIdx] = useState(savedIdx);
@@ -111,7 +114,7 @@ export default function Prioridades() {
   const nextItem = plan[currentIdx + 1];
   const isLast = currentIdx === plan.length - 1;
   const motivo = MOTIVO_COLOR[color]?.[item.dimensionId] || item.motivo;
-  const recursos = RECURSOS_EXTRA[item.dimensionId] || [];
+  const recursos = getRecursosPorBarrio(barrio, item.dimensionId);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f0eef8", display: "flex", flexDirection: "column", fontFamily: "Montserrat, system-ui, sans-serif" }}>
