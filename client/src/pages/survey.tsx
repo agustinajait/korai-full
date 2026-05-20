@@ -546,7 +546,10 @@ export default function Survey() {
     const scores = calcularScores(answers, situacionLaboral);
     const prioritarias = getPrioridadesBloqueantes(scores);
     if (prioritarias.length > 0) {
-      setProfundizacionDims(prioritarias.map(p => p.dimensionId));
+      setProfundizacionDims(prioritarias.map(p => p.dimensionId.filter ? prioritarias.map(p => p.dimensionId.filter(d => {
+        const score = scores.find(s => s.dimensionId === d);
+        return score && score.color !== "verde";
+      }) : prioritarias.map(p => p.dimensionId));
       setShowProfundizacion(true);
     } else {
       handleSubmit({});
