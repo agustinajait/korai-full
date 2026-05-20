@@ -137,16 +137,60 @@ const PROFUNDIZACION: Record<string, Pregunta[]> = {
       { value: "no", label: "No, tengo dificultades" },
     ]},
   ],
-  vivienda: [
-    { id: "viv_riesgo_alquiler", texto: "¿Tenés riesgo de no poder seguir pagando el alquiler?", tipo: "single", opciones: [
-      { value: "si", label: "Sí, estoy en riesgo" },
-      { value: "no", label: "No, estoy estable" },
-    ]}, // reemplaza viv_situacion — se filtra por tipo_vivienda en la pantalla
-    { id: "viv_riesgo", texto: "¿Tenés riesgo de perder ese lugar?", tipo: "single", opciones: [
+  vivienda_alquiler: [
+    { id: "viv_riesgo", texto: "¿Tenés riesgo de no poder seguir pagando el alquiler?", tipo: "single", opciones: [
       { value: "si", label: "Sí, estoy en riesgo" },
       { value: "no", label: "No, estoy estable" },
     ]},
-    { id: "viv_arreglos", texto: "¿Tu vivienda necesita arreglos importantes (techo, paredes, humedad)?", tipo: "single", opciones: [
+    { id: "viv_acuerdo", texto: "¿Tenés un contrato o acuerdo claro para vivir ahí?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, tengo contrato o acuerdo" },
+      { value: "no", label: "No, es informal" },
+    ]},
+    { id: "viv_arreglos", texto: "¿La vivienda necesita arreglos importantes (techo, humedad, paredes)?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, necesita arreglos" },
+      { value: "no", label: "No, está bien" },
+    ]},
+  ],
+  vivienda_propia: [
+    { id: "viv_arreglos", texto: "¿La vivienda necesita arreglos importantes (techo, humedad, paredes)?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, necesita arreglos" },
+      { value: "no", label: "No, está bien" },
+    ]},
+    { id: "viv_papeles", texto: "¿Tenés algún problema con los papeles o titularidad de la vivienda?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, tengo problemas" },
+      { value: "no", label: "No, está todo en orden" },
+    ]},
+  ],
+  vivienda_prestada: [
+    { id: "viv_riesgo", texto: "¿Tenés riesgo de tener que irte de ese lugar?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, estoy en riesgo" },
+      { value: "no", label: "No, estoy estable" },
+    ]},
+    { id: "viv_alternativa", texto: "¿Tenés otro lugar donde ir si no podés seguir ahí?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, tengo alternativa" },
+      { value: "no", label: "No tengo a donde ir" },
+    ]},
+  ],
+  vivienda_inestable: [
+    { id: "viv_seguro", texto: "¿Tenés un lugar seguro para dormir esta noche?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, tengo lugar" },
+      { value: "no", label: "No, necesito ayuda urgente" },
+    ]},
+    { id: "viv_dias", texto: "¿Podés quedarte ahí los próximos días?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, por ahora sí" },
+      { value: "no", label: "No, necesito ayuda" },
+    ]},
+    { id: "viv_urgente", texto: "¿Hay niños, adultos mayores o personas con discapacidad afectadas?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, hay personas vulnerables" },
+      { value: "no", label: "No" },
+    ]},
+  ],
+  vivienda: [
+    { id: "viv_riesgo", texto: "¿Tenés riesgo de perder tu vivienda?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, estoy en riesgo" },
+      { value: "no", label: "No, estoy estable" },
+    ]},
+    { id: "viv_arreglos", texto: "¿La vivienda necesita arreglos importantes (techo, humedad, paredes)?", tipo: "single", opciones: [
       { value: "si", label: "Sí, necesita arreglos" },
       { value: "no", label: "No, está bien" },
     ]},
@@ -180,7 +224,7 @@ const PROFUNDIZACION: Record<string, Pregunta[]> = {
   ],
 };
 
-function ProfundizacionScreen({ dimensiones, onComplete, onBack }: { dimensiones: string[]; onComplete: (r: Record<string, any>) => void; onBack?: () => void }) {
+function ProfundizacionScreen({ dimensiones, onComplete, onBack, tipoVivienda }: { dimensiones: string[]; onComplete: (r: Record<string, any>) => void; onBack?: () => void; tipoVivienda?: string }) {
   const [respuestas, setRespuestas] = useState<Record<string, any>>({});
   const [dimIdx, setDimIdx] = useState(0);
   const [pregIdx, setPregIdx] = useState(0);
@@ -198,7 +242,15 @@ function ProfundizacionScreen({ dimensiones, onComplete, onBack }: { dimensiones
   };
 
   const dimActual = dimensiones[dimIdx];
-  const preguntas = PROFUNDIZACION[dimActual] || [];
+  const getPreguntasVivienda = () => {
+    if (dimActual !== "vivienda") return PROFUNDIZACION[dimActual] || [];
+    if (tipoVivienda === "alquiler") return PROFUNDIZACION["vivienda_alquiler"] || PROFUNDIZACION["vivienda"] || [];
+    if (tipoVivienda === "propia") return PROFUNDIZACION["vivienda_propia"] || PROFUNDIZACION["vivienda"] || [];
+    if (tipoVivienda === "prestada") return PROFUNDIZACION["vivienda_prestada"] || PROFUNDIZACION["vivienda"] || [];
+    if (tipoVivienda === "inestable") return PROFUNDIZACION["vivienda_inestable"] || PROFUNDIZACION["vivienda"] || [];
+    return PROFUNDIZACION["vivienda"] || [];
+  };
+  const preguntas = getPreguntasVivienda();
   const preguntaActual = preguntas[pregIdx];
   const dimInfo = INSTRUMENT.dimensions.find(d => d.id === dimActual);
 
@@ -241,6 +293,7 @@ function ProfundizacionScreen({ dimensiones, onComplete, onBack }: { dimensiones
 
   return (
     <div className="min-h-screen pt-20 pb-10 px-4 flex flex-col items-center max-w-xl mx-auto bg-[#F4F0FF]">
+      {puedeVolver && <button onClick={volver} style={{ alignSelf: "flex-start", background: "none", border: "none", color: "#5c40c0", fontSize: "14px", fontWeight: 700, cursor: "pointer", marginBottom: "8px" }}>← Volver</button>}
       {/* Progress */}
       <div className="w-full mb-8">
         <div className="flex justify-between text-xs text-[#6B5FA0] mb-2">
@@ -493,7 +546,10 @@ export default function Survey() {
     const scores = calcularScores(answers, situacionLaboral);
     const prioritarias = getPrioridadesBloqueantes(scores);
     if (prioritarias.length > 0) {
-      setProfundizacionDims(prioritarias.map(p => p.dimensionId));
+      setProfundizacionDims(prioritarias.map(p => p.dimensionId.filter ? prioritarias.map(p => p.dimensionId.filter(d => {
+        const score = scores.find(s => s.dimensionId === d);
+        return score && score.color !== "verde";
+      }) : prioritarias.map(p => p.dimensionId));
       setShowProfundizacion(true);
     } else {
       handleSubmit({});
@@ -506,6 +562,7 @@ export default function Survey() {
     return (
       <ProfundizacionScreen
         dimensiones={profundizacionDims}
+        tipoVivienda={context.demographics?.tipo_vivienda}
         onComplete={(respuestas) => {
           setProfundizacionRespuestas(respuestas);
           setShowProfundizacion(false);
