@@ -69,7 +69,7 @@ type Pregunta = {
 const PROFUNDIZACION: Record<string, Pregunta[]> = {
   empleo: [
     { id: "emp_experiencia", texto: "¿Trabajaste alguna vez?", tipo: "single", opciones: [
-      { value: "dependencia", label: "Sí, en relación de dependencia" },
+      { value: "dependencia", label: "Sí, en trabajo en blanco (con recibo de sueldo)" },
       { value: "informal", label: "Sí, de manera informal" },
       { value: "nunca", label: "No, nunca trabajé" },
     ]},
@@ -86,6 +86,15 @@ const PROFUNDIZACION: Record<string, Pregunta[]> = {
       { value: "si_medio", label: "Sí, media jornada" },
       { value: "si_horas", label: "Sí, por horas" },
       { value: "no", label: "No por el momento" },
+    ]},
+    { id: "emp_obstaculo", texto: "¿Qué te impide empezar a trabajar ahora?", tipo: "single", opciones: [
+      { value: "personas_cargo", label: "Tengo personas a cargo" },
+      { value: "salud", label: "Tengo un problema de salud" },
+      { value: "documentacion", label: "Me falta documentacion" },
+      { value: "hijos", label: "No tengo con quien dejar a mis hijos" },
+      { value: "estudiando", label: "Estoy estudiando" },
+      { value: "transporte", label: "No tengo movilidad o transporte" },
+      { value: "otro", label: "Otro motivo" },
     ]},
   ],
   educacion: [
@@ -129,20 +138,17 @@ const PROFUNDIZACION: Record<string, Pregunta[]> = {
     ]},
   ],
   vivienda: [
-    { id: "viv_situacion", texto: "¿Dónde estás viviendo actualmente?", tipo: "single", opciones: [
-      { value: "propia", label: "Vivienda propia" },
-      { value: "alquiler", label: "Alquiler" },
-      { value: "prestado", label: "Prestado / cedido" },
-      { value: "inestable", label: "Situación inestable" },
-    ]},
+    { id: "viv_riesgo_alquiler", texto: "¿Tenés riesgo de no poder seguir pagando el alquiler?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, estoy en riesgo" },
+      { value: "no", label: "No, estoy estable" },
+    ]}, // reemplaza viv_situacion — se filtra por tipo_vivienda en la pantalla
     { id: "viv_riesgo", texto: "¿Tenés riesgo de perder ese lugar?", tipo: "single", opciones: [
       { value: "si", label: "Sí, estoy en riesgo" },
       { value: "no", label: "No, estoy estable" },
     ]},
-    { id: "viv_servicios", texto: "¿Tenés acceso a servicios básicos?", tipo: "single", opciones: [
-      { value: "todos", label: "Sí, todos (agua, luz, gas)" },
-      { value: "algunos", label: "Algunos servicios" },
-      { value: "ninguno", label: "Ninguno" },
+    { id: "viv_arreglos", texto: "¿Tu vivienda necesita arreglos importantes (techo, paredes, humedad)?", tipo: "single", opciones: [
+      { value: "si", label: "Sí, necesita arreglos" },
+      { value: "no", label: "No, está bien" },
     ]},
   ],
   ingresos: [
@@ -174,10 +180,22 @@ const PROFUNDIZACION: Record<string, Pregunta[]> = {
   ],
 };
 
-function ProfundizacionScreen({ dimensiones, onComplete }: { dimensiones: string[]; onComplete: (r: Record<string, any>) => void }) {
+function ProfundizacionScreen({ dimensiones, onComplete, onBack }: { dimensiones: string[]; onComplete: (r: Record<string, any>) => void; onBack?: () => void }) {
   const [respuestas, setRespuestas] = useState<Record<string, any>>({});
   const [dimIdx, setDimIdx] = useState(0);
   const [pregIdx, setPregIdx] = useState(0);
+  
+  const volver = () => {
+    if (pregIdx > 0) {
+      setPregIdx(p => p - 1);
+    } else if (dimIdx > 0) {
+      setDimIdx(d => d - 1);
+      const prevDim = dimensiones[dimIdx - 1];
+      setPregIdx((PROFUNDIZACION[prevDim]?.length || 1) - 1);
+    } else if (onBack) {
+      onBack();
+    }
+  };
 
   const dimActual = dimensiones[dimIdx];
   const preguntas = PROFUNDIZACION[dimActual] || [];
@@ -188,7 +206,12 @@ function ProfundizacionScreen({ dimensiones, onComplete }: { dimensiones: string
   const pregActualNum = dimensiones.slice(0, dimIdx).reduce((acc, d) => acc + (PROFUNDIZACION[d]?.length || 0), 0) + pregIdx + 1;
 
   const avanzar = () => {
-    const nextPregIdx = pregIdx + 1;
+    let nextPregIdx = pregIdx + 1;
+    // Saltar emp_obstaculo si la disponibilidad no es "no"
+    const pregSig = preguntas[nextPregIdx];
+    if (pregSig?.id === "emp_obstaculo" && respuestas["emp_disponibilidad"] !== "no") {
+      nextPregIdx++;
+    }
     if (nextPregIdx < preguntas.length) {
       setPregIdx(nextPregIdx);
     } else {
@@ -294,7 +317,21 @@ export default function Survey() {
 
   const context = JSON.parse(localStorage.getItem("korai_context") || "{}");
   const situacionLaboral = context.demographics?.situacion_laboral;
+  const tipoVivienda = context.demographics?.tipo_vivienda || "";
   const indicators = getActiveIndicatorsSafe(situacionLaboral);
+  
+  // Adaptar label de prevision_06 según tipo de vivienda
+  const indicatorsAdaptados = indicators.map(ind => {
+    if (ind.id === "prevision_06") {
+      let label = "Puedo pagar o sostener los gastos del hogar";
+      if (tipoVivienda === "alquiler") label = "Puedo pagar el alquiler y los gastos del hogar";
+      else if (tipoVivienda === "propia") label = "Puedo sostener los gastos del hogar, como servicios, comida o transporte";
+      else if (tipoVivienda === "prestado_cedida") label = "Puedo sostener los gastos del lugar donde vivo, como servicios, comida o transporte";
+      else if (tipoVivienda === "inestable") label = "Hoy puedo cubrir necesidades basicas como comida, transporte o higiene";
+      return { ...ind, label };
+    }
+    return ind;
+  });
 
   // Redirect if no context AND no saved answers
   useEffect(() => {
@@ -451,7 +488,7 @@ export default function Survey() {
     }
   };
 
-  // Después del comentario: detectar áreas rojas y activar profundización
+  // Detectar áreas rojas y amarillas — priorizar rojas primero
   const handleAfterComment = () => {
     const scores = calcularScores(answers, situacionLaboral);
     const prioritarias = getPrioridadesBloqueantes(scores);
