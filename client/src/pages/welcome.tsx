@@ -92,6 +92,19 @@ const CONTEXT_QUESTIONS = [
     ],
     soloSi: ["ninos", "adultos", "ambos"],
   },
+  {
+    id: "ingreso_hogar",
+    emoji: "💰",
+    titulo: "¿Cuál es el ingreso mensual de tu hogar?",
+    subtitulo: "Sumando todos los ingresos del hogar. La información es confidencial.",
+    opciones: [
+      { value: "menos_700k",      label: "Menos de $700.000",              emoji: "💸" },
+      { value: "700k_1300k",      label: "Entre $700.000 y $1.300.000",    emoji: "💸" },
+      { value: "1300k_2000k",     label: "Entre $1.300.000 y $2.000.000",  emoji: "💸" },
+      { value: "mas_2000k",       label: "Más de $2.000.000",              emoji: "💸" },
+      { value: "prefiero_no",     label: "Prefiero no decirlo",            emoji: "🔒" },
+    ],
+  },
 ];
 
 function ContextQuestion({
@@ -455,7 +468,7 @@ export default function Welcome() {
             </label>
             <Input placeholder="Ej: 1155556666" value={telefono} onChange={e => { setTelefono(e.target.value); setFormError(""); }}
               className="h-11 text-sm border-2 rounded-xl"
-              style={{ background: C.bgCard, borderColor: C.border, color: C.text }} />
+              style={{ background: C.bgCard, borderColor: formError && !telefono.trim() ? "#ef4444" : C.border, color: C.text }} />
             <p className="text-[10px]" style={{ color: C.textSub }}>Para enviarte tu plan y hacer seguimiento de tu situación.</p>
           </div>
 
