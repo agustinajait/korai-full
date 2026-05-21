@@ -146,32 +146,32 @@ export default function Superadmin() {
 
   const colorBadge = (c) => c === "rojo" ? "bg-red-500/20 text-red-400 border-red-500/30" : c === "amarillo" ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-green-500/20 text-green-400 border-green-500/30";
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#070A13]"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center bg-[#070A13] text-red-400">{error}</div>;
-  if (!stats) return <div className="min-h-screen flex items-center justify-center bg-[#070A13] text-white/40">Sin datos aun</div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#f0eef8]"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center bg-[#f0eef8] text-red-400">{error}</div>;
+  if (!stats) return <div className="min-h-screen flex items-center justify-center bg-[#f0eef8] text-[#9B8EC4]">Sin datos aun</div>;
 
   const overallColor = stats.dist.rojo >= 0.33 ? "rojo" : stats.dist.amarillo >= 0.33 ? "amarillo" : "verde";
   const overallBg = overallColor === "rojo" ? "bg-red-500/10 border-red-500/30" : overallColor === "amarillo" ? "bg-yellow-500/10 border-yellow-500/30" : "bg-green-500/10 border-green-500/30";
   const overallDot = overallColor === "rojo" ? "bg-red-500" : overallColor === "amarillo" ? "bg-yellow-500" : "bg-green-500";
 
   return (
-    <div className="min-h-screen bg-[#070A13] text-[#EEF2FF] font-sans">
+    <div className="min-h-screen bg-[#f0eef8] text-[#1E1040] font-sans">
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[1100px] h-[700px] bg-[#7c5cff]/15 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[1100px] h-[700px] bg-[#5c40c0]/5 rounded-full blur-[120px]" />
       </div>
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
 
         <div className="flex items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#7c5cff] to-[#3b82f6] text-white flex items-center justify-center font-black text-2xl">K</div>
-            <div><div className="text-xl font-black">KORAI Superadmin</div><div className="text-xs text-[#A9B3DA]">Panel de control total</div></div>
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#5c40c0] to-[#7c5cff] text-[#1E1040] flex items-center justify-center font-black text-2xl">K</div>
+            <div><div className="text-xl font-black">KORAI Superadmin</div><div className="text-xs text-[#6B5FA0]">Panel de control total</div></div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => setShowCaseList(s => !s)} className="text-[#EEF2FF] hover:bg-white/10 text-sm gap-2">
+            <Button variant="ghost" onClick={() => setShowCaseList(s => !s)} className="text-[#1E1040] hover:bg-[#ede9fe] text-sm gap-2">
               <Users className="w-4 h-4" /> {showCaseList ? "Ver resumen" : "Ver usuarios"}
             </Button>
-            <Link href="/"><Button variant="ghost" className="text-[#EEF2FF] hover:bg-white/10 text-sm">Diagnostico</Button></Link>
-            <Button variant="ghost" onClick={() => { localStorage.removeItem("korai_admin_auth"); localStorage.removeItem("korai_admin_role"); setLocation("/admin"); }} className="text-white/40 hover:text-white hover:bg-white/10">
+            <Link href="/"><Button variant="ghost" className="text-[#1E1040] hover:bg-[#ede9fe] text-sm">Diagnostico</Button></Link>
+            <Button variant="ghost" onClick={() => { localStorage.removeItem("korai_admin_auth"); localStorage.removeItem("korai_admin_role"); setLocation("/admin"); }} className="text-[#9B8EC4] hover:text-[#1E1040] hover:bg-[#ede9fe]">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
@@ -179,17 +179,17 @@ export default function Superadmin() {
 
         <div className="grid grid-cols-3 gap-3">
           {[{ label: "Total usuarios", value: responses.length }, { label: "Con seguimiento", value: responses.filter(r => r.acepto_seguimiento).length }, { label: "Con telefono", value: responses.filter(r => getTelefono(r)).length }].map(s => (
-            <div key={s.label} className="bg-white/5 border border-white/10 rounded-2xl p-4"><div className="text-2xl font-black">{s.value}</div><div className="text-xs text-white/50 mt-1">{s.label}</div></div>
+            <div key={s.label} className="bg-white border border-[#DDD6FE] rounded-2xl p-4"><div className="text-2xl font-black">{s.value}</div><div className="text-xs text-[#6B5FA0] mt-1">{s.label}</div></div>
           ))}
         </div>
 
         {showCaseList && (
-          <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
-            <div className="p-5 border-b border-white/10">
+          <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
+            <div className="p-5 border-b border-[#DDD6FE]">
               <h3 className="font-black text-lg mb-3">Usuarios registrados</h3>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, DNI o barrio..." className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, DNI o barrio..." className="w-full h-11 px-4 rounded-xl bg-white border border-[#DDD6FE] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none" />
             </div>
-            <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto">
+            <div className="divide-y divide-[#EDE9FE] max-h-[500px] overflow-y-auto">
               {filtered.map((r, i) => {
                 const nombre = getNombrePersona(r);
                 const telefono = getTelefono(r);
@@ -208,10 +208,10 @@ export default function Superadmin() {
                 areas.forEach(p => { msg += p.emoji + " " + p.dimensionName + "\n"; p.accionesCorto.slice(0,2).forEach((a,i) => { msg += (i+1) + ". " + a + "\n"; }); const rec = p.recursos?.[0]; if (rec?.url) msg += "Recurso: " + rec.nombre + ": " + rec.url + "\n"; msg += "\n"; });
                 msg += "\nEn 7 dias te vamos a contactar.";
                 return (
-                  <div key={r.id || i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/5 transition-colors">
+                  <div key={r.id || i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-white transition-colors">
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-white truncate">{nombre}</div>
-                      <div className="text-xs text-white/40">{barrio} · {fecha}{dni ? " · DNI: " + dni : ""}</div>
+                      <div className="font-bold text-sm text-[#1E1040] truncate">{nombre}</div>
+                      <div className="text-xs text-[#9B8EC4]">{barrio} · {fecha}{dni ? " · DNI: " + dni : ""}</div>
                     </div>
                     <div className="flex items-center gap-1">{scores.map(s => <div key={s.dimensionId} className={`w-2.5 h-2.5 rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} />)}</div>
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${rojas >= 2 ? "bg-red-500/20 text-red-400 border-red-500/30" : rojas === 1 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-green-500/20 text-green-400 border-green-500/30"}`}>{rojas} criticas</span>
@@ -221,8 +221,8 @@ export default function Superadmin() {
                     <button onClick={() => { navigator.clipboard.writeText(msg); alert("Plan copiado!"); }} className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-3 py-1.5 rounded-lg font-bold">Copiar</button>
                     {confirmDeleteId === r.id ? (
                       <div className="flex gap-1">
-                        <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} className="text-[10px] text-white bg-red-500 px-2 py-1 rounded-lg font-bold">{deletingId === r.id ? "..." : "Confirmar"}</button>
-                        <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] text-white/40 bg-white/5 px-2 py-1 rounded-lg">No</button>
+                        <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} className="text-[10px] text-[#1E1040] bg-red-500 px-2 py-1 rounded-lg font-bold">{deletingId === r.id ? "..." : "Confirmar"}</button>
+                        <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] text-[#9B8EC4] bg-white px-2 py-1 rounded-lg">No</button>
                       </div>
                     ) : (
                       <button onClick={() => setConfirmDeleteId(r.id)} className="text-[10px] text-red-400/60 bg-red-500/5 border border-red-500/20 px-2 py-1 rounded-lg hover:bg-red-500/20">Eliminar</button>
@@ -230,31 +230,31 @@ export default function Superadmin() {
                   </div>
                 );
               })}
-              {filtered.length === 0 && <div className="text-center py-8 text-white/30">No se encontraron usuarios</div>}
+              {filtered.length === 0 && <div className="text-center py-8 text-[#9B8EC4]">No se encontraron usuarios</div>}
             </div>
           </div>
         )}
 
         <div className="flex items-center gap-3 flex-wrap">
           <MapPin className="w-4 h-4 text-primary" />
-          <span className="text-xs text-white/50 uppercase font-bold tracking-wider">Filtrar por barrio:</span>
+          <span className="text-xs text-[#6B5FA0] uppercase font-bold tracking-wider">Filtrar por barrio:</span>
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setBarrioFilter("all")} className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === "all" ? "bg-primary text-white" : "bg-white/5 text-white/50 hover:bg-white/10"}`}>Todos ({responses.length})</button>
-            {barrios.map(b => <button key={b} onClick={() => setBarrioFilter(b)} className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === b ? "bg-primary text-white" : "bg-white/5 text-white/50 hover:bg-white/10"}`}>{b}</button>)}
+            <button onClick={() => setBarrioFilter("all")} className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === "all" ? "bg-primary text-[#1E1040]" : "bg-white text-[#6B5FA0] hover:bg-[#ede9fe]"}`}>Todos ({responses.length})</button>
+            {barrios.map(b => <button key={b} onClick={() => setBarrioFilter(b)} className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === b ? "bg-primary text-[#1E1040]" : "bg-white text-[#6B5FA0] hover:bg-[#ede9fe]"}`}>{b}</button>)}
           </div>
         </div>
 
         <div className={`p-8 rounded-[40px] border relative overflow-hidden ${overallBg}`}>
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-2xl animate-pulse ${overallDot}`}><div className="text-white font-black text-lg">CABA</div></div>
-            <div className="text-center md:text-left"><h2 className="text-2xl font-black uppercase tracking-tighter">Estado General del Territorio</h2><p className="text-[#A9B3DA] text-sm mt-1">Basado en <span className="font-black text-white">{stats.total}</span> diagnosticos</p></div>
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-sm animate-pulse ${overallDot}`}><div className="text-[#1E1040] font-black text-lg">CABA</div></div>
+            <div className="text-center md:text-left"><h2 className="text-2xl font-black uppercase tracking-tighter">Estado General del Territorio</h2><p className="text-[#6B5FA0] text-sm mt-1">Basado en <span className="font-black text-[#1E1040]">{stats.total}</span> diagnosticos</p></div>
             <div className="md:ml-auto flex gap-6 text-center">
-              <div><div className="text-2xl font-black text-red-400">{Math.round(stats.dist.rojo * 100)}%</div><div className="text-[10px] text-white/50 uppercase">Critico</div></div>
-              <div><div className="text-2xl font-black text-yellow-400">{Math.round(stats.dist.amarillo * 100)}%</div><div className="text-[10px] text-white/50 uppercase">Alerta</div></div>
-              <div><div className="text-2xl font-black text-green-400">{Math.round(stats.dist.verde * 100)}%</div><div className="text-[10px] text-white/50 uppercase">Estable</div></div>
+              <div><div className="text-2xl font-black text-red-400">{Math.round(stats.dist.rojo * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Critico</div></div>
+              <div><div className="text-2xl font-black text-yellow-400">{Math.round(stats.dist.amarillo * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Alerta</div></div>
+              <div><div className="text-2xl font-black text-green-400">{Math.round(stats.dist.verde * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Estable</div></div>
             </div>
           </div>
-          <div className="mt-6 flex h-3 w-full rounded-full overflow-hidden bg-white/10">
+          <div className="mt-6 flex h-3 w-full rounded-full overflow-hidden bg-[#ede9fe]">
             <div style={{ width: `${stats.dist.verde * 100}%` }} className="bg-[#22c55e]" />
             <div style={{ width: `${stats.dist.amarillo * 100}%` }} className="bg-[#f59e0b]" />
             <div style={{ width: `${stats.dist.rojo * 100}%` }} className="bg-[#ef4444]" />
@@ -263,30 +263,30 @@ export default function Superadmin() {
 
         <div className="grid lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden">
-              <div className="p-6 border-b border-white/10"><h3 className="text-xl font-black">Diagnostico por Dimension</h3></div>
+            <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
+              <div className="p-6 border-b border-[#DDD6FE]"><h3 className="text-xl font-black">Diagnostico por Dimension</h3></div>
               <div className="p-6 grid sm:grid-cols-2 gap-4">
                 {INSTRUMENT.dimensions.map(d => {
                   const s = stats.byDim[d.id] || { rojo: 0, amarillo: 0, verde: 0, n: 0, color: "verde", severity: 0, explanation: "" };
                   const isSelected = selectedDimension === d.id;
                   const isCritical = stats.mostCritical === d.id && s.severity > 0;
                   return (
-                    <div key={d.id} onClick={() => setSelectedDimension(isSelected ? null : d.id)} className={`p-5 rounded-3xl border transition-all cursor-pointer space-y-3 relative ${isSelected ? "border-primary/50 bg-primary/5" : isCritical ? "border-red-500/50 bg-red-500/5" : "border-white/5 bg-white/5 hover:bg-white/10"}`}>
-                      {isCritical && <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">CRITICO</div>}
+                    <div key={d.id} onClick={() => setSelectedDimension(isSelected ? null : d.id)} className={`p-5 rounded-3xl border transition-all cursor-pointer space-y-3 relative ${isSelected ? "border-primary/50 bg-primary/5" : isCritical ? "border-red-500/50 bg-red-500/5" : "border-[#DDD6FE] bg-white hover:bg-[#ede9fe]"}`}>
+                      {isCritical && <div className="absolute -top-2 -right-2 bg-red-500 text-[#1E1040] text-[9px] font-black px-2 py-0.5 rounded-full">CRITICO</div>}
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3"><span className="text-2xl">{d.emoji}</span><div><div className="font-bold">{d.name}</div><div className="text-[10px] text-white/40">Severidad: {s.severity}%</div></div></div>
+                        <div className="flex items-center gap-3"><span className="text-2xl">{d.emoji}</span><div><div className="font-bold">{d.name}</div><div className="text-[10px] text-[#9B8EC4]">Severidad: {s.severity}%</div></div></div>
                         <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${colorBadge(s.color)}`}>{s.color}</div>
                       </div>
-                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden"><div style={{ width: `${s.severity}%` }} className={`h-full rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} /></div>
-                      <p className="text-[11px] text-white/60 italic">{s.explanation}</p>
+                      <div className="h-1.5 w-full bg-white rounded-full overflow-hidden"><div style={{ width: `${s.severity}%` }} className={`h-full rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} /></div>
+                      <p className="text-[11px] text-[#6B5FA0] italic">{s.explanation}</p>
                       {isSelected && PROGRAMAS_CABA[d.id] && (
-                        <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+                        <div className="mt-3 pt-3 border-t border-[#DDD6FE] space-y-2">
                           {PROGRAMAS_CABA[d.id].map((p, i) => (
-                            <div key={i} className="p-3 rounded-xl bg-white/5 space-y-1">
+                            <div key={i} className="p-3 rounded-xl bg-white space-y-1">
                               <div className="font-bold text-xs">{p.nombre}</div>
-                              <div className="text-[10px] text-white/50">{p.descripcion}</div>
+                              <div className="text-[10px] text-[#6B5FA0]">{p.descripcion}</div>
                               {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary flex items-center gap-1 hover:underline"><ExternalLink className="w-3 h-3" /> Ver programa</a>}
-                              {p.contacto && <span className="text-[10px] text-white/40">{p.contacto}</span>}
+                              {p.contacto && <span className="text-[10px] text-[#9B8EC4]">{p.contacto}</span>}
                             </div>
                           ))}
                         </div>
@@ -300,21 +300,21 @@ export default function Superadmin() {
 
           <div className="lg:col-span-4 space-y-6">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4"><div className="text-[#A9B3DA] text-[10px] font-bold uppercase mb-1">Diagnosticos</div><div className="text-3xl font-black">{stats.total}</div><div className="text-[10px] text-green-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> En tiempo real</div></div>
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4"><div className="text-[#A9B3DA] text-[10px] font-bold uppercase mb-1">Barrios</div><div className="text-3xl font-black">{barrios.length}</div><div className="text-[10px] text-white/40 mt-1">con datos</div></div>
+              <div className="bg-white border border-[#DDD6FE] rounded-2xl p-4"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Diagnosticos</div><div className="text-3xl font-black">{stats.total}</div><div className="text-[10px] text-green-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> En tiempo real</div></div>
+              <div className="bg-white border border-[#DDD6FE] rounded-2xl p-4"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Barrios</div><div className="text-3xl font-black">{barrios.length}</div><div className="text-[10px] text-[#9B8EC4] mt-1">con datos</div></div>
             </div>
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5">
+            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5">
               <h3 className="text-base font-black mb-4 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-primary" /> Voces del territorio</h3>
               <div className="space-y-3 max-h-[300px] overflow-y-auto">
                 {stats.comentarios.length > 0 ? stats.comentarios.map((c, i) => (
-                  <div key={i} className="p-3 rounded-2xl bg-white/5">
-                    <div className="flex items-center gap-2 mb-1"><MapPin className="w-3 h-3 text-primary" /><span className="text-[10px] text-white/60">{c.barrio}</span><span className="text-[9px] text-white/30 ml-auto">{new Date(c.submitted_at).toLocaleDateString("es-AR")}</span></div>
-                    <p className="text-xs italic text-white/80">"{c.text}"</p>
+                  <div key={i} className="p-3 rounded-2xl bg-white">
+                    <div className="flex items-center gap-2 mb-1"><MapPin className="w-3 h-3 text-primary" /><span className="text-[10px] text-[#6B5FA0]">{c.barrio}</span><span className="text-[9px] text-[#9B8EC4] ml-auto">{new Date(c.submitted_at).toLocaleDateString("es-AR")}</span></div>
+                    <p className="text-xs italic text-[#1E1040]">"{c.text}"</p>
                   </div>
-                )) : <p className="text-xs text-white/30 text-center py-4">No hay comentarios aun.</p>}
+                )) : <p className="text-xs text-[#9B8EC4] text-center py-4">No hay comentarios aun.</p>}
               </div>
             </div>
-            <div className="bg-gradient-to-br from-[#7c5cff]/20 to-transparent border border-[#7c5cff]/30 rounded-3xl p-5">
+            <div className="bg-gradient-to-br from-[#5c40c0]/20 to-transparent border border-[#7c5cff]/30 rounded-3xl p-5">
               <h3 className="text-base font-black mb-1">Sumar mas territorio</h3>
               <Link href="/"><Button className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-11 text-sm mt-3">Ir al diagnostico ciudadano</Button></Link>
             </div>

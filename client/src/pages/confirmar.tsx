@@ -119,7 +119,7 @@ export default function Confirmar() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-5 bg-[#F4F0FF]">
+    <div className="min-h-screen flex flex-col items-center justify-center px-5 bg-[#f0eef8]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -168,7 +168,7 @@ export default function Confirmar() {
                   enviarWhatsApp(telefono, mensaje).catch(err => console.error("Error reenviando WhatsApp:", err));
                 }
               }}
-              className="w-full h-12 font-bold rounded-2xl bg-[#5B21B6] text-white flex items-center justify-center gap-2"
+              className="w-full h-12 font-bold rounded-2xl bg-[#5c40c0] text-white flex items-center justify-center gap-2"
             >
               ðŸ“² Reenviar mi plan por WhatsApp
             </Button>
@@ -189,7 +189,7 @@ export default function Confirmar() {
               <h1 className="text-xl font-black text-[#1E1040]">No pudimos confirmar</h1>
               <p className="text-[#6B5FA0] text-sm">El link puede haber expirado. VolvÃ© a tu diagnÃ³stico.</p>
             </div>
-            <Button onClick={() => setLocation("/")} className="bg-[#5B21B6] text-white rounded-2xl h-12 w-full font-bold">
+            <Button onClick={() => setLocation("/")} className="bg-[#5c40c0] text-white rounded-2xl h-12 w-full font-bold">
               Volver al inicio
             </Button>
           </>

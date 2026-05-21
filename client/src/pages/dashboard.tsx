@@ -90,23 +90,23 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
     c === "rojo" ? "text-red-600" : c === "amarillo" ? "text-yellow-700" : "text-green-700";
 
   return (
-    <div className="min-h-screen bg-[#070A13] text-[#EEF2FF] font-sans">
+    <div className="min-h-screen bg-[#f0eef8] text-[#1E1040] font-sans">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={onBack} className="text-white/50 hover:text-white hover:bg-white/10 gap-2">
+          <Button variant="ghost" onClick={onBack} className="text-[#6B5FA0] hover:text-[#1E1040] hover:bg-[#ede9fe] gap-2">
             <ArrowLeft className="w-4 h-4" /> Volver
           </Button>
         </div>
 
         {/* Header */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+        <div className="bg-white border border-[#DDD6FE] rounded-3xl p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7c5cff] to-[#3b82f6] flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#5c40c0] to-[#7c5cff] flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-[#1E1040]" />
             </div>
             <div>
               <div className="text-xl font-black">{nombre}</div>
-              <div className="text-xs text-white/40 mt-0.5">
+              <div className="text-xs text-[#9B8EC4] mt-0.5">
                 {historial.length} diagnóstico{historial.length !== 1 ? "s" : ""} registrado{historial.length !== 1 ? "s" : ""}
               </div>
             </div>
@@ -116,35 +116,35 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
         {loading ? (
           <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
         ) : historial.length === 0 ? (
-          <div className="text-center py-10 text-white/40">Sin historial disponible.</div>
+          <div className="text-center py-10 text-[#9B8EC4]">Sin historial disponible.</div>
         ) : (
           <>
             {/* Evolución visual por dimensión */}
-            <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
-              <div className="p-5 border-b border-white/10">
+            <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
+              <div className="p-5 border-b border-[#DDD6FE]">
                 <h3 className="font-black text-lg">Evolución por dimensión</h3>
-                <p className="text-xs text-white/40 mt-1">Cada columna es un diagnóstico. De izquierda a derecha, del más antiguo al más reciente.</p>
+                <p className="text-xs text-[#9B8EC4] mt-1">Cada columna es un diagnóstico. De izquierda a derecha, del más antiguo al más reciente.</p>
               </div>
               <div className="p-5 overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr>
-                      <th className="text-left text-xs text-white/40 font-bold pb-3 pr-4 w-32">Dimensión</th>
+                      <th className="text-left text-xs text-[#9B8EC4] font-bold pb-3 pr-4 w-32">Dimensión</th>
                       {historial.map((h, i) => (
-                        <th key={i} className="text-center text-xs text-white/40 font-bold pb-3 px-2 min-w-[80px]">
+                        <th key={i} className="text-center text-xs text-[#9B8EC4] font-bold pb-3 px-2 min-w-[80px]">
                           <div>{new Date(h.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</div>
-                          <div className="text-[9px] text-white/25">#{i + 1}</div>
+                          <div className="text-[9px] text-[#C4B5FD]">#{i + 1}</div>
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-[#EDE9FE]">
                     {INSTRUMENT.dimensions.map(d => (
                       <tr key={d.id}>
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
                             <span>{d.emoji}</span>
-                            <span className="font-semibold text-xs text-white/70">{d.name}</span>
+                            <span className="font-semibold text-xs text-[#1E1040]">{d.name}</span>
                           </div>
                         </td>
                         {historial.map((h, i) => {
@@ -180,11 +180,11 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
             </div>
 
             {/* Timeline */}
-            <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
-              <div className="p-5 border-b border-white/10">
+            <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
+              <div className="p-5 border-b border-[#DDD6FE]">
                 <h3 className="font-black text-lg">Timeline de diagnósticos</h3>
               </div>
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-[#EDE9FE]">
                 {historial.map((h, i) => {
                   const sitLab = (() => { try { const p = (() => { const raw = h.perfil_contextual; return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); })(); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
                   const scores = calcularScores(h.answers || {}, sitLab);
@@ -192,11 +192,11 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
                   const fecha = new Date(h.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" });
                   const isLast = i === historial.length - 1;
                   return (
-                    <div key={i} className={`p-5 ${isLast ? "bg-white/3" : ""}`}>
+                    <div key={i} className={`p-5 ${isLast ? "bg-[#f8f6ff]" : ""}`}>
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <div className="font-bold text-sm">Diagnóstico #{i + 1}</div>
-                          <div className="text-xs text-white/40">{fecha} {isLast ? "· Más reciente" : ""}</div>
+                          <div className="text-xs text-[#9B8EC4]">{fecha} {isLast ? "· Más reciente" : ""}</div>
                         </div>
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
                           rojas >= 2 ? "bg-red-500/20 text-red-400 border-red-500/30" :
@@ -256,37 +256,37 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
     "bg-green-500/20 text-green-400 border-green-500/30";
 
   return (
-    <div className="min-h-screen bg-[#070A13] text-[#EEF2FF] font-sans">
+    <div className="min-h-screen bg-[#f0eef8] text-[#1E1040] font-sans">
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[1100px] h-[700px] bg-[#7c5cff]/15 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[1100px] h-[700px] bg-[#5c40c0]/5 rounded-full blur-[120px]" />
       </div>
 
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
 
         {/* Header caso */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={onBack} className="text-white/50 hover:text-white hover:bg-white/10 gap-2">
+          <Button variant="ghost" onClick={onBack} className="text-[#6B5FA0] hover:text-[#1E1040] hover:bg-[#ede9fe] gap-2">
             <ArrowLeft className="w-4 h-4" /> Volver al dashboard
           </Button>
         </div>
 
         {/* Perfil */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7c5cff] to-[#3b82f6] flex items-center justify-center">
-            <User className="w-7 h-7 text-white" />
+        <div className="bg-white border border-[#DDD6FE] rounded-3xl p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#5c40c0] to-[#7c5cff] flex items-center justify-center">
+            <User className="w-7 h-7 text-[#1E1040]" />
           </div>
           <div className="flex-1">
             <div className="text-xl font-black">{getNombrePersona(response)}</div>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
-              <span className="text-xs text-white/50 flex items-center gap-1">
+              <span className="text-xs text-[#6B5FA0] flex items-center gap-1">
                 <MapPin className="w-3 h-3 text-primary" /> {barrio}
               </span>
-              <span className="text-xs text-white/30">·</span>
-              <span className="text-xs text-white/50">{fecha}</span>
+              <span className="text-xs text-[#9B8EC4]">·</span>
+              <span className="text-xs text-[#6B5FA0]">{fecha}</span>
               {response.territorio?.ciudad && (
                 <>
-                  <span className="text-xs text-white/30">·</span>
-                  <span className="text-xs text-white/50">{response.territorio.ciudad}</span>
+                  <span className="text-xs text-[#9B8EC4]">·</span>
+                  <span className="text-xs text-[#6B5FA0]">{response.territorio.ciudad}</span>
                 </>
               )}
             </div>
@@ -306,10 +306,10 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
         </div>
 
         {/* Scores por dimensión */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
-          <div className="p-5 border-b border-white/10">
+        <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
+          <div className="p-5 border-b border-[#DDD6FE]">
             <h3 className="font-black text-lg">Diagnóstico por dimensión</h3>
-            <p className="text-xs text-white/40 mt-1">Resultado del autodiagnóstico en las 6 áreas de bienestar</p>
+            <p className="text-xs text-[#9B8EC4] mt-1">Resultado del autodiagnóstico en las 6 áreas de bienestar</p>
           </div>
           <div className="p-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {scores.map(s => (
@@ -328,7 +328,7 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
                   </span>
                 </div>
                 {/* Barra */}
-                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-[#ede9fe] rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-700 ${
                       s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"
@@ -336,22 +336,22 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
                     style={{ width: `${(s.verde / s.total) * 100}%` }}
                   />
                 </div>
-                <div className="text-[10px] text-white/40">{s.verde} de {s.total} indicadores positivos</div>
+                <div className="text-[10px] text-[#9B8EC4]">{s.verde} de {s.total} indicadores positivos</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Plan generado */}
-        <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
-          <div className="p-5 border-b border-white/10">
+        <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
+          <div className="p-5 border-b border-[#DDD6FE]">
             <h3 className="font-black text-lg">Plan de acción generado</h3>
-            <p className="text-xs text-white/40 mt-1">Áreas prioritarias y acciones recomendadas para este caso</p>
+            <p className="text-xs text-[#9B8EC4] mt-1">Áreas prioritarias y acciones recomendadas para este caso</p>
           </div>
           <div className="p-5 space-y-4">
             {plan.map((item, i) => (
               <div key={i} className={`p-4 rounded-2xl border space-y-3 ${
-                item.esPrioritaria ? "border-red-500/30 bg-red-500/5" : "border-white/10 bg-white/3"
+                item.esPrioritaria ? "border-red-500/30 bg-red-500/5" : "border-[#DDD6FE] bg-[#f8f6ff]"
               }`}>
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{item.emoji}</span>
@@ -359,10 +359,10 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm">{item.dimensionName}</span>
                       {item.esPrioritaria && (
-                        <span className="text-[9px] bg-red-500 text-white px-2 py-0.5 rounded-full font-black">BLOQUEANTE</span>
+                        <span className="text-[9px] bg-red-500 text-[#1E1040] px-2 py-0.5 rounded-full font-black">BLOQUEANTE</span>
                       )}
                     </div>
-                    <div className="text-[10px] text-white/40 mt-0.5">{item.motivo}</div>
+                    <div className="text-[10px] text-[#9B8EC4] mt-0.5">{item.motivo}</div>
                   </div>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border uppercase flex-shrink-0 ${colorBadge(item.nivelColor)}`}>
                     {item.cuando}
@@ -372,7 +372,7 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
                 {/* Acciones */}
                 <div className="space-y-1">
                   {item.accionesCorto.map((a, j) => (
-                    <div key={j} className="flex items-start gap-2 text-xs text-white/60">
+                    <div key={j} className="flex items-start gap-2 text-xs text-[#6B5FA0]">
                       <ChevronRight className="w-3 h-3 text-primary mt-0.5 flex-shrink-0" />
                       {a}
                     </div>
@@ -388,7 +388,7 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
                         href={r.url || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] bg-white/5 border border-white/10 px-2 py-1 rounded-lg text-primary hover:bg-white/10 flex items-center gap-1 transition-colors"
+                        className="text-[10px] bg-white border border-[#DDD6FE] px-2 py-1 rounded-lg text-primary hover:bg-[#ede9fe] flex items-center gap-1 transition-colors"
                       >
                         <ExternalLink className="w-2.5 h-2.5" /> {r.nombre}
                       </a>
@@ -402,11 +402,11 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
 
         {/* Texto abierto si existe */}
         {response.texto_abierto && (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
+          <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5">
             <h3 className="font-black text-base mb-3 flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-primary" /> Lo que nos contó
             </h3>
-            <p className="text-sm italic text-white/70 leading-relaxed">"{response.texto_abierto}"</p>
+            <p className="text-sm italic text-[#1E1040] leading-relaxed">"{response.texto_abierto}"</p>
           </div>
         )}
       </div>
@@ -567,28 +567,28 @@ export default function Dashboard() {
   if (selectedCase) return <CasoIndividual response={selectedCase} onBack={() => setSelectedCase(null)} />;
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#070A13]">
+    <div className="min-h-screen flex items-center justify-center bg-[#f0eef8]">
       <div className="text-center space-y-4">
         <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
-        <p className="text-white/50 text-sm">Cargando datos del territorio...</p>
+        <p className="text-[#6B5FA0] text-sm">Cargando datos del territorio...</p>
       </div>
     </div>
   );
 
   if (error) return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-[#070A13]">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-[#f0eef8]">
       <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-      <h2 className="text-2xl font-bold mb-2 text-white">Error al cargar datos</h2>
-      <p className="text-white/50 text-sm mb-4">{error}</p>
+      <h2 className="text-2xl font-bold mb-2 text-[#1E1040]">Error al cargar datos</h2>
+      <p className="text-[#6B5FA0] text-sm mb-4">{error}</p>
       <Link href="/" className="text-primary hover:underline">Volver al inicio</Link>
     </div>
   );
 
   if (!stats) return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-[#070A13]">
-      <Users className="w-12 h-12 text-white/20 mb-4" />
-      <h2 className="text-xl font-bold text-white/50">Sin datos aún</h2>
-      <p className="text-white/30 text-sm mt-2">Los diagnósticos aparecerán aquí en tiempo real.</p>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center bg-[#f0eef8]">
+      <Users className="w-12 h-12 text-[#C4B5FD] mb-4" />
+      <h2 className="text-xl font-bold text-[#6B5FA0]">Sin datos aún</h2>
+      <p className="text-[#9B8EC4] text-sm mt-2">Los diagnósticos aparecerán aquí en tiempo real.</p>
     </div>
   );
 
@@ -597,10 +597,10 @@ export default function Dashboard() {
   const overallDot = overallColor === "rojo" ? "bg-red-500" : overallColor === "amarillo" ? "bg-yellow-500" : "bg-green-500";
 
   return (
-    <div className="min-h-screen bg-[#070A13] text-[#EEF2FF] font-sans">
+    <div className="min-h-screen bg-[#f0eef8] text-[#1E1040] font-sans">
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[1100px] h-[700px] bg-[#7c5cff]/15 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[20%] w-[900px] h-[600px] bg-[#f59e0b]/8 rounded-full blur-[100px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[1100px] h-[700px] bg-[#5c40c0]/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[20%] w-[900px] h-[600px] bg-[#ffd166]/5 rounded-full blur-[100px]" />
       </div>
 
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
@@ -608,24 +608,24 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#7c5cff] to-[#3b82f6] text-white flex items-center justify-center font-black text-2xl shadow-lg shadow-primary/20">K</div>
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#5c40c0] to-[#7c5cff] text-[#1E1040] flex items-center justify-center font-black text-2xl shadow-lg shadow-[#5c40c0]/10">K</div>
             <div>
               <div className="text-xl font-black leading-tight">KORAI Dashboard</div>
-              <div className="text-xs text-[#A9B3DA]">Panel institucional · Ciudad de Buenos Aires</div>
+              <div className="text-xs text-[#6B5FA0]">Panel institucional · Ciudad de Buenos Aires</div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               onClick={() => setShowCaseList(!showCaseList)}
-              className="text-[#EEF2FF] hover:bg-white/10 text-sm gap-2"
+              className="text-[#1E1040] hover:bg-[#ede9fe] text-sm gap-2"
             >
               <Users className="w-4 h-4" /> {showCaseList ? "Ver resumen" : "Ver casos individuales"}
             </Button>
             <Link href="/">
-              <Button variant="ghost" className="text-[#EEF2FF] hover:bg-white/10 text-sm">Diagnóstico ciudadano</Button>
+              <Button variant="ghost" className="text-[#1E1040] hover:bg-[#ede9fe] text-sm">Diagnóstico ciudadano</Button>
             </Link>
-            <Button variant="ghost" onClick={handleLogout} className="text-white/40 hover:text-white hover:bg-white/10">
+            <Button variant="ghost" onClick={handleLogout} className="text-[#9B8EC4] hover:text-[#1E1040] hover:bg-[#ede9fe]">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
@@ -633,18 +633,18 @@ export default function Dashboard() {
 
         {/* LISTA DE CASOS INDIVIDUALES */}
         {showCaseList && (
-          <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
-            <div className="p-5 border-b border-white/10 flex items-center justify-between">
+          <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
+            <div className="p-5 border-b border-[#DDD6FE] flex items-center justify-between">
               <div>
                 <h3 className="font-black text-lg">Casos individuales</h3>
-                <p className="text-xs text-white/40 mt-0.5">{filtered.length} diagnósticos · Clic para ver detalle · "Evolución" para ver trazabilidad</p>
+                <p className="text-xs text-[#9B8EC4] mt-0.5">{filtered.length} diagnósticos · Clic para ver detalle · "Evolución" para ver trazabilidad</p>
               </div>
-              <div className="flex gap-3 text-[10px] text-white/40">
+              <div className="flex gap-3 text-[10px] text-[#9B8EC4]">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Aceptó seguimiento</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white/20 inline-block" /> Sin respuesta</span>
               </div>
             </div>
-            <div className="divide-y divide-white/5 max-h-[600px] overflow-y-auto">
+            <div className="divide-y divide-[#EDE9FE] max-h-[600px] overflow-y-auto">
               {filtered.map((r, i) => {
                 const sitLabR = (() => { try { const p = (() => { const raw = r.perfil_contextual; return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); })(); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
                 const scores = calcularScores(r.answers || {}, sitLabR);
@@ -657,12 +657,12 @@ export default function Dashboard() {
                   <div
                     key={r.id || i}
                     onClick={() => setSelectedCase(r)}
-                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/5 cursor-pointer transition-colors group"
+                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-white cursor-pointer transition-colors group"
                   >
                     {/* Avatar con indicador seguimiento */}
                     <div className="relative flex-shrink-0">
-                      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                        <User className="w-4 h-4 text-white/40" />
+                      <div className="w-9 h-9 rounded-xl bg-white border border-[#DDD6FE] flex items-center justify-center">
+                        <User className="w-4 h-4 text-[#9B8EC4]" />
                       </div>
                       {aceptoSeguimiento && (
                         <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-500 border-2 border-[#070A13]" title="Aceptó seguimiento" />
@@ -670,8 +670,8 @@ export default function Dashboard() {
                     </div>
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-white truncate">{nombre}</div>
-                      <div className="text-[11px] text-white/40 flex items-center gap-1.5">
+                      <div className="font-bold text-sm text-[#1E1040] truncate">{nombre}</div>
+                      <div className="text-[11px] text-[#9B8EC4] flex items-center gap-1.5">
                         <MapPin className="w-2.5 h-2.5 text-primary flex-shrink-0" />
                         <span className="truncate">{barrio}</span>
                         <span>·</span>
@@ -706,13 +706,13 @@ export default function Dashboard() {
                         <button
                           onClick={() => handleDelete(r.id)}
                           disabled={deletingId === r.id}
-                          className="text-[10px] text-white bg-red-500 px-2 py-1 rounded-lg hover:bg-red-600 transition-colors font-bold"
+                          className="text-[10px] text-[#1E1040] bg-red-500 px-2 py-1 rounded-lg hover:bg-red-600 transition-colors font-bold"
                         >
                           {deletingId === r.id ? "..." : "Confirmar"}
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="text-[10px] text-white/40 bg-white/5 px-2 py-1 rounded-lg hover:bg-white/10 transition-colors"
+                          className="text-[10px] text-[#9B8EC4] bg-white px-2 py-1 rounded-lg hover:bg-[#ede9fe] transition-colors"
                         >
                           Cancelar
                         </button>
@@ -725,7 +725,7 @@ export default function Dashboard() {
                         🗑
                       </button>
                     )}
-                    <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-primary transition-colors flex-shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-[#C4B5FD] group-hover:text-primary transition-colors flex-shrink-0" />
                   </div>
                 );
               })}
@@ -736,17 +736,17 @@ export default function Dashboard() {
         {/* Filtro por barrio */}
         <div className="flex items-center gap-3 flex-wrap">
           <MapPin className="w-4 h-4 text-primary" />
-          <span className="text-xs text-white/50 uppercase font-bold tracking-wider">Filtrar por barrio:</span>
+          <span className="text-xs text-[#6B5FA0] uppercase font-bold tracking-wider">Filtrar por barrio:</span>
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setBarrioFilter("all")}
-              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === "all" ? "bg-primary text-white" : "bg-white/5 text-white/50 hover:bg-white/10"}`}
+              className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === "all" ? "bg-primary text-[#1E1040]" : "bg-white text-[#6B5FA0] hover:bg-[#ede9fe]"}`}
             >
               Todos ({responses.length})
             </button>
             {barrios.map(b => (
               <button key={b} onClick={() => setBarrioFilter(b)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === b ? "bg-primary text-white" : "bg-white/5 text-white/50 hover:bg-white/10"}`}>
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === b ? "bg-primary text-[#1E1040]" : "bg-white text-[#6B5FA0] hover:bg-[#ede9fe]"}`}>
                 {b}
               </button>
             ))}
@@ -756,22 +756,22 @@ export default function Dashboard() {
         {/* Estado general */}
         <div className={`p-8 rounded-[40px] border relative overflow-hidden ${overallBg}`}>
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-2xl animate-pulse ${overallDot}`}>
-              <div className="text-white font-black text-lg">CABA</div>
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-sm animate-pulse ${overallDot}`}>
+              <div className="text-[#1E1040] font-black text-lg">CABA</div>
             </div>
             <div className="text-center md:text-left">
               <h2 className="text-2xl font-black uppercase tracking-tighter">Estado General del Territorio</h2>
-              <p className="text-[#A9B3DA] text-sm mt-1">
-                Basado en <span className="font-black text-white">{stats.total}</span> diagnósticos · {barrioFilter === "all" ? "Ciudad de Buenos Aires" : `Barrio ${barrioFilter}`}
+              <p className="text-[#6B5FA0] text-sm mt-1">
+                Basado en <span className="font-black text-[#1E1040]">{stats.total}</span> diagnósticos · {barrioFilter === "all" ? "Ciudad de Buenos Aires" : `Barrio ${barrioFilter}`}
               </p>
             </div>
             <div className="md:ml-auto flex gap-6 text-center">
-              <div><div className="text-2xl font-black text-red-400">{Math.round(stats.dist.rojo * 100)}%</div><div className="text-[10px] text-white/50 uppercase">Crítico</div></div>
-              <div><div className="text-2xl font-black text-yellow-400">{Math.round(stats.dist.amarillo * 100)}%</div><div className="text-[10px] text-white/50 uppercase">Alerta</div></div>
-              <div><div className="text-2xl font-black text-green-400">{Math.round(stats.dist.verde * 100)}%</div><div className="text-[10px] text-white/50 uppercase">Estable</div></div>
+              <div><div className="text-2xl font-black text-red-400">{Math.round(stats.dist.rojo * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Crítico</div></div>
+              <div><div className="text-2xl font-black text-yellow-400">{Math.round(stats.dist.amarillo * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Alerta</div></div>
+              <div><div className="text-2xl font-black text-green-400">{Math.round(stats.dist.verde * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Estable</div></div>
             </div>
           </div>
-          <div className="mt-6 flex h-3 w-full rounded-full overflow-hidden bg-white/10">
+          <div className="mt-6 flex h-3 w-full rounded-full overflow-hidden bg-[#ede9fe]">
             <div style={{ width: `${stats.dist.verde * 100}%` }} className="bg-[#22c55e] transition-all duration-1000" />
             <div style={{ width: `${stats.dist.amarillo * 100}%` }} className="bg-[#f59e0b] transition-all duration-1000" />
             <div style={{ width: `${stats.dist.rojo * 100}%` }} className="bg-[#ef4444] transition-all duration-1000" />
@@ -783,10 +783,10 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
             {/* Empleo */}
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-3">
+            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">💼</span>
-                <span className="text-xs font-black uppercase text-white/50 tracking-wider">Situación laboral</span>
+                <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Situación laboral</span>
               </div>
               {[
                 { label: "Con trabajo", val: stats.demografico.empleo.con_trabajo, color: "bg-green-500" },
@@ -797,10 +797,10 @@ export default function Dashboard() {
                 return (
                   <div key={label} className="space-y-1">
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-white/60">{label}</span>
-                      <span className="font-black text-white">{pct}% <span className="text-white/30 font-normal">({val})</span></span>
+                      <span className="text-[#6B5FA0]">{label}</span>
+                      <span className="font-black text-[#1E1040]">{pct}% <span className="text-[#9B8EC4] font-normal">({val})</span></span>
                     </div>
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-white rounded-full overflow-hidden">
                       <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
@@ -809,10 +809,10 @@ export default function Dashboard() {
             </div>
 
             {/* Ingreso */}
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-3">
+            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">💰</span>
-                <span className="text-xs font-black uppercase text-white/50 tracking-wider">Ingreso del hogar</span>
+                <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Ingreso del hogar</span>
               </div>
               {[
                 { label: "< $700K", val: stats.demografico.ingreso.menos_700k, color: "bg-red-500" },
@@ -825,10 +825,10 @@ export default function Dashboard() {
                 return (
                   <div key={label} className="space-y-1">
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-white/60">{label}</span>
-                      <span className="font-black text-white">{pct}% <span className="text-white/30 font-normal">({val})</span></span>
+                      <span className="text-[#6B5FA0]">{label}</span>
+                      <span className="font-black text-[#1E1040]">{pct}% <span className="text-[#9B8EC4] font-normal">({val})</span></span>
                     </div>
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-white rounded-full overflow-hidden">
                       <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
@@ -837,10 +837,10 @@ export default function Dashboard() {
             </div>
 
             {/* Educación */}
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-3">
+            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📚</span>
-                <span className="text-xs font-black uppercase text-white/50 tracking-wider">Educación</span>
+                <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Educación</span>
               </div>
               {[
                 { label: "Secundario completo", val: stats.demografico.educacion.con_secundario, color: "bg-green-500" },
@@ -852,23 +852,23 @@ export default function Dashboard() {
                 return (
                   <div key={label} className="space-y-1">
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-white/60">{label}</span>
-                      <span className="font-black text-white">{pct}% <span className="text-white/30 font-normal">({val})</span></span>
+                      <span className="text-[#6B5FA0]">{label}</span>
+                      <span className="font-black text-[#1E1040]">{pct}% <span className="text-[#9B8EC4] font-normal">({val})</span></span>
                     </div>
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-white rounded-full overflow-hidden">
                       <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
               })}
-              <p className="text-[9px] text-white/20 pt-1">Solo usuarios que pasaron por profundización educativa</p>
+              <p className="text-[9px] text-[#C4B5FD] pt-1">Solo usuarios que pasaron por profundización educativa</p>
             </div>
 
             {/* Vivienda */}
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-3">
+            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🏠</span>
-                <span className="text-xs font-black uppercase text-white/50 tracking-wider">Tipo de vivienda</span>
+                <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Tipo de vivienda</span>
               </div>
               {[
                 { label: "Propia", val: stats.demografico.vivienda.propia, color: "bg-green-500" },
@@ -880,10 +880,10 @@ export default function Dashboard() {
                 return (
                   <div key={label} className="space-y-1">
                     <div className="flex justify-between text-[11px]">
-                      <span className="text-white/60">{label}</span>
-                      <span className="font-black text-white">{pct}% <span className="text-white/30 font-normal">({val})</span></span>
+                      <span className="text-[#6B5FA0]">{label}</span>
+                      <span className="font-black text-[#1E1040]">{pct}% <span className="text-[#9B8EC4] font-normal">({val})</span></span>
                     </div>
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-white rounded-full overflow-hidden">
                       <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
@@ -897,10 +897,10 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-12 gap-6">
           {/* Dimensiones */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-              <div className="p-6 border-b border-white/10">
+            <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden shadow-sm">
+              <div className="p-6 border-b border-[#DDD6FE]">
                 <h3 className="text-xl font-black">Diagnóstico por Dimensión</h3>
-                <p className="text-xs text-white/40 mt-1">Hacé clic en una dimensión para ver los programas disponibles</p>
+                <p className="text-xs text-[#9B8EC4] mt-1">Hacé clic en una dimensión para ver los programas disponibles</p>
               </div>
               <div className="p-6 grid sm:grid-cols-2 gap-4">
                 {INSTRUMENT.dimensions.map(d => {
@@ -911,10 +911,10 @@ export default function Dashboard() {
                     <div key={d.id} onClick={() => setSelectedDimension(isSelected ? null : d.id)}
                       className={`p-5 rounded-3xl border transition-all cursor-pointer space-y-3 relative ${
                         isSelected ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20" :
-                        isCritical ? "border-red-500/50 bg-red-500/5" : "border-white/5 bg-white/5 hover:bg-white/10"
+                        isCritical ? "border-red-500/50 bg-red-500/5" : "border-[#DDD6FE] bg-white hover:bg-[#ede9fe]"
                       }`}>
                       {isCritical && (
-                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-bounce">ÁREA CRÍTICA</div>
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-[#1E1040] text-[9px] font-black px-2 py-0.5 rounded-full animate-bounce">ÁREA CRÍTICA</div>
                       )}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -930,23 +930,23 @@ export default function Dashboard() {
                           "bg-green-500/20 text-green-400 border-green-500/30"
                         }`}>{s.color}</div>
                       </div>
-                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-white rounded-full overflow-hidden">
                         <div style={{ width: `${s.severity}%` }}
                           className={`h-full rounded-full transition-all duration-1000 ${
                             s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"
                           }`} />
                       </div>
-                      <p className="text-[11px] text-white/60 italic">{s.explanation}</p>
+                      <p className="text-[11px] text-[#6B5FA0] italic">{s.explanation}</p>
                       {isSelected && PROGRAMAS_CABA[d.id] && (
-                        <div className="mt-3 pt-3 border-t border-white/10 space-y-2 animate-in fade-in slide-in-from-top-2">
+                        <div className="mt-3 pt-3 border-t border-[#DDD6FE] space-y-2 animate-in fade-in slide-in-from-top-2">
                           <div className="text-[10px] font-black text-primary uppercase tracking-wider mb-2">Programas disponibles en CABA</div>
                           {PROGRAMAS_CABA[d.id].map((p, i) => (
-                            <div key={i} className="p-3 rounded-xl bg-white/5 border border-white/5 space-y-1">
-                              <div className="font-bold text-xs text-white">{p.nombre}</div>
-                              <div className="text-[10px] text-white/50">{p.descripcion}</div>
+                            <div key={i} className="p-3 rounded-xl bg-white border border-[#DDD6FE] space-y-1">
+                              <div className="font-bold text-xs text-[#1E1040]">{p.nombre}</div>
+                              <div className="text-[10px] text-[#6B5FA0]">{p.descripcion}</div>
                               <div className="flex gap-3 mt-1">
                                 {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary flex items-center gap-1 hover:underline"><ExternalLink className="w-3 h-3" /> Ver programa</a>}
-                                {p.contacto && <span className="text-[10px] text-white/40">{p.contacto}</span>}
+                                {p.contacto && <span className="text-[10px] text-[#9B8EC4]">{p.contacto}</span>}
                               </div>
                             </div>
                           ))}
@@ -964,19 +964,19 @@ export default function Dashboard() {
                   <AlertCircle className="w-5 h-5 text-red-400" />
                   <h3 className="text-lg font-black">Intervención prioritaria recomendada</h3>
                 </div>
-                <p className="text-sm text-white/50">Basado en los datos del territorio, estos son los programas más urgentes:</p>
+                <p className="text-sm text-[#6B5FA0]">Basado en los datos del territorio, estos son los programas más urgentes:</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {topCriticalDims.flatMap(dimId =>
                     (PROGRAMAS_CABA[dimId] || []).slice(0, 2).map((p, i) => {
                       const dim = INSTRUMENT.dimensions.find(d => d.id === dimId);
                       return (
-                        <div key={`${dimId}-${i}`} className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                        <div key={`${dimId}-${i}`} className="p-4 rounded-2xl bg-white border border-[#DDD6FE] space-y-2">
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{dim?.emoji}</span>
-                            <div className="text-[10px] text-white/40 uppercase font-bold">{dim?.name}</div>
+                            <div className="text-[10px] text-[#9B8EC4] uppercase font-bold">{dim?.name}</div>
                           </div>
-                          <div className="font-bold text-sm text-white">{p.nombre}</div>
-                          <div className="text-[10px] text-white/50">{p.descripcion}</div>
+                          <div className="font-bold text-sm text-[#1E1040]">{p.nombre}</div>
+                          <div className="text-[10px] text-[#6B5FA0]">{p.descripcion}</div>
                           {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary flex items-center gap-1 hover:underline mt-1"><ExternalLink className="w-3 h-3" /> Acceder al programa</a>}
                         </div>
                       );
@@ -990,39 +990,39 @@ export default function Dashboard() {
           {/* Columna derecha */}
           <div className="lg:col-span-4 space-y-6">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                <div className="text-[#A9B3DA] text-[10px] font-bold uppercase mb-1">Diagnósticos</div>
-                <div className="text-3xl font-black text-white">{stats.total}</div>
+              <div className="bg-white border border-[#DDD6FE] rounded-2xl p-4">
+                <div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Diagnósticos</div>
+                <div className="text-3xl font-black text-[#1E1040]">{stats.total}</div>
                 <div className="text-[10px] text-green-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> En tiempo real</div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-                <div className="text-[#A9B3DA] text-[10px] font-bold uppercase mb-1">Barrios</div>
-                <div className="text-3xl font-black text-white">{barrios.length}</div>
-                <div className="text-[10px] text-white/40 mt-1">con datos</div>
+              <div className="bg-white border border-[#DDD6FE] rounded-2xl p-4">
+                <div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Barrios</div>
+                <div className="text-3xl font-black text-[#1E1040]">{barrios.length}</div>
+                <div className="text-[10px] text-[#9B8EC4] mt-1">con datos</div>
               </div>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl">
+            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5 shadow-sm">
               <h3 className="text-base font-black mb-4 flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-primary" /> Voces del territorio
               </h3>
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                 {stats.comentarios.length > 0 ? stats.comentarios.map((c: any, i: number) => (
-                  <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                  <div key={i} className="p-4 rounded-2xl bg-white border border-[#DDD6FE]">
                     <div className="flex items-center gap-2 mb-2">
                       <MapPin className="w-3 h-3 text-primary" />
-                      <span className="text-[10px] font-bold text-white/60">{c.barrio}</span>
-                      <span className="text-[9px] text-white/30 ml-auto">{new Date(c.submitted_at).toLocaleDateString("es-AR")}</span>
+                      <span className="text-[10px] font-bold text-[#6B5FA0]">{c.barrio}</span>
+                      <span className="text-[9px] text-[#9B8EC4] ml-auto">{new Date(c.submitted_at).toLocaleDateString("es-AR")}</span>
                     </div>
-                    <p className="text-xs italic text-white/80 leading-relaxed">"{c.text}"</p>
+                    <p className="text-xs italic text-[#1E1040] leading-relaxed">"{c.text}"</p>
                   </div>
-                )) : <p className="text-xs text-white/30 text-center py-4">No hay comentarios aún.</p>}
+                )) : <p className="text-xs text-[#9B8EC4] text-center py-4">No hay comentarios aún.</p>}
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-[#7c5cff]/20 to-transparent border border-[#7c5cff]/30 rounded-3xl p-5">
+            <div className="bg-gradient-to-br from-[#5c40c0]/20 to-transparent border border-[#7c5cff]/30 rounded-3xl p-5">
               <h3 className="text-base font-black mb-1">Sumar más territorio</h3>
-              <p className="text-xs text-[#A9B3DA] mb-4">Cada diagnóstico individual enriquece la inteligencia territorial de KORAI.</p>
+              <p className="text-xs text-[#6B5FA0] mb-4">Cada diagnóstico individual enriquece la inteligencia territorial de KORAI.</p>
               <Link href="/"><Button className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-11 text-sm">Ir al diagnóstico ciudadano</Button></Link>
             </div>
           </div>
