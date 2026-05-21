@@ -293,7 +293,7 @@ function ProfundizacionScreen({ dimensiones, onComplete, onBack, tipoVivienda }:
 
   return (
     <div className="min-h-screen pt-20 pb-10 px-4 flex flex-col items-center max-w-xl mx-auto bg-[#F4F0FF]">
-      {puedeVolver && <button onClick={volver} style={{ alignSelf: "flex-start", background: "none", border: "none", color: "#5c40c0", fontSize: "14px", fontWeight: 700, cursor: "pointer", marginBottom: "8px" }}>← Volver</button>}
+      
       {/* Progress */}
       <div className="w-full mb-8">
         <div className="flex justify-between text-xs text-[#6B5FA0] mb-2">
@@ -545,11 +545,16 @@ export default function Survey() {
   const handleAfterComment = () => {
     const scores = calcularScores(answers, situacionLaboral);
     const prioritarias = getPrioridadesBloqueantes(scores);
-    if (prioritarias.length > 0) {
-      setProfundizacionDims(prioritarias.map(p => p.dimensionId.filter ? prioritarias.map(p => p.dimensionId.filter(d => {
-        const score = scores.find(s => s.dimensionId === d);
-        return score && score.color !== "verde";
-      }) : prioritarias.map(p => p.dimensionId));
+
+    const dimsConProfundizacion = prioritarias
+      .map(p => p.dimensionId)
+      .filter(dimId => {
+        const score = scores.find(s => s.dimensionId === dimId);
+        return score && score.color !== "verde" && PROFUNDIZACION[dimId];
+      });
+
+    if (dimsConProfundizacion.length > 0) {
+      setProfundizacionDims(dimsConProfundizacion);
       setShowProfundizacion(true);
     } else {
       handleSubmit({});
