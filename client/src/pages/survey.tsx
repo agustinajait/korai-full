@@ -26,6 +26,7 @@ async function submitToSupabase(payload: {
   apellido?: string;
   telefono?: string;
   profundizacion?: Record<string, any>;
+  demographics?: Record<string, any>;
 }) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/dsubmit_response`, {
     method: "POST",
@@ -45,6 +46,7 @@ async function submitToSupabase(payload: {
         telefono: payload.telefono || "",
         comentario: payload.texto_abierto || "",
         profundizacion: payload.profundizacion || {},
+        demographics: payload.demographics || {},
       }),
     }),
   });
@@ -523,6 +525,7 @@ export default function Survey() {
         apellido: context.apellido || "",
         telefono: context.telefono || "",
         profundizacion,
+        demographics: context.demographics || {},
       });
 
       // Avisar si ya hizo el diagnóstico antes
