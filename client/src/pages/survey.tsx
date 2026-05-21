@@ -259,11 +259,19 @@ function ProfundizacionScreen({ dimensiones, onComplete, onBack, tipoVivienda }:
 
   const avanzar = () => {
     let nextPregIdx = pregIdx + 1;
+
     // Saltar emp_obstaculo si la disponibilidad no es "no"
     const pregSig = preguntas[nextPregIdx];
     if (pregSig?.id === "emp_obstaculo" && respuestas["emp_disponibilidad"] !== "no") {
       nextPregIdx++;
     }
+
+    // Saltar sal_tipo si sal_problema es "no"
+    const pregSig2 = preguntas[nextPregIdx];
+    if (pregSig2?.id === "sal_tipo" && respuestas["sal_problema"] !== "si") {
+      nextPregIdx++;
+    }
+
     if (nextPregIdx < preguntas.length) {
       setPregIdx(nextPregIdx);
     } else {
@@ -552,6 +560,12 @@ export default function Survey() {
         const score = scores.find(s => s.dimensionId === dimId);
         return score && score.color !== "verde" && PROFUNDIZACION[dimId];
       });
+
+    // Forzar profundización de empleo si el usuario está desempleado o buscando trabajo
+    const sinTrabajo = ["buscando", "no_trabajo"].includes(situacionLaboral || "");
+    if (sinTrabajo && !dimsConProfundizacion.includes("empleo") && PROFUNDIZACION["empleo"]) {
+      dimsConProfundizacion.unshift("empleo");
+    }
 
     if (dimsConProfundizacion.length > 0) {
       setProfundizacionDims(dimsConProfundizacion);
