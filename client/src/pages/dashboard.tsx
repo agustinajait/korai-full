@@ -506,12 +506,51 @@ export default function Dashboard() {
 
     const mostCritical = Object.entries(byDim).sort((a, b) => b[1].severity - a[1].severity)[0]?.[0];
     const total = filtered.length;
+
+    // ── Métricas demográficas ─────────────────────────────────────────────────
+    const demografico = {
+      empleo: { sin_trabajo: 0, buscando: 0, con_trabajo: 0 },
+      ingreso: { menos_700k: 0, r700k_1300k: 0, r1300k_2000k: 0, mas_2000k: 0, prefiero_no: 0 },
+      educacion: { sin_secundario: 0, con_secundario: 0, cursando: 0 },
+      vivienda: { propia: 0, alquiler: 0, prestada: 0, inestable: 0 },
+    };
+
+    filtered.forEach(r => {
+      const perfil = (() => { try { const raw = r.perfil_contextual; return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); } catch { return {}; } })();
+      const demo = perfil?.demographics || perfil || {};
+
+      // Empleo
+      if (demo.situacion_laboral === "no_trabajo") demografico.empleo.sin_trabajo++;
+      else if (demo.situacion_laboral === "buscando") demografico.empleo.buscando++;
+      else if (demo.situacion_laboral === "tengo_trabajo") demografico.empleo.con_trabajo++;
+
+      // Ingreso del hogar
+      if (demo.ingreso_hogar === "menos_700k") demografico.ingreso.menos_700k++;
+      else if (demo.ingreso_hogar === "700k_1300k") demografico.ingreso.r700k_1300k++;
+      else if (demo.ingreso_hogar === "1300k_2000k") demografico.ingreso.r1300k_2000k++;
+      else if (demo.ingreso_hogar === "mas_2000k") demografico.ingreso.mas_2000k++;
+      else if (demo.ingreso_hogar === "prefiero_no") demografico.ingreso.prefiero_no++;
+
+      // Educación (desde profundización)
+      const prof = perfil?.profundizacion || {};
+      if (prof.edu_secundario === "no") demografico.educacion.sin_secundario++;
+      else if (prof.edu_secundario === "si") demografico.educacion.con_secundario++;
+      else if (prof.edu_secundario === "curso") demografico.educacion.cursando++;
+
+      // Vivienda
+      if (demo.tipo_vivienda === "propia") demografico.vivienda.propia++;
+      else if (demo.tipo_vivienda === "alquiler") demografico.vivienda.alquiler++;
+      else if (demo.tipo_vivienda === "prestada") demografico.vivienda.prestada++;
+      else if (demo.tipo_vivienda === "inestable") demografico.vivienda.inestable++;
+    });
+
     return {
       total,
       dist: { rojo: total ? rojo / total : 0, amarillo: total ? amarillo / total : 0, verde: total ? verde / total : 0 },
       byDim,
       mostCritical,
       comentarios: comentarios.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()),
+      demografico,
     };
   }, [filtered]);
 
@@ -738,6 +777,122 @@ export default function Dashboard() {
             <div style={{ width: `${stats.dist.rojo * 100}%` }} className="bg-[#ef4444] transition-all duration-1000" />
           </div>
         </div>
+
+        {/* ── Panel demográfico ─────────────────────────────────────────── */}
+        {stats.demografico && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+            {/* Empleo */}
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💼</span>
+                <span className="text-xs font-black uppercase text-white/50 tracking-wider">Situación laboral</span>
+              </div>
+              {[
+                { label: "Con trabajo", val: stats.demografico.empleo.con_trabajo, color: "bg-green-500" },
+                { label: "Buscando", val: stats.demografico.empleo.buscando, color: "bg-yellow-500" },
+                { label: "Sin trabajo", val: stats.demografico.empleo.sin_trabajo, color: "bg-red-500" },
+              ].map(({ label, val, color }) => {
+                const pct = stats.total > 0 ? Math.round((val / stats.total) * 100) : 0;
+                return (
+                  <div key={label} className="space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-white/60">{label}</span>
+                      <span className="font-black text-white">{pct}% <span className="text-white/30 font-normal">({val})</span></span>
+                    </div>
+                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Ingreso */}
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💰</span>
+                <span className="text-xs font-black uppercase text-white/50 tracking-wider">Ingreso del hogar</span>
+              </div>
+              {[
+                { label: "< $700K", val: stats.demografico.ingreso.menos_700k, color: "bg-red-500" },
+                { label: "$700K–$1.3M", val: stats.demografico.ingreso.r700k_1300k, color: "bg-orange-400" },
+                { label: "$1.3M–$2M", val: stats.demografico.ingreso.r1300k_2000k, color: "bg-yellow-500" },
+                { label: "> $2M", val: stats.demografico.ingreso.mas_2000k, color: "bg-green-500" },
+                { label: "Prefiere no decir", val: stats.demografico.ingreso.prefiero_no, color: "bg-white/20" },
+              ].map(({ label, val, color }) => {
+                const pct = stats.total > 0 ? Math.round((val / stats.total) * 100) : 0;
+                return (
+                  <div key={label} className="space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-white/60">{label}</span>
+                      <span className="font-black text-white">{pct}% <span className="text-white/30 font-normal">({val})</span></span>
+                    </div>
+                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Educación */}
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📚</span>
+                <span className="text-xs font-black uppercase text-white/50 tracking-wider">Educación</span>
+              </div>
+              {[
+                { label: "Secundario completo", val: stats.demografico.educacion.con_secundario, color: "bg-green-500" },
+                { label: "Cursando", val: stats.demografico.educacion.cursando, color: "bg-yellow-500" },
+                { label: "Sin secundario", val: stats.demografico.educacion.sin_secundario, color: "bg-red-500" },
+              ].map(({ label, val, color }) => {
+                const base = stats.demografico.educacion.con_secundario + stats.demografico.educacion.cursando + stats.demografico.educacion.sin_secundario;
+                const pct = base > 0 ? Math.round((val / base) * 100) : 0;
+                return (
+                  <div key={label} className="space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-white/60">{label}</span>
+                      <span className="font-black text-white">{pct}% <span className="text-white/30 font-normal">({val})</span></span>
+                    </div>
+                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+              <p className="text-[9px] text-white/20 pt-1">Solo usuarios que pasaron por profundización educativa</p>
+            </div>
+
+            {/* Vivienda */}
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🏠</span>
+                <span className="text-xs font-black uppercase text-white/50 tracking-wider">Tipo de vivienda</span>
+              </div>
+              {[
+                { label: "Propia", val: stats.demografico.vivienda.propia, color: "bg-green-500" },
+                { label: "Alquilada", val: stats.demografico.vivienda.alquiler, color: "bg-yellow-500" },
+                { label: "Prestada", val: stats.demografico.vivienda.prestada, color: "bg-orange-400" },
+                { label: "Inestable", val: stats.demografico.vivienda.inestable, color: "bg-red-500" },
+              ].map(({ label, val, color }) => {
+                const pct = stats.total > 0 ? Math.round((val / stats.total) * 100) : 0;
+                return (
+                  <div key={label} className="space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-white/60">{label}</span>
+                      <span className="font-black text-white">{pct}% <span className="text-white/30 font-normal">({val})</span></span>
+                    </div>
+                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-12 gap-6">
           {/* Dimensiones */}
