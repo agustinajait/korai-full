@@ -179,12 +179,12 @@ export default function Superadmin() {
 
         <div className="grid grid-cols-3 gap-3">
           {[{ label: "Total usuarios", value: responses.length }, { label: "Con seguimiento", value: responses.filter(r => r.acepto_seguimiento).length }, { label: "Con telefono", value: responses.filter(r => getTelefono(r)).length }].map(s => (
-            <div key={s.label} className="bg-white border border-[#B8A9E8] rounded-2xl p-4"><div className="text-2xl font-black">{s.value}</div><div className="text-xs text-[#6B5FA0] mt-1">{s.label}</div></div>
+            <div key={s.label} className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm"><div className="text-2xl font-black">{s.value}</div><div className="text-xs text-[#6B5FA0] mt-1">{s.label}</div></div>
           ))}
         </div>
 
         {showCaseList && (
-          <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+          <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-3xl overflow-hidden shadow-sm">
             <div className="p-5 border-b border-[#B8A9E8]">
               <h3 className="font-black text-lg mb-3">Usuarios registrados</h3>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, DNI o barrio..." className="w-full h-11 px-4 rounded-xl bg-white border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none" />
@@ -225,7 +225,7 @@ export default function Superadmin() {
                         <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] text-[#9B8EC4] bg-white px-2 py-1 rounded-lg">No</button>
                       </div>
                     ) : (
-                      <button onClick={() => setConfirmDeleteId(r.id)} className="text-[10px] text-red-400/60 bg-red-500/5 border border-red-500/20 px-2 py-1 rounded-lg hover:bg-red-500/20">Eliminar</button>
+                      <button onClick={() => setConfirmDeleteId(r.id)} className="text-[10px] text-red-500 bg-red-50 border border-red-300 px-2 py-1 rounded-lg hover:bg-red-100 font-bold">🗑 Eliminar</button>
                     )}
                   </div>
                 );
@@ -263,7 +263,7 @@ export default function Superadmin() {
 
         <div className="grid lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+            <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-3xl overflow-hidden shadow-sm">
               <div className="p-6 border-b border-[#B8A9E8]"><h3 className="text-xl font-black">Diagnostico por Dimension</h3></div>
               <div className="p-6 grid sm:grid-cols-2 gap-4">
                 {INSTRUMENT.dimensions.map(d => {
@@ -300,8 +300,8 @@ export default function Superadmin() {
 
           <div className="lg:col-span-4 space-y-6">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Diagnosticos</div><div className="text-3xl font-black">{stats.total}</div><div className="text-[10px] text-green-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> En tiempo real</div></div>
-              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Barrios</div><div className="text-3xl font-black">{barrios.length}</div><div className="text-[10px] text-[#9B8EC4] mt-1">con datos</div></div>
+              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Diagnosticos</div><div className="text-3xl font-black">{stats.total}</div><div className="text-[10px] text-green-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> En tiempo real</div></div>
+              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Barrios</div><div className="text-3xl font-black">{barrios.length}</div><div className="text-[10px] text-[#9B8EC4] mt-1">con datos</div></div>
             </div>
             <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5">
               <h3 className="text-base font-black mb-4 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-primary" /> Voces del territorio</h3>

@@ -100,7 +100,7 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
         </div>
 
         {/* Header */}
-        <div className="bg-white border border-[#B8A9E8] rounded-3xl p-6">
+        <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-3xl p-6 shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-[#1E1040]" />
@@ -789,7 +789,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
             {/* Empleo */}
-            <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 space-y-3">
+            <div className="bg-gradient-to-br from-white to-[#ede9fe] border border-[#B8A9E8] rounded-3xl p-5 space-y-3 shadow-sm">
               <div className="flex items-center gap-2">
                 <span className="text-xl">💼</span>
                 <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Situación laboral</span>
@@ -815,7 +815,7 @@ export default function Dashboard() {
             </div>
 
             {/* Ingreso */}
-            <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 space-y-3">
+            <div className="bg-gradient-to-br from-white to-[#ede9fe] border border-[#B8A9E8] rounded-3xl p-5 space-y-3 shadow-sm">
               <div className="flex items-center gap-2">
                 <span className="text-xl">💰</span>
                 <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Ingreso del hogar</span>
@@ -843,7 +843,7 @@ export default function Dashboard() {
             </div>
 
             {/* Educación */}
-            <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 space-y-3">
+            <div className="bg-gradient-to-br from-white to-[#ede9fe] border border-[#B8A9E8] rounded-3xl p-5 space-y-3 shadow-sm">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📚</span>
                 <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Educación</span>
@@ -871,7 +871,7 @@ export default function Dashboard() {
             </div>
 
             {/* Vivienda */}
-            <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 space-y-3">
+            <div className="bg-gradient-to-br from-white to-[#ede9fe] border border-[#B8A9E8] rounded-3xl p-5 space-y-3 shadow-sm">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🏠</span>
                 <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Tipo de vivienda</span>
@@ -899,7 +899,7 @@ export default function Dashboard() {
 
             {/* Beneficio social */}
             {(stats.demografico.beneficio.si + stats.demografico.beneficio.no) > 0 && (
-              <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 space-y-3">
+              <div className="bg-gradient-to-br from-white to-[#ede9fe] border border-[#B8A9E8] rounded-3xl p-5 space-y-3 shadow-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🏛️</span>
                   <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Beneficio social</span>
@@ -917,7 +917,7 @@ export default function Dashboard() {
                         <span className="text-[#6B5FA0]">{label}</span>
                         <span className="font-black text-[#1E1040]">{pct}% <span className="text-[#9B8EC4] font-normal">({val})</span></span>
                       </div>
-                      <div className="h-1.5 bg-[#DDD6FE] rounded-full overflow-hidden">
+                      <div className="h-2 bg-[#DDD6FE] rounded-full overflow-hidden">
                         <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
@@ -932,7 +932,7 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-12 gap-6">
           {/* Dimensiones */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-3xl overflow-hidden shadow-sm">
               <div className="p-6 border-b border-[#B8A9E8]">
                 <h3 className="text-xl font-black">Diagnóstico por Dimensión</h3>
                 <p className="text-xs text-[#9B8EC4] mt-1">Hacé clic en una dimensión para ver los programas disponibles</p>
@@ -1025,12 +1025,12 @@ export default function Dashboard() {
           {/* Columna derecha */}
           <div className="lg:col-span-4 space-y-6">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4">
+              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm">
                 <div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Diagnósticos</div>
                 <div className="text-3xl font-black text-[#1E1040]">{stats.total}</div>
                 <div className="text-[10px] text-green-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> En tiempo real</div>
               </div>
-              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4">
+              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm">
                 <div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Barrios</div>
                 <div className="text-3xl font-black text-[#1E1040]">{barrios.length}</div>
                 <div className="text-[10px] text-[#9B8EC4] mt-1">con datos</div>
