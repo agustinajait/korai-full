@@ -515,6 +515,7 @@ export default function Dashboard() {
       educacion: { sin_secundario: 0, con_secundario: 0, cursando: 0 },
       vivienda: { propia: 0, alquiler: 0, prestada: 0, inestable: 0 },
       beneficio: { si: 0, no: 0 },
+      seguridad: { seguro: 0, inseguro: 0 },
     };
 
     filtered.forEach(r => {
@@ -548,6 +549,11 @@ export default function Dashboard() {
       // Beneficio social (solo quienes vieron la pregunta: ingreso bajo)
       if (demo.beneficio_social === "si") demografico.beneficio.si++;
       else if (demo.beneficio_social === "no") demografico.beneficio.no++;
+
+      // Seguridad barrial (indicador vivienda_05)
+      const seg = r.answers?.["vivienda_05"];
+      if (seg === "verde") demografico.seguridad.seguro++;
+      else if (seg === "rojo" || seg === "amarillo") demografico.seguridad.inseguro++;
     });
 
     return {
@@ -974,6 +980,35 @@ export default function Dashboard() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Seguridad barrial */}
+            {(stats.demografico.seguridad.seguro + stats.demografico.seguridad.inseguro) > 0 && (
+              <div className="bg-gradient-to-br from-white to-[#ede9fe] border border-[#B8A9E8] rounded-3xl p-5 space-y-3 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🔒</span>
+                  <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Seguridad en el barrio</span>
+                </div>
+                {[
+                  { label: "Se siente seguro/a", val: stats.demografico.seguridad.seguro, color: "bg-green-500" },
+                  { label: "No se siente seguro/a", val: stats.demografico.seguridad.inseguro, color: "bg-red-500" },
+                ].map(({ label, val, color }) => {
+                  const base = stats.demografico.seguridad.seguro + stats.demografico.seguridad.inseguro;
+                  const pct = base > 0 ? Math.round((val / base) * 100) : 0;
+                  return (
+                    <div key={label} className="space-y-1">
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-[#6B5FA0]">{label}</span>
+                        <span className="font-black text-[#1E1040]">{pct}% <span className="text-[#9B8EC4] font-normal">({val})</span></span>
+                      </div>
+                      <div className="h-2 bg-[#DDD6FE] rounded-full overflow-hidden">
+                        <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+                <p className="text-[9px] text-[#9B8EC4] pt-1">Basado en: "Me siento seguro/a en mi barrio, especialmente de noche"</p>
               </div>
             )}
 
