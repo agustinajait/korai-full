@@ -801,48 +801,36 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
           {/* Personas en situación crítica */}
-          <div className="bg-gradient-to-br from-[#fff1f1] to-[#ffe4e4] border-2 border-red-200 rounded-3xl p-6 flex flex-col gap-2 shadow-sm">
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl p-5 flex flex-col gap-1.5 shadow-sm">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">🚨</span>
-              <span className="text-xs font-black uppercase text-red-400 tracking-wider">Situación crítica</span>
+              <span className="text-base">🚨</span>
+              <span className="text-[10px] font-black uppercase text-red-400 tracking-wider">Situación crítica</span>
             </div>
-            <div className="text-5xl font-black text-red-500 leading-none">{personasCriticas}</div>
-            <div className="text-sm text-red-400 leading-snug">
-              personas con vulnerabilidad crítica en el territorio
-            </div>
-            <div className="text-[10px] text-red-300 mt-1">
-              {Math.round(stats.dist.rojo * 100)}% del total diagnosticado
-            </div>
+            <div className="text-4xl font-black text-red-500 leading-none">{personasCriticas}</div>
+            <div className="text-sm text-[#6B5FA0] leading-snug">personas en situación crítica</div>
+            <div className="text-[10px] text-[#9B8EC4]">{Math.round(stats.dist.rojo * 100)}% del total diagnosticado</div>
           </div>
 
           {/* Sin cobertura de beneficios */}
-          <div className="bg-gradient-to-br from-[#fffbeb] to-[#fef3c7] border-2 border-yellow-200 rounded-3xl p-6 flex flex-col gap-2 shadow-sm">
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl p-5 flex flex-col gap-1.5 shadow-sm">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">⚠️</span>
-              <span className="text-xs font-black uppercase text-yellow-600 tracking-wider">Brecha de cobertura</span>
+              <span className="text-base">⚠️</span>
+              <span className="text-[10px] font-black uppercase text-yellow-600 tracking-wider">Brecha de cobertura</span>
             </div>
-            <div className="text-5xl font-black text-yellow-500 leading-none">{sinBeneficioVulnerable}</div>
-            <div className="text-sm text-yellow-600 leading-snug">
-              personas vulnerables sin ningún beneficio social
-            </div>
-            <div className="text-[10px] text-yellow-400 mt-1">
-              No están en el sistema de protección social
-            </div>
+            <div className="text-4xl font-black text-yellow-500 leading-none">{sinBeneficioVulnerable}</div>
+            <div className="text-sm text-[#6B5FA0] leading-snug">personas vulnerables sin beneficio social</div>
+            <div className="text-[10px] text-[#9B8EC4]">No están en el sistema de protección social</div>
           </div>
 
           {/* Dimensión más crítica */}
-          <div className="bg-gradient-to-br from-[#f5f3ff] to-[#ede9fe] border-2 border-[#B8A9E8] rounded-3xl p-6 flex flex-col gap-2 shadow-sm">
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl p-5 flex flex-col gap-1.5 shadow-sm">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">📍</span>
-              <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Dimensión más crítica</span>
+              <span className="text-base">📍</span>
+              <span className="text-[10px] font-black uppercase text-[#6B5FA0] tracking-wider">Dimensión más crítica</span>
             </div>
-            <div className="text-3xl font-black text-[#5c40c0] leading-tight">{dimMasCriticaNombre || "—"}</div>
-            <div className="text-sm text-[#6B5FA0] leading-snug">
-              {dimMasCriticaPct}% de los diagnósticos en rojo en esta área
-            </div>
-            <div className="text-[10px] text-[#9B8EC4] mt-1">
-              Requiere intervención prioritaria del municipio
-            </div>
+            <div className="text-2xl font-black text-[#5c40c0] leading-tight">{dimMasCriticaNombre || "—"}</div>
+            <div className="text-sm text-[#6B5FA0] leading-snug">{dimMasCriticaPct}% de los diagnósticos en rojo</div>
+            <div className="text-[10px] text-[#9B8EC4]">Requiere intervención prioritaria</div>
           </div>
 
         </div>
@@ -998,7 +986,7 @@ export default function Dashboard() {
             <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-3xl overflow-hidden shadow-sm">
               <div className="p-6 border-b border-[#B8A9E8]">
                 <h3 className="text-xl font-black">Diagnóstico por Dimensión</h3>
-                <p className="text-xs text-[#9B8EC4] mt-1">Hacé clic en una dimensión para ver los programas disponibles</p>
+                <p className="text-xs text-[#9B8EC4] mt-1">Hacé clic en una dimensión para ver los indicadores más críticos</p>
               </div>
               <div className="p-6 grid sm:grid-cols-2 gap-4">
                 {INSTRUMENT.dimensions.map(d => {
@@ -1035,21 +1023,39 @@ export default function Dashboard() {
                           }`} />
                       </div>
                       <p className="text-[11px] text-[#6B5FA0] italic">{s.explanation}</p>
-                      {isSelected && PROGRAMAS_CABA[d.id] && (
-                        <div className="mt-3 pt-3 border-t border-[#B8A9E8] space-y-2 animate-in fade-in slide-in-from-top-2">
-                          <div className="text-[10px] font-black text-primary uppercase tracking-wider mb-2">Programas disponibles en CABA</div>
-                          {PROGRAMAS_CABA[d.id].map((p, i) => (
-                            <div key={i} className="p-3 rounded-xl bg-white border border-[#B8A9E8] space-y-1">
-                              <div className="font-bold text-xs text-[#1E1040]">{p.nombre}</div>
-                              <div className="text-[10px] text-[#6B5FA0]">{p.descripcion}</div>
-                              <div className="flex gap-3 mt-1">
-                                {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary flex items-center gap-1 hover:underline"><ExternalLink className="w-3 h-3" /> Ver programa</a>}
-                                {p.contacto && <span className="text-[10px] text-[#9B8EC4]">{p.contacto}</span>}
+                      {isSelected && (() => {
+                        // Indicadores de esta dimensión ordenados por % de rojo+amarillo
+                        const indsDim = INSTRUMENT.indicators.filter(ind => ind.dimension === d.id);
+                        const indsConScore = indsDim.map(ind => {
+                          let rojo = 0, amarillo = 0, total = 0;
+                          filtered.forEach(r => {
+                            const val = r.answers?.[ind.id];
+                            if (val) { total++; if (val === "rojo") rojo++; else if (val === "amarillo") amarillo++; }
+                          });
+                          return { ind, rojo, amarillo, total, pct: total > 0 ? Math.round(((rojo + amarillo) / total) * 100) : 0, pctRojo: total > 0 ? Math.round((rojo / total) * 100) : 0 };
+                        }).filter(x => x.total > 0).sort((a, b) => b.pct - a.pct);
+                        if (indsConScore.length === 0) return <div className="mt-3 pt-3 border-t border-[#B8A9E8] text-[11px] text-[#9B8EC4]">Sin datos suficientes aún.</div>;
+                        return (
+                          <div className="mt-3 pt-3 border-t border-[#B8A9E8] space-y-2 animate-in fade-in slide-in-from-top-2">
+                            <div className="text-[10px] font-black text-[#5c40c0] uppercase tracking-wider mb-2">Indicadores más críticos</div>
+                            {indsConScore.slice(0, 4).map(({ ind, rojo, amarillo, total, pct, pctRojo }) => (
+                              <div key={ind.id} className="space-y-1">
+                                <div className="flex justify-between items-start gap-2">
+                                  <span className="text-[11px] text-[#1E1040] leading-snug flex-1">{ind.label}</span>
+                                  <span className={`text-[10px] font-black flex-shrink-0 ${pctRojo >= 50 ? "text-red-500" : pct >= 40 ? "text-yellow-500" : "text-[#9B8EC4]"}`}>{pct}%</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-[#ede9fe] rounded-full overflow-hidden">
+                                  <div className="h-full flex">
+                                    <div className="bg-red-400 h-full transition-all duration-700" style={{ width: `${total > 0 ? (rojo/total)*100 : 0}%` }} />
+                                    <div className="bg-yellow-400 h-full transition-all duration-700" style={{ width: `${total > 0 ? (amarillo/total)*100 : 0}%` }} />
+                                  </div>
+                                </div>
+                                <div className="text-[9px] text-[#9B8EC4]">{rojo} en rojo · {amarillo} en alerta · {total} respondieron</div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}

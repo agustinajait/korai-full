@@ -208,7 +208,10 @@ export default function Superadmin() {
                 areas.forEach(p => { msg += p.emoji + " " + p.dimensionName + "\n"; p.accionesCorto.slice(0,2).forEach((a,i) => { msg += (i+1) + ". " + a + "\n"; }); const rec = p.recursos?.[0]; if (rec?.url) msg += "Recurso: " + rec.nombre + ": " + rec.url + "\n"; msg += "\n"; });
                 msg += "\nEn 7 dias te vamos a contactar.";
                 return (
-                  <div key={r.id || i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-white transition-colors">
+                  <div key={r.id || i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#f0eef8] transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-[#5c40c0] flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-xs font-black">{nombre ? nombre.charAt(0).toUpperCase() : "?"}</span>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm text-[#1E1040] truncate">{nombre}</div>
                       <div className="text-xs text-[#9B8EC4]">{barrio} · {fecha}{dni ? " · DNI: " + dni : ""}</div>
