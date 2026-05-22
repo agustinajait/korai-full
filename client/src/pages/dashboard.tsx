@@ -599,6 +599,19 @@ export default function Dashboard() {
   );
 
   const overallColor = stats.dist.rojo >= 0.33 ? "rojo" : stats.dist.amarillo >= 0.33 ? "amarillo" : "verde";
+
+  // KPIs ejecutivos
+  const personasCriticas = Math.round(stats.total * stats.dist.rojo);
+  const sinBeneficioVulnerable = stats.demografico?.beneficio?.no || 0;
+  const dimMasCritica = stats.mostCritical
+    ? { id: stats.mostCritical, ...stats.byDim[stats.mostCritical] }
+    : null;
+  const dimMasCriticaNombre = dimMasCritica
+    ? ({"empleo":"Empleo","ingresos":"Ingresos","vivienda":"Vivienda","salud":"Salud","educacion":"Educación","vinculos":"Red y Vínculos"}[dimMasCritica.id] || dimMasCritica.id)
+    : "";
+  const dimMasCriticaPct = dimMasCritica
+    ? Math.round((dimMasCritica.rojo / (dimMasCritica.n || 1)) * 100)
+    : 0;
   const overallBg = overallColor === "rojo" ? "bg-red-500/10 border-red-500/30" : overallColor === "amarillo" ? "bg-yellow-500/10 border-yellow-500/30" : "bg-green-500/10 border-green-500/30";
   const overallDot = overallColor === "rojo" ? "bg-red-500" : overallColor === "amarillo" ? "bg-yellow-500" : "bg-green-500";
 
@@ -782,6 +795,56 @@ export default function Dashboard() {
             <div style={{ width: `${stats.dist.amarillo * 100}%` }} className="bg-[#f59e0b] transition-all duration-1000" />
             <div style={{ width: `${stats.dist.rojo * 100}%` }} className="bg-[#ef4444] transition-all duration-1000" />
           </div>
+        </div>
+
+        {/* ── KPIs ejecutivos ───────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          {/* Personas en situación crítica */}
+          <div className="bg-gradient-to-br from-[#fff1f1] to-[#ffe4e4] border-2 border-red-200 rounded-3xl p-6 flex flex-col gap-2 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🚨</span>
+              <span className="text-xs font-black uppercase text-red-400 tracking-wider">Situación crítica</span>
+            </div>
+            <div className="text-5xl font-black text-red-500 leading-none">{personasCriticas}</div>
+            <div className="text-sm text-red-400 leading-snug">
+              personas con vulnerabilidad crítica en el territorio
+            </div>
+            <div className="text-[10px] text-red-300 mt-1">
+              {Math.round(stats.dist.rojo * 100)}% del total diagnosticado
+            </div>
+          </div>
+
+          {/* Sin cobertura de beneficios */}
+          <div className="bg-gradient-to-br from-[#fffbeb] to-[#fef3c7] border-2 border-yellow-200 rounded-3xl p-6 flex flex-col gap-2 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">⚠️</span>
+              <span className="text-xs font-black uppercase text-yellow-600 tracking-wider">Brecha de cobertura</span>
+            </div>
+            <div className="text-5xl font-black text-yellow-500 leading-none">{sinBeneficioVulnerable}</div>
+            <div className="text-sm text-yellow-600 leading-snug">
+              personas vulnerables sin ningún beneficio social
+            </div>
+            <div className="text-[10px] text-yellow-400 mt-1">
+              No están en el sistema de protección social
+            </div>
+          </div>
+
+          {/* Dimensión más crítica */}
+          <div className="bg-gradient-to-br from-[#f5f3ff] to-[#ede9fe] border-2 border-[#B8A9E8] rounded-3xl p-6 flex flex-col gap-2 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">📍</span>
+              <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Dimensión más crítica</span>
+            </div>
+            <div className="text-3xl font-black text-[#5c40c0] leading-tight">{dimMasCriticaNombre || "—"}</div>
+            <div className="text-sm text-[#6B5FA0] leading-snug">
+              {dimMasCriticaPct}% de los diagnósticos en rojo en esta área
+            </div>
+            <div className="text-[10px] text-[#9B8EC4] mt-1">
+              Requiere intervención prioritaria del municipio
+            </div>
+          </div>
+
         </div>
 
         {/* ── Panel demográfico ─────────────────────────────────────────── */}
