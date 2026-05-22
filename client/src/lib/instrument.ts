@@ -75,7 +75,7 @@ export const INSTRUMENT = {
     // ─── EDUCACIÓN ────────────────────────────────────────────────────────────
     { id: "educacion_01", dimension: "educacion", label: "Puedo leer, escribir y manejarme con trámites y mensajes importantes" },
     { id: "educacion_02", dimension: "educacion", label: "Manejo WhatsApp, mail, formularios u otras herramientas digitales básicas" },
-    { id: "educacion_03", dimension: "educacion", label: "Tengo saberes o habilidades que puedo usar para trabajar o mejorar mi situacion" },
+    { id: "educacion_03", dimension: "educacion", label: "Tengo habilidades que puedo usar para trabajar o mejorar mi situación" },
     { id: "educacion_04", dimension: "educacion", label: "Si hay chicos en el hogar, pueden sostener la escuela todos los días", soloSiNinos: true },
     { id: "educacion_05", dimension: "educacion", label: "Tengo cerca una escuela, curso o centro de formación accesible" },
     { id: "educacion_06", dimension: "educacion", label: "Si tuviera la oportunidad, podria estudiar o capacitarme — tengo ganas y posibilidades" },
@@ -88,7 +88,7 @@ export const INSTRUMENT = {
     { id: "red_03", dimension: "red", label: "Me siento respetado/a en mi entorno, sin discriminación" },
     { id: "red_04", dimension: "red", label: "Siento que soy yo quien decide sobre mi vida, nadie me controla ni me presiona" },
     { id: "red_05", dimension: "red", label: "Participo o me gustaria participar en algun grupo, club, iglesia o actividad del barrio" },
-    { id: "red_06", dimension: "red", label: "Tengo algo que me da energia o alegria — un hobby, deporte, salida o momento para mi" },
+    { id: "red_06", dimension: "red", label: "Tengo algo que me da energía o alegría — un deporte, salida o momento para mí" },
   ] as Indicator[]
 };
 

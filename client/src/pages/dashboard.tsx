@@ -988,7 +988,7 @@ export default function Dashboard() {
                 <h3 className="text-xl font-black">Diagnóstico por Dimensión</h3>
                 <p className="text-xs text-[#9B8EC4] mt-1">Hacé clic en una dimensión para ver los indicadores más críticos</p>
               </div>
-              <div className="p-6 grid sm:grid-cols-2 gap-4">
+              <div className="p-6 grid sm:grid-cols-2 gap-4 items-start">
                 {INSTRUMENT.dimensions.map(d => {
                   const s = stats.byDim[d.id] || { rojo: 0, amarillo: 0, verde: 0, n: 0, color: "verde", severity: 0, explanation: "" };
                   const isSelected = selectedDimension === d.id;
