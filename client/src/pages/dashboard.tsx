@@ -517,6 +517,7 @@ export default function Dashboard() {
       vivienda: { propia: 0, alquiler: 0, prestada: 0, inestable: 0 },
       beneficio: { si: 0, no: 0 },
       seguridad: { seguro: 0, inseguro: 0 },
+      habilidades: { limpieza: 0, cuidado: 0, cocina: 0, construccion: 0, ventas: 0, admin: 0, tecnologia: 0, oficios: 0, otro: 0 },
     };
 
     filtered.forEach(r => {
@@ -550,6 +551,16 @@ export default function Dashboard() {
       // Beneficio social (solo quienes vieron la pregunta: ingreso bajo)
       if (demo.beneficio_social === "si") demografico.beneficio.si++;
       else if (demo.beneficio_social === "no") demografico.beneficio.no++;
+
+      // Habilidades laborales (emp_tareas — multi)
+      const tareas = r.answers?.["emp_tareas"];
+      if (tareas) {
+        const vals = Array.isArray(tareas) ? tareas : String(tareas).split(",");
+        vals.forEach((v: string) => {
+          const k = v.trim() as keyof typeof demografico.habilidades;
+          if (k in demografico.habilidades) demografico.habilidades[k]++;
+        });
+      }
 
       // Seguridad barrial (indicador vivienda_05)
       const seg = r.answers?.["vivienda_05"];
@@ -1027,6 +1038,45 @@ export default function Dashboard() {
                   );
                 })}
                 <p className="text-[9px] text-[#9B8EC4] pt-1">Basado en: "Me siento seguro/a en mi barrio, especialmente de noche"</p>
+              </div>
+            )}
+
+            {/* Habilidades laborales */}
+            {Object.values(stats.demografico.habilidades).some(v => v > 0) && (
+              <div className="bg-gradient-to-br from-white to-[#ede9fe] border border-[#B8A9E8] rounded-3xl p-5 space-y-3 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🛠️</span>
+                  <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Habilidades laborales</span>
+                </div>
+                <p className="text-[9px] text-[#9B8EC4]">Solo usuarios sin empleo que pasaron por profundización</p>
+                {[
+                  { label: "Limpieza",       key: "limpieza",      emoji: "🧹" },
+                  { label: "Cuidado",        key: "cuidado",       emoji: "🤝" },
+                  { label: "Cocina",         key: "cocina",        emoji: "🍳" },
+                  { label: "Construcción",   key: "construccion",  emoji: "🏗️" },
+                  { label: "Ventas",         key: "ventas",        emoji: "🛒" },
+                  { label: "Administración", key: "admin",         emoji: "📋" },
+                  { label: "Tecnología",     key: "tecnologia",    emoji: "💻" },
+                  { label: "Oficios",        key: "oficios",       emoji: "🔧" },
+                  { label: "Otro",           key: "otro",          emoji: "➕" },
+                ].filter(({ key }) => stats.demografico.habilidades[key as keyof typeof stats.demografico.habilidades] > 0)
+                 .sort((a, b) => stats.demografico.habilidades[b.key as keyof typeof stats.demografico.habilidades] - stats.demografico.habilidades[a.key as keyof typeof stats.demografico.habilidades])
+                 .map(({ label, key, emoji }) => {
+                  const val = stats.demografico.habilidades[key as keyof typeof stats.demografico.habilidades];
+                  const base = Object.values(stats.demografico.habilidades).reduce((a, b) => a + b, 0);
+                  const pct = base > 0 ? Math.round((val / base) * 100) : 0;
+                  return (
+                    <div key={key} className="space-y-1">
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-[#6B5FA0]">{emoji} {label}</span>
+                        <span className="font-black text-[#1E1040]">{val} <span className="text-[#9B8EC4] font-normal">({pct}%)</span></span>
+                      </div>
+                      <div className="h-1.5 bg-[#DDD6FE] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#5c40c0] rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
