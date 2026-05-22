@@ -163,7 +163,7 @@ export default function Superadmin() {
 
         <div className="flex items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#5c40c0] to-[#7c5cff] text-[#1E1040] flex items-center justify-center font-black text-2xl">K</div>
+            <img src={koraiLogo} alt="KORAI" className="w-12 h-12 object-contain" />
             <div><div className="text-xl font-black">KORAI Superadmin</div><div className="text-xs text-[#6B5FA0]">Panel de control total</div></div>
           </div>
           <div className="flex items-center gap-2">
@@ -179,15 +179,15 @@ export default function Superadmin() {
 
         <div className="grid grid-cols-3 gap-3">
           {[{ label: "Total usuarios", value: responses.length }, { label: "Con seguimiento", value: responses.filter(r => r.acepto_seguimiento).length }, { label: "Con telefono", value: responses.filter(r => getTelefono(r)).length }].map(s => (
-            <div key={s.label} className="bg-white border border-[#DDD6FE] rounded-2xl p-4"><div className="text-2xl font-black">{s.value}</div><div className="text-xs text-[#6B5FA0] mt-1">{s.label}</div></div>
+            <div key={s.label} className="bg-white border border-[#B8A9E8] rounded-2xl p-4"><div className="text-2xl font-black">{s.value}</div><div className="text-xs text-[#6B5FA0] mt-1">{s.label}</div></div>
           ))}
         </div>
 
         {showCaseList && (
-          <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
-            <div className="p-5 border-b border-[#DDD6FE]">
+          <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+            <div className="p-5 border-b border-[#B8A9E8]">
               <h3 className="font-black text-lg mb-3">Usuarios registrados</h3>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, DNI o barrio..." className="w-full h-11 px-4 rounded-xl bg-white border border-[#DDD6FE] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, DNI o barrio..." className="w-full h-11 px-4 rounded-xl bg-white border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none" />
             </div>
             <div className="divide-y divide-[#EDE9FE] max-h-[500px] overflow-y-auto">
               {filtered.map((r, i) => {
@@ -263,15 +263,15 @@ export default function Superadmin() {
 
         <div className="grid lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
-              <div className="p-6 border-b border-[#DDD6FE]"><h3 className="text-xl font-black">Diagnostico por Dimension</h3></div>
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+              <div className="p-6 border-b border-[#B8A9E8]"><h3 className="text-xl font-black">Diagnostico por Dimension</h3></div>
               <div className="p-6 grid sm:grid-cols-2 gap-4">
                 {INSTRUMENT.dimensions.map(d => {
                   const s = stats.byDim[d.id] || { rojo: 0, amarillo: 0, verde: 0, n: 0, color: "verde", severity: 0, explanation: "" };
                   const isSelected = selectedDimension === d.id;
                   const isCritical = stats.mostCritical === d.id && s.severity > 0;
                   return (
-                    <div key={d.id} onClick={() => setSelectedDimension(isSelected ? null : d.id)} className={`p-5 rounded-3xl border transition-all cursor-pointer space-y-3 relative ${isSelected ? "border-primary/50 bg-primary/5" : isCritical ? "border-red-500/50 bg-red-500/5" : "border-[#DDD6FE] bg-white hover:bg-[#ede9fe]"}`}>
+                    <div key={d.id} onClick={() => setSelectedDimension(isSelected ? null : d.id)} className={`p-5 rounded-3xl border transition-all cursor-pointer space-y-3 relative ${isSelected ? "border-primary/50 bg-primary/5" : isCritical ? "border-red-500/50 bg-red-500/5" : "border-[#B8A9E8] bg-white hover:bg-[#ede9fe]"}`}>
                       {isCritical && <div className="absolute -top-2 -right-2 bg-red-500 text-[#1E1040] text-[9px] font-black px-2 py-0.5 rounded-full">CRITICO</div>}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3"><span className="text-2xl">{d.emoji}</span><div><div className="font-bold">{d.name}</div><div className="text-[10px] text-[#9B8EC4]">Severidad: {s.severity}%</div></div></div>
@@ -280,7 +280,7 @@ export default function Superadmin() {
                       <div className="h-1.5 w-full bg-white rounded-full overflow-hidden"><div style={{ width: `${s.severity}%` }} className={`h-full rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} /></div>
                       <p className="text-[11px] text-[#6B5FA0] italic">{s.explanation}</p>
                       {isSelected && PROGRAMAS_CABA[d.id] && (
-                        <div className="mt-3 pt-3 border-t border-[#DDD6FE] space-y-2">
+                        <div className="mt-3 pt-3 border-t border-[#B8A9E8] space-y-2">
                           {PROGRAMAS_CABA[d.id].map((p, i) => (
                             <div key={i} className="p-3 rounded-xl bg-white space-y-1">
                               <div className="font-bold text-xs">{p.nombre}</div>
@@ -300,10 +300,10 @@ export default function Superadmin() {
 
           <div className="lg:col-span-4 space-y-6">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white border border-[#DDD6FE] rounded-2xl p-4"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Diagnosticos</div><div className="text-3xl font-black">{stats.total}</div><div className="text-[10px] text-green-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> En tiempo real</div></div>
-              <div className="bg-white border border-[#DDD6FE] rounded-2xl p-4"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Barrios</div><div className="text-3xl font-black">{barrios.length}</div><div className="text-[10px] text-[#9B8EC4] mt-1">con datos</div></div>
+              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Diagnosticos</div><div className="text-3xl font-black">{stats.total}</div><div className="text-[10px] text-green-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> En tiempo real</div></div>
+              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Barrios</div><div className="text-3xl font-black">{barrios.length}</div><div className="text-[10px] text-[#9B8EC4] mt-1">con datos</div></div>
             </div>
-            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5">
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5">
               <h3 className="text-base font-black mb-4 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-primary" /> Voces del territorio</h3>
               <div className="space-y-3 max-h-[300px] overflow-y-auto">
                 {stats.comentarios.length > 0 ? stats.comentarios.map((c, i) => (

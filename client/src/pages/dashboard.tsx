@@ -99,9 +99,9 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
         </div>
 
         {/* Header */}
-        <div className="bg-white border border-[#DDD6FE] rounded-3xl p-6">
+        <div className="bg-white border border-[#B8A9E8] rounded-3xl p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#5c40c0] to-[#7c5cff] flex items-center justify-center">
+            <div className="w-12 h-12 flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-[#1E1040]" />
             </div>
             <div>
@@ -120,8 +120,8 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
         ) : (
           <>
             {/* Evolución visual por dimensión */}
-            <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
-              <div className="p-5 border-b border-[#DDD6FE]">
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+              <div className="p-5 border-b border-[#B8A9E8]">
                 <h3 className="font-black text-lg">Evolución por dimensión</h3>
                 <p className="text-xs text-[#9B8EC4] mt-1">Cada columna es un diagnóstico. De izquierda a derecha, del más antiguo al más reciente.</p>
               </div>
@@ -180,8 +180,8 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
             </div>
 
             {/* Timeline */}
-            <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
-              <div className="p-5 border-b border-[#DDD6FE]">
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+              <div className="p-5 border-b border-[#B8A9E8]">
                 <h3 className="font-black text-lg">Timeline de diagnósticos</h3>
               </div>
               <div className="divide-y divide-[#EDE9FE]">
@@ -271,8 +271,8 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
         </div>
 
         {/* Perfil */}
-        <div className="bg-white border border-[#DDD6FE] rounded-3xl p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#5c40c0] to-[#7c5cff] flex items-center justify-center">
+        <div className="bg-white border border-[#B8A9E8] rounded-3xl p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div className="w-14 h-14 flex items-center justify-center">
             <User className="w-7 h-7 text-[#1E1040]" />
           </div>
           <div className="flex-1">
@@ -306,8 +306,8 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
         </div>
 
         {/* Scores por dimensión */}
-        <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
-          <div className="p-5 border-b border-[#DDD6FE]">
+        <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+          <div className="p-5 border-b border-[#B8A9E8]">
             <h3 className="font-black text-lg">Diagnóstico por dimensión</h3>
             <p className="text-xs text-[#9B8EC4] mt-1">Resultado del autodiagnóstico en las 6 áreas de bienestar</p>
           </div>
@@ -343,15 +343,15 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
         </div>
 
         {/* Plan generado */}
-        <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
-          <div className="p-5 border-b border-[#DDD6FE]">
+        <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+          <div className="p-5 border-b border-[#B8A9E8]">
             <h3 className="font-black text-lg">Plan de acción generado</h3>
             <p className="text-xs text-[#9B8EC4] mt-1">Áreas prioritarias y acciones recomendadas para este caso</p>
           </div>
           <div className="p-5 space-y-4">
             {plan.map((item, i) => (
               <div key={i} className={`p-4 rounded-2xl border space-y-3 ${
-                item.esPrioritaria ? "border-red-500/30 bg-red-500/5" : "border-[#DDD6FE] bg-[#f8f6ff]"
+                item.esPrioritaria ? "border-red-500/30 bg-red-500/5" : "border-[#B8A9E8] bg-[#f8f6ff]"
               }`}>
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{item.emoji}</span>
@@ -388,7 +388,7 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
                         href={r.url || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] bg-white border border-[#DDD6FE] px-2 py-1 rounded-lg text-primary hover:bg-[#ede9fe] flex items-center gap-1 transition-colors"
+                        className="text-[10px] bg-white border border-[#B8A9E8] px-2 py-1 rounded-lg text-primary hover:bg-[#ede9fe] flex items-center gap-1 transition-colors"
                       >
                         <ExternalLink className="w-2.5 h-2.5" /> {r.nombre}
                       </a>
@@ -402,7 +402,7 @@ function CasoIndividual({ response, onBack }: { response: any; onBack: () => voi
 
         {/* Texto abierto si existe */}
         {response.texto_abierto && (
-          <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5">
+          <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5">
             <h3 className="font-black text-base mb-3 flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-primary" /> Lo que nos contó
             </h3>
@@ -608,7 +608,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#5c40c0] to-[#7c5cff] text-[#1E1040] flex items-center justify-center font-black text-2xl shadow-lg shadow-[#5c40c0]/10">K</div>
+            <img src={koraiLogo} alt="KORAI" className="w-12 h-12 object-contain" />
             <div>
               <div className="text-xl font-black leading-tight">KORAI Dashboard</div>
               <div className="text-xs text-[#6B5FA0]">Panel institucional · Ciudad de Buenos Aires</div>
@@ -633,8 +633,8 @@ export default function Dashboard() {
 
         {/* LISTA DE CASOS INDIVIDUALES */}
         {showCaseList && (
-          <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden">
-            <div className="p-5 border-b border-[#DDD6FE] flex items-center justify-between">
+          <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+            <div className="p-5 border-b border-[#B8A9E8] flex items-center justify-between">
               <div>
                 <h3 className="font-black text-lg">Casos individuales</h3>
                 <p className="text-xs text-[#9B8EC4] mt-0.5">{filtered.length} diagnósticos · Clic para ver detalle · "Evolución" para ver trazabilidad</p>
@@ -661,7 +661,7 @@ export default function Dashboard() {
                   >
                     {/* Avatar con indicador seguimiento */}
                     <div className="relative flex-shrink-0">
-                      <div className="w-9 h-9 rounded-xl bg-white border border-[#DDD6FE] flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-xl bg-white border border-[#B8A9E8] flex items-center justify-center">
                         <User className="w-4 h-4 text-[#9B8EC4]" />
                       </div>
                       {aceptoSeguimiento && (
@@ -783,7 +783,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
             {/* Empleo */}
-            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5 space-y-3">
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">💼</span>
                 <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Situación laboral</span>
@@ -809,7 +809,7 @@ export default function Dashboard() {
             </div>
 
             {/* Ingreso */}
-            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5 space-y-3">
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">💰</span>
                 <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Ingreso del hogar</span>
@@ -837,7 +837,7 @@ export default function Dashboard() {
             </div>
 
             {/* Educación */}
-            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5 space-y-3">
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📚</span>
                 <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Educación</span>
@@ -865,7 +865,7 @@ export default function Dashboard() {
             </div>
 
             {/* Vivienda */}
-            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5 space-y-3">
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🏠</span>
                 <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Tipo de vivienda</span>
@@ -897,8 +897,8 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-12 gap-6">
           {/* Dimensiones */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white border border-[#DDD6FE] rounded-3xl overflow-hidden shadow-sm">
-              <div className="p-6 border-b border-[#DDD6FE]">
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden shadow-sm">
+              <div className="p-6 border-b border-[#B8A9E8]">
                 <h3 className="text-xl font-black">Diagnóstico por Dimensión</h3>
                 <p className="text-xs text-[#9B8EC4] mt-1">Hacé clic en una dimensión para ver los programas disponibles</p>
               </div>
@@ -911,7 +911,7 @@ export default function Dashboard() {
                     <div key={d.id} onClick={() => setSelectedDimension(isSelected ? null : d.id)}
                       className={`p-5 rounded-3xl border transition-all cursor-pointer space-y-3 relative ${
                         isSelected ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20" :
-                        isCritical ? "border-red-500/50 bg-red-500/5" : "border-[#DDD6FE] bg-white hover:bg-[#ede9fe]"
+                        isCritical ? "border-red-500/50 bg-red-500/5" : "border-[#B8A9E8] bg-white hover:bg-[#ede9fe]"
                       }`}>
                       {isCritical && (
                         <div className="absolute -top-2 -right-2 bg-red-500 text-[#1E1040] text-[9px] font-black px-2 py-0.5 rounded-full animate-bounce">ÁREA CRÍTICA</div>
@@ -938,10 +938,10 @@ export default function Dashboard() {
                       </div>
                       <p className="text-[11px] text-[#6B5FA0] italic">{s.explanation}</p>
                       {isSelected && PROGRAMAS_CABA[d.id] && (
-                        <div className="mt-3 pt-3 border-t border-[#DDD6FE] space-y-2 animate-in fade-in slide-in-from-top-2">
+                        <div className="mt-3 pt-3 border-t border-[#B8A9E8] space-y-2 animate-in fade-in slide-in-from-top-2">
                           <div className="text-[10px] font-black text-primary uppercase tracking-wider mb-2">Programas disponibles en CABA</div>
                           {PROGRAMAS_CABA[d.id].map((p, i) => (
-                            <div key={i} className="p-3 rounded-xl bg-white border border-[#DDD6FE] space-y-1">
+                            <div key={i} className="p-3 rounded-xl bg-white border border-[#B8A9E8] space-y-1">
                               <div className="font-bold text-xs text-[#1E1040]">{p.nombre}</div>
                               <div className="text-[10px] text-[#6B5FA0]">{p.descripcion}</div>
                               <div className="flex gap-3 mt-1">
@@ -970,7 +970,7 @@ export default function Dashboard() {
                     (PROGRAMAS_CABA[dimId] || []).slice(0, 2).map((p, i) => {
                       const dim = INSTRUMENT.dimensions.find(d => d.id === dimId);
                       return (
-                        <div key={`${dimId}-${i}`} className="p-4 rounded-2xl bg-white border border-[#DDD6FE] space-y-2">
+                        <div key={`${dimId}-${i}`} className="p-4 rounded-2xl bg-white border border-[#B8A9E8] space-y-2">
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{dim?.emoji}</span>
                             <div className="text-[10px] text-[#9B8EC4] uppercase font-bold">{dim?.name}</div>
@@ -990,25 +990,25 @@ export default function Dashboard() {
           {/* Columna derecha */}
           <div className="lg:col-span-4 space-y-6">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white border border-[#DDD6FE] rounded-2xl p-4">
+              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4">
                 <div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Diagnósticos</div>
                 <div className="text-3xl font-black text-[#1E1040]">{stats.total}</div>
                 <div className="text-[10px] text-green-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> En tiempo real</div>
               </div>
-              <div className="bg-white border border-[#DDD6FE] rounded-2xl p-4">
+              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4">
                 <div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Barrios</div>
                 <div className="text-3xl font-black text-[#1E1040]">{barrios.length}</div>
                 <div className="text-[10px] text-[#9B8EC4] mt-1">con datos</div>
               </div>
             </div>
 
-            <div className="bg-white border border-[#DDD6FE] rounded-3xl p-5 shadow-sm">
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 shadow-sm">
               <h3 className="text-base font-black mb-4 flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-primary" /> Voces del territorio
               </h3>
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                 {stats.comentarios.length > 0 ? stats.comentarios.map((c: any, i: number) => (
-                  <div key={i} className="p-4 rounded-2xl bg-white border border-[#DDD6FE]">
+                  <div key={i} className="p-4 rounded-2xl bg-white border border-[#B8A9E8]">
                     <div className="flex items-center gap-2 mb-2">
                       <MapPin className="w-3 h-3 text-primary" />
                       <span className="text-[10px] font-bold text-[#6B5FA0]">{c.barrio}</span>
