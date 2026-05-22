@@ -49,7 +49,15 @@ function generarMensaje2(plan: any[], context: any, profundizacion: any): string
   const criticas = plan.filter((p: any) => p.nivelColor === "rojo").slice(0, 2);
   const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
 
-  let msg = `Perfecto${nombre ? ` ${nombre}` : ""} ðŸ™Œ AcÃ¡ estÃ¡ tu plan para las prÃ³ximas 2 semanas:\n\n`;
+  // Resumen de áreas críticas
+  const areasResumen = areas.map((p: any) => `${p.emoji} ${p.dimensionName}`).join("\n");
+
+  let msg = `Hola ${nombre} 👋\n`;
+  msg += `Soy Korai, tu asistente de bienestar social.\n`;
+  msg += `Analizamos tu diagnóstico y detectamos que hoy podrías necesitar apoyo principalmente en:\n`;
+  msg += `${areasResumen}\n\n`;
+  msg += `*📌 En 7 días vamos a volver a contactarte para acompañarte y guiarte en los próximos pasos de tu proceso.*\n\n`;
+  msg += `Este es tu plan de acción personalizado para empezar esta semana:\n\n`;
 
   areas.forEach((p: any) => {
     msg += `${p.emoji} *${p.dimensionName}*\n`;
@@ -57,20 +65,19 @@ function generarMensaje2(plan: any[], context: any, profundizacion: any): string
       msg += `${i + 1}. ${a}\n`;
     });
     const r = p.recursos?.[0];
-    if (r?.telefono) msg += `ðŸ“ž ${r.nombre}: ${r.telefono}\n`;
-    else if (r?.url) msg += `ðŸ”— ${r.nombre}: ${r.url}\n`;
+    if (r?.nombre && r?.url) msg += `\nRecurso útil:\n${r.nombre}\n${r.url}\n`;
+    else if (r?.nombre && r?.telefono) msg += `\nRecurso útil:\n${r.nombre}: ${r.telefono}\n`;
 
     if (p.dimensionId === "empleo" && profundizacion?.emp_disponibilidad !== "no") {
-      msg += `ðŸ”— SacÃ¡ turno en el CIL: buenosaires.gob.ar/tramites/centro-de-integracion-laboral\n`;
+      msg += `\nRecurso útil:\nCIL – Centro de Integración Laboral\nformulario-sigeci.buenosaires.gob.ar\n`;
     }
     if (p.dimensionId === "salud" && profundizacion?.sal_cobertura === "no") {
-      msg += `ðŸ“ž SUMAR (sin obra social): 0800-222-5462\n`;
+      msg += `\nRecurso útil:\nSUMAR (sin obra social): 0800-222-5462\n`;
     }
     msg += "\n";
   });
 
-  msg += `---\nEn 7 dÃ­as te vamos a preguntar cÃ³mo te fue ðŸ’ª\n`;
-  msg += `_Korai â€” app.korai.lat_`;
+  msg += `Saludos,\nEquipo Korai`;
   return msg;
 }
 
@@ -119,7 +126,7 @@ export default function Confirmar() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-5 bg-[#f0eef8]">
+    <div className="min-h-screen flex flex-col items-center justify-center px-5 bg-[#F4F0FF]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -168,7 +175,7 @@ export default function Confirmar() {
                   enviarWhatsApp(telefono, mensaje).catch(err => console.error("Error reenviando WhatsApp:", err));
                 }
               }}
-              className="w-full h-12 font-bold rounded-2xl bg-[#5c40c0] text-white flex items-center justify-center gap-2"
+              className="w-full h-12 font-bold rounded-2xl bg-[#5B21B6] text-white flex items-center justify-center gap-2"
             >
               ðŸ“² Reenviar mi plan por WhatsApp
             </Button>
@@ -189,7 +196,7 @@ export default function Confirmar() {
               <h1 className="text-xl font-black text-[#1E1040]">No pudimos confirmar</h1>
               <p className="text-[#6B5FA0] text-sm">El link puede haber expirado. VolvÃ© a tu diagnÃ³stico.</p>
             </div>
-            <Button onClick={() => setLocation("/")} className="bg-[#5c40c0] text-white rounded-2xl h-12 w-full font-bold">
+            <Button onClick={() => setLocation("/")} className="bg-[#5B21B6] text-white rounded-2xl h-12 w-full font-bold">
               Volver al inicio
             </Button>
           </>

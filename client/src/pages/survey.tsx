@@ -692,14 +692,10 @@ export default function Survey() {
 
           <button
             onClick={() => {
-              const plan = JSON.parse(localStorage.getItem("korai_user_plan_v1") || "[]");
               const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-              const nombre = context.nombre ? " Mi nombre es " + context.nombre + "." : "";
-              const dni = context.dni ? "\nDNI: " + context.dni : "";
-              const top2 = plan.slice(0, 2);
-              let msg = "Hola Korai! Termine mi diagnostico." + nombre + dni + "\n\nMi plan prioriza: " + top2.map(p => p.dimensionName).join(" y ") + "\n\n";
-              top2.forEach(p => { msg += p.emoji + " " + p.dimensionName + ": " + p.accionesCorto[0] + "\n"; const r = p.recursos?.[0]; if (r?.url) msg += "Recurso: " + r.nombre + ": " + r.url + "\n"; msg += "\n"; });
-              msg += "En 7 dias te volvemos a contactar. Korai - app.korai.lat";
+              const nombre = context.nombre || "";
+              const dni = context.dni || "";
+              const msg = "Hola Korai, terminé mi diagnóstico.\nMi nombre es " + nombre + "\nDNI: " + dni + "\nQuiero recibir mi plan de acción y comenzar este proceso de acompañamiento con vos.";
               window.open("https://wa.me/5491161210313?text=" + encodeURIComponent(msg), "_blank");
             }}
             style={{ width: "100%", height: "52px", borderRadius: "14px", border: "none", background: "#25D366", color: "white", fontWeight: 800, fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "10px" }}
