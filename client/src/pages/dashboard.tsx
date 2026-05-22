@@ -552,8 +552,9 @@ export default function Dashboard() {
       if (demo.beneficio_social === "si") demografico.beneficio.si++;
       else if (demo.beneficio_social === "no") demografico.beneficio.no++;
 
-      // Habilidades laborales (emp_tareas — multi)
-      const tareas = r.answers?.["emp_tareas"];
+      // Habilidades laborales (emp_tareas — en profundizacion)
+      const profDem = perfil?.profundizacion || {};
+      const tareas = profDem["emp_tareas"];
       if (tareas) {
         const vals = Array.isArray(tareas) ? tareas : String(tareas).split(",");
         vals.forEach((v: string) => {
