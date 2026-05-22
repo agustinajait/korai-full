@@ -425,6 +425,7 @@ export default function Dashboard() {
   const [barrioFilter, setBarrioFilter] = useState("all");
   const [selectedCase, setSelectedCase] = useState<any | null>(null);
   const [showCaseList, setShowCaseList] = useState(false);
+  const [filtroCriticos, setFiltroCriticos] = useState(false);
   const [showTrazabilidad, setShowTrazabilidad] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -662,7 +663,12 @@ export default function Dashboard() {
             <div className="p-5 border-b border-[#B8A9E8] flex items-center justify-between">
               <div>
                 <h3 className="font-black text-lg">Casos individuales</h3>
-                <p className="text-xs text-[#9B8EC4] mt-0.5">{filtered.length} diagnósticos · Clic para ver detalle · "Evolución" para ver trazabilidad</p>
+                <p className="text-xs text-[#9B8EC4] mt-0.5">
+                  {filtroCriticos
+                    ? <><span className="text-red-500 font-bold">🚨 Mostrando solo casos críticos</span> · <button onClick={() => setFiltroCriticos(false)} className="underline text-[#6B5FA0]">Ver todos</button></>
+                    : <>{filtered.length} diagnósticos · Clic para ver detalle · "Evolución" para ver trazabilidad</>
+                  }
+                </p>
               </div>
               <div className="flex gap-3 text-[10px] text-[#9B8EC4]">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Aceptó seguimiento</span>
@@ -670,7 +676,13 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="divide-y divide-[#EDE9FE] max-h-[600px] overflow-y-auto">
-              {filtered.map((r, i) => {
+              {(filtroCriticos
+                ? filtered.filter(r => {
+                    const sc = calcularScores(r.answers || {}, r.perfil_contextual?.demographics?.situacion_laboral);
+                    return sc.filter(s => s.color === "rojo").length >= 2;
+                  })
+                : filtered
+              ).map((r, i) => {
                 const sitLabR = (() => { try { const p = (() => { const raw = r.perfil_contextual; return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); })(); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
                 const scores = calcularScores(r.answers || {}, sitLabR);
                 const rojas = scores.filter(s => s.color === "rojo").length;
@@ -806,15 +818,21 @@ export default function Dashboard() {
         {/* ── KPIs ejecutivos ───────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-          {/* Personas en situación crítica */}
-          <div className="bg-white border border-[#B8A9E8] rounded-2xl p-5 flex flex-col gap-1.5 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-base">🚨</span>
-              <span className="text-[10px] font-black uppercase text-red-400 tracking-wider">Situación crítica</span>
+          {/* Personas en situación crítica — clickeable */}
+          <div
+            className={`rounded-2xl p-5 flex flex-col gap-1.5 shadow-sm cursor-pointer transition-all border-2 ${filtroCriticos ? "bg-red-50 border-red-400 ring-2 ring-red-200" : "bg-white border-[#B8A9E8] hover:border-red-300 hover:bg-red-50"}`}
+            onClick={() => { setFiltroCriticos(f => !f); setShowCaseList(true); }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🚨</span>
+                <span className="text-[10px] font-black uppercase text-red-400 tracking-wider">Situación crítica</span>
+              </div>
+              {filtroCriticos && <span className="text-[9px] bg-red-500 text-white px-2 py-0.5 rounded-full font-black">FILTRO ON</span>}
             </div>
             <div className="text-4xl font-black text-red-500 leading-none">{personasCriticas}</div>
             <div className="text-sm text-[#6B5FA0] leading-snug">personas en situación crítica</div>
-            <div className="text-[10px] text-[#9B8EC4]">{Math.round(stats.dist.rojo * 100)}% del total diagnosticado</div>
+            <div className="text-[10px] text-[#9B8EC4]">{Math.round(stats.dist.rojo * 100)}% del total · <span className="text-red-400 font-bold">Clic para ver</span></div>
           </div>
 
           {/* Sin cobertura de beneficios */}
