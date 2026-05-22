@@ -105,6 +105,17 @@ const CONTEXT_QUESTIONS = [
       { value: "prefiero_no",     label: "Prefiero no decirlo",            emoji: "🔒" },
     ],
   },
+  {
+    id: "beneficio_social",
+    emoji: "🏛️",
+    titulo: "¿Recibís algún beneficio social del gobierno?",
+    subtitulo: "AUH, Potenciar Trabajo, pensiones, tarjetas alimentarias u otros programas.",
+    opciones: [
+      { value: "si",  label: "Sí, recibo algún beneficio", emoji: "✅" },
+      { value: "no",  label: "No recibo ninguno",           emoji: "❌" },
+    ],
+    soloSiIngreso: ["menos_700k", "700k_1300k"],
+  },
 ];
 
 function ContextQuestion({
@@ -253,8 +264,9 @@ export default function Welcome() {
   const [returnError, setReturnError] = useState("");
 
   const activeQuestions = CONTEXT_QUESTIONS.filter(q => {
-    if (!q.soloSi) return true;
-    return q.soloSi.includes(contextAnswers.personas_cargo || "");
+    if (q.soloSi && !q.soloSi.includes(contextAnswers.personas_cargo || "")) return false;
+    if ((q as any).soloSiIngreso && !(q as any).soloSiIngreso.includes(contextAnswers.ingreso_hogar || "")) return false;
+    return true;
   });
 
   const handleFormNext = () => {
@@ -276,8 +288,9 @@ export default function Welcome() {
     setContextAnswers(newAnswers);
 
     const nextActive = CONTEXT_QUESTIONS.filter(q => {
-      if (!q.soloSi) return true;
-      return q.soloSi.includes(newAnswers.personas_cargo || "");
+      if (q.soloSi && !q.soloSi.includes(newAnswers.personas_cargo || "")) return false;
+      if ((q as any).soloSiIngreso && !(q as any).soloSiIngreso.includes(newAnswers.ingreso_hogar || "")) return false;
+      return true;
     });
 
     if (contextStep + 1 < nextActive.length) {

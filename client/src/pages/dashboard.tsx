@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import koraiLogo from "@/lib/koraiLogo";
 import { INSTRUMENT } from "@/lib/instrument";
 import { calcularScores, generatePlanDesdeScores } from "@/lib/korai-logic";
 import { Loader2, AlertCircle, TrendingUp, Users, MessageSquare, LogOut, MapPin, ExternalLink, ArrowLeft, User, ChevronRight } from "lucide-react";
@@ -513,6 +514,7 @@ export default function Dashboard() {
       ingreso: { menos_700k: 0, r700k_1300k: 0, r1300k_2000k: 0, mas_2000k: 0, prefiero_no: 0 },
       educacion: { sin_secundario: 0, con_secundario: 0, cursando: 0 },
       vivienda: { propia: 0, alquiler: 0, prestada: 0, inestable: 0 },
+      beneficio: { si: 0, no: 0 },
     };
 
     filtered.forEach(r => {
@@ -542,6 +544,10 @@ export default function Dashboard() {
       else if (demo.tipo_vivienda === "alquiler") demografico.vivienda.alquiler++;
       else if (demo.tipo_vivienda === "prestada") demografico.vivienda.prestada++;
       else if (demo.tipo_vivienda === "inestable") demografico.vivienda.inestable++;
+
+      // Beneficio social (solo quienes vieron la pregunta: ingreso bajo)
+      if (demo.beneficio_social === "si") demografico.beneficio.si++;
+      else if (demo.beneficio_social === "no") demografico.beneficio.no++;
     });
 
     return {
@@ -890,6 +896,35 @@ export default function Dashboard() {
                 );
               })}
             </div>
+
+            {/* Beneficio social */}
+            {(stats.demografico.beneficio.si + stats.demografico.beneficio.no) > 0 && (
+              <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🏛️</span>
+                  <span className="text-xs font-black uppercase text-[#6B5FA0] tracking-wider">Beneficio social</span>
+                </div>
+                <p className="text-[10px] text-[#9B8EC4]">Solo usuarios con ingreso bajo</p>
+                {[
+                  { label: "Recibe beneficio", val: stats.demografico.beneficio.si, color: "bg-green-500" },
+                  { label: "No recibe ninguno", val: stats.demografico.beneficio.no, color: "bg-red-500" },
+                ].map(({ label, val, color }) => {
+                  const base = stats.demografico.beneficio.si + stats.demografico.beneficio.no;
+                  const pct = base > 0 ? Math.round((val / base) * 100) : 0;
+                  return (
+                    <div key={label} className="space-y-1">
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-[#6B5FA0]">{label}</span>
+                        <span className="font-black text-[#1E1040]">{pct}% <span className="text-[#9B8EC4] font-normal">({val})</span></span>
+                      </div>
+                      <div className="h-1.5 bg-[#DDD6FE] rounded-full overflow-hidden">
+                        <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
           </div>
         )}
