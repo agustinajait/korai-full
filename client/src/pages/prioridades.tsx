@@ -79,7 +79,12 @@ export default function Prioridades() {
     const nombre = context.nombre || "";
     const dni = context.dni ? `\nDNI: ${context.dni}` : "";
     const msg = `Hola Korai. Terminé mi diagnóstico.\n\nMi nombre es ${nombre} y quiero que me envíes mi plan personalizado y me acompañes en el proceso.${dni}`;
-    window.open(`https://wa.me/5491161210313?text=${encodeURIComponent(msg)}`, "_blank");
+    const encoded = encodeURIComponent(msg);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const url = isMobile
+      ? `https://wa.me/5491161210313?text=${encoded}`
+      : `https://web.whatsapp.com/send?phone=5491161210313&text=${encoded}`;
+    window.open(url, "_blank");
   };
 
   if (plan.length === 0) {
