@@ -74,21 +74,17 @@ export default function Prioridades() {
     }
   }, []);
 
-  const handleWhatsApp = (item?: PlanItem) => {
+  const handleWhatsApp = (_item?: PlanItem) => {
     const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-    const nombre = context.nombre ? ` Mi nombre es ${context.nombre}.` : "";
+    const nombre = context.nombre || "";
     const dni = context.dni ? `\nDNI: ${context.dni}` : "";
-    const items = item ? [item] : plan.slice(0, 2);
-    const areaName = items.map(p => p.dimensionName).join(" y ");
-    let msg = `Hola Korai! Termine mi diagnostico.${nombre}${dni}\n\nMi plan prioriza: ${areaName}\n\n`;
-    items.forEach(p => {
-      msg += `${p.emoji} ${p.dimensionName}: ${p.accionesCorto[0]}\n`;
-      const r = p.recursos?.[0];
-      if (r?.url) msg += `Recurso: ${r.nombre}: ${r.url}\n`;
-      msg += "\n";
-    });
-    msg += `En 7 dias te volvemos a contactar. Korai - app.korai.lat`;
-    window.open(`https://wa.me/5491161210313?text=${encodeURIComponent(msg)}`, "_blank");
+    const msg = `Hola Korai. Terminé mi diagnóstico.\n\nMi nombre es ${nombre} y quiero que me envíes mi plan personalizado y me acompañes en el proceso.${dni}`;
+    const encoded = encodeURIComponent(msg);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const url = isMobile
+      ? `https://wa.me/5491161210313?text=${encoded}`
+      : `https://web.whatsapp.com/send?phone=5491161210313&text=${encoded}`;
+    window.open(url, "_blank");
   };
 
   if (plan.length === 0) {
