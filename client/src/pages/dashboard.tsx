@@ -229,6 +229,14 @@ function TrazabilidadView({ response, onBack }: { response: any; onBack: () => v
 
 // ─── Vista de caso individual ───────────────────────────────────────────────
 // Helper: extrae nombre y apellido del perfil_contextual
+function getDni(r: any): string {
+  try {
+    const raw = r.perfil_contextual;
+    const p = typeof raw === "string" ? JSON.parse(raw) : (raw || {});
+    return p?.dni || r.dni_real || "";
+  } catch { return r.dni_real || ""; }
+}
+
 function getNombrePersona(r: any): string {
   try {
     const raw = r.perfil_contextual;
@@ -423,6 +431,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [selectedDimension, setSelectedDimension] = useState<string | null>(null);
   const [barrioFilter, setBarrioFilter] = useState("all");
+  const [caseSearch, setCaseSearch] = useState("");
   const [selectedCase, setSelectedCase] = useState<any | null>(null);
   const [showCaseList, setShowCaseList] = useState(false);
   const [filtroCriticos, setFiltroCriticos] = useState(false);
@@ -460,9 +469,13 @@ export default function Dashboard() {
   }, [responses]);
 
   const filtered = useMemo(() => {
-    if (barrioFilter === "all") return responses;
-    return responses.filter(r => r.territorio?.barrio === barrioFilter);
-  }, [responses, barrioFilter]);
+    let list = barrioFilter === "all" ? responses : responses.filter(r => r.territorio?.barrio === barrioFilter);
+    if (caseSearch.trim()) {
+      const q = caseSearch.toLowerCase();
+      list = list.filter(r => getNombrePersona(r).toLowerCase().includes(q) || getDni(r).toLowerCase().includes(q));
+    }
+    return list;
+  }, [responses, barrioFilter, caseSearch]);
 
   const stats = useMemo(() => {
     if (!filtered.length) return null;
@@ -686,6 +699,14 @@ export default function Dashboard() {
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Aceptó seguimiento</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-white/20 inline-block" /> Sin respuesta</span>
               </div>
+            </div>
+            <div className="p-5 border-b border-[#B8A9E8]">
+              <input
+                value={caseSearch}
+                onChange={e => setCaseSearch(e.target.value)}
+                placeholder="Buscar por nombre o DNI..."
+                className="w-full h-11 px-4 rounded-xl bg-white border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none"
+              />
             </div>
             <div className="divide-y divide-[#EDE9FE] max-h-[600px] overflow-y-auto">
               {(filtroCriticos
