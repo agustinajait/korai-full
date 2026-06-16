@@ -52,6 +52,22 @@ async function deleteResponse(id) {
   if (!res.ok) throw new Error("Error al eliminar");
 }
 
+async function updateResponseProfile(r, updates) {
+  const raw = r.perfil_contextual;
+  const p = (() => { try { return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); } catch { return {}; } })();
+  const merged = { ...p, ...updates };
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/responses?id=eq.${r.id}`,
+    {
+      method: "PATCH",
+      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+      body: JSON.stringify({ perfil_contextual: JSON.stringify(merged) }),
+    }
+  );
+  if (!res.ok) throw new Error("Error al guardar");
+  return merged;
+}
+
 function getNombrePersona(r) {
   try {
     const raw = r.perfil_contextual;
@@ -84,6 +100,9 @@ export default function Superadmin() {
   const [search, setSearch] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({ nombre: "", apellido: "", telefono: "", dni: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     const role = localStorage.getItem("korai_admin_role");
@@ -97,6 +116,29 @@ export default function Superadmin() {
     setDeletingId(id);
     try { await deleteResponse(id); setResponses(prev => prev.filter(r => r.id !== id)); } catch { alert("Error al eliminar."); }
     setDeletingId(null); setConfirmDeleteId(null);
+  };
+
+  const openEdit = (r) => {
+    const raw = r.perfil_contextual;
+    const p = (() => { try { return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); } catch { return {}; } })();
+    setEditingUser(r);
+    setEditForm({
+      nombre: p?.nombre || "",
+      apellido: p?.apellido || "",
+      telefono: p?.telefono || "",
+      dni: p?.dni || r.dni_real || "",
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editingUser) return;
+    setSavingEdit(true);
+    try {
+      const merged = await updateResponseProfile(editingUser, editForm);
+      setResponses(prev => prev.map(r => r.id === editingUser.id ? { ...r, perfil_contextual: JSON.stringify(merged) } : r));
+      setEditingUser(null);
+    } catch { alert("Error al guardar los cambios."); }
+    setSavingEdit(false);
   };
 
   const barrios = useMemo(() => {
@@ -190,7 +232,7 @@ export default function Superadmin() {
               <h3 className="font-black text-lg mb-3">Usuarios registrados</h3>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, DNI o barrio..." className="w-full h-11 px-4 rounded-xl bg-white border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none" />
             </div>
-            <div className="divide-y divide-[#EDE9FE] max-h-[500px] overflow-y-auto">
+            <div className="divide-y divide-[#EDE9FE]">
               {filtered.map((r, i) => {
                 const nombre = getNombrePersona(r);
                 const telefono = getTelefono(r);
@@ -223,6 +265,7 @@ export default function Superadmin() {
                       <button onClick={() => window.open("https://wa.me/549" + telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(msg), "_blank")} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WA</button>
                     )}
                     <button onClick={() => { navigator.clipboard.writeText(msg); alert("Plan copiado!"); }} className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-3 py-1.5 rounded-lg font-bold">Copiar</button>
+                    <button onClick={() => openEdit(r)} className="text-xs bg-blue-500/20 text-blue-500 border border-blue-500/30 px-3 py-1.5 rounded-lg font-bold">Ver/Editar</button>
                     {confirmDeleteId === r.id ? (
                       <div className="flex gap-1">
                         <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} className="text-[10px] text-[#1E1040] bg-red-500 px-2 py-1 rounded-lg font-bold">{deletingId === r.id ? "..." : "Confirmar"}</button>
@@ -325,6 +368,36 @@ export default function Superadmin() {
           </div>
         </div>
       </div>
+
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setEditingUser(null)}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="font-black text-lg">Editar usuario</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-[#6B5FA0]">Nombre</label>
+                <input value={editForm.nombre} onChange={e => setEditForm(f => ({ ...f, nombre: e.target.value }))} className="w-full h-10 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#6B5FA0]">Apellido</label>
+                <input value={editForm.apellido} onChange={e => setEditForm(f => ({ ...f, apellido: e.target.value }))} className="w-full h-10 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#6B5FA0]">Teléfono</label>
+                <input value={editForm.telefono} onChange={e => setEditForm(f => ({ ...f, telefono: e.target.value }))} className="w-full h-10 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none" placeholder="11xxxxxxxx" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#6B5FA0]">DNI</label>
+                <input value={editForm.dni} onChange={e => setEditForm(f => ({ ...f, dni: e.target.value }))} className="w-full h-10 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none" />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => setEditingUser(null)} className="flex-1 h-10 rounded-xl border border-[#B8A9E8] text-sm font-bold text-[#6B5FA0]">Cancelar</button>
+              <button onClick={saveEdit} disabled={savingEdit} className="flex-1 h-10 rounded-xl bg-[#5c40c0] text-white text-sm font-bold disabled:opacity-50">{savingEdit ? "Guardando..." : "Guardar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
