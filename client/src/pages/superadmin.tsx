@@ -52,6 +52,17 @@ async function deleteResponse(id) {
   if (!res.ok) throw new Error("Error al eliminar");
 }
 
+async function generarMensajeIA(payload) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/generate_message`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok || data.status === "error") throw new Error(data?.error || "Error generando mensaje");
+  return data.mensaje as string;
+}
+
 async function updateResponseProfile(r, updates) {
   const raw = r.perfil_contextual;
   const p = (() => { try { return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); } catch { return {}; } })();
@@ -103,6 +114,10 @@ export default function Superadmin() {
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({ nombre: "", apellido: "", telefono: "", dni: "" });
   const [savingEdit, setSavingEdit] = useState(false);
+  const [iaMensaje, setIaMensaje] = useState("");
+  const [iaLoading, setIaLoading] = useState(false);
+  const [iaError, setIaError] = useState("");
+  const [mensajeUsuario, setMensajeUsuario] = useState("");
 
   useEffect(() => {
     const role = localStorage.getItem("korai_admin_role");
@@ -128,6 +143,7 @@ export default function Superadmin() {
       telefono: p?.telefono || "",
       dni: p?.dni || r.dni_real || "",
     });
+    setIaMensaje(""); setIaError(""); setMensajeUsuario("");
   };
 
   const saveEdit = async () => {
@@ -139,6 +155,27 @@ export default function Superadmin() {
       setEditingUser(null);
     } catch { alert("Error al guardar los cambios."); }
     setSavingEdit(false);
+  };
+
+  const planDeUsuario = (r) => {
+    const answers = r?.answers || {};
+    const plan = generatePlanDesdeScores(answers);
+    const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
+    return (criticas.length > 0 ? criticas : plan.slice(0, 2));
+  };
+
+  const handleGenerarIA = async (tipo) => {
+    if (!editingUser) return;
+    setIaLoading(true); setIaError(""); setIaMensaje("");
+    try {
+      const nombre = getNombrePersona(editingUser);
+      const plan = planDeUsuario(editingUser);
+      const mensaje = await generarMensajeIA({ tipo, nombre, plan, mensajeUsuario });
+      setIaMensaje(mensaje);
+    } catch (e) {
+      setIaError(e.message || "Error al generar mensaje");
+    }
+    setIaLoading(false);
   };
 
   const barrios = useMemo(() => {
@@ -371,7 +408,7 @@ export default function Superadmin() {
 
       {editingUser && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setEditingUser(null)}>
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md space-y-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h3 className="font-black text-lg">Editar usuario</h3>
             <div className="space-y-3">
               <div>
@@ -394,6 +431,35 @@ export default function Superadmin() {
             <div className="flex gap-2 pt-2">
               <button onClick={() => setEditingUser(null)} className="flex-1 h-10 rounded-xl border border-[#B8A9E8] text-sm font-bold text-[#6B5FA0]">Cancelar</button>
               <button onClick={saveEdit} disabled={savingEdit} className="flex-1 h-10 rounded-xl bg-[#5c40c0] text-white text-sm font-bold disabled:opacity-50">{savingEdit ? "Guardando..." : "Guardar"}</button>
+            </div>
+
+            <div className="border-t border-[#EDE9FE] pt-4 space-y-3">
+              <h4 className="font-black text-sm flex items-center gap-2">✨ Acompañamiento con IA</h4>
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={() => handleGenerarIA("plan")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">Generar plan</button>
+                <button onClick={() => handleGenerarIA("seguimiento")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">Generar seguimiento</button>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#6B5FA0]">¿Qué te escribió el usuario? (opcional, para generar respuesta)</label>
+                <textarea value={mensajeUsuario} onChange={e => setMensajeUsuario(e.target.value)} className="w-full h-16 px-3 py-2 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none resize-none" placeholder="Pegá aquí lo que te escribió..." />
+                <button onClick={() => handleGenerarIA("respuesta")} disabled={iaLoading || !mensajeUsuario.trim()} className="mt-2 text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">Generar respuesta</button>
+              </div>
+
+              {iaLoading && <p className="text-xs text-[#9B8EC4] flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Generando con IA...</p>}
+              {iaError && <p className="text-xs text-red-500">{iaError}</p>}
+
+              {iaMensaje && (
+                <div className="space-y-2">
+                  <textarea value={iaMensaje} onChange={e => setIaMensaje(e.target.value)} className="w-full h-40 px-3 py-2 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm focus:outline-none resize-none" />
+                  <div className="flex gap-2">
+                    <button onClick={() => { navigator.clipboard.writeText(iaMensaje); alert("Mensaje copiado!"); }} className="flex-1 h-9 rounded-lg bg-purple-500/20 text-purple-500 text-xs font-bold">Copiar</button>
+                    {editForm.telefono && (
+                      <button onClick={() => window.open("https://wa.me/549" + editForm.telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(iaMensaje), "_blank")} className="flex-1 h-9 rounded-lg bg-green-500/20 text-green-500 text-xs font-bold">Abrir WhatsApp</button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
