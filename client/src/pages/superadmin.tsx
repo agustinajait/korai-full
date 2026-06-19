@@ -52,6 +52,37 @@ async function deleteResponse(id) {
   if (!res.ok) throw new Error("Error al eliminar");
 }
 
+async function fetchNotes(responseId: string) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/case_notes?response_id=eq.${responseId}&order=created_at.desc`,
+    { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
+  );
+  if (!res.ok) return [];
+  return res.json();
+}
+
+async function addNote(responseId: string, texto: string, estado: string) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/case_notes`, {
+    method: "POST",
+    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=representation" },
+    body: JSON.stringify({ response_id: responseId, texto, estado }),
+  });
+  if (!res.ok) throw new Error("Error al guardar nota");
+  const data = await res.json();
+  return data[0];
+}
+
+async function deleteNote(id: string) {
+  await fetch(`${SUPABASE_URL}/rest/v1/case_notes?id=eq.${id}`, {
+    method: "DELETE",
+    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Prefer": "return=minimal" },
+  });
+}
+
+function diasDesde(fecha: string): number {
+  return Math.floor((Date.now() - new Date(fecha).getTime()) / (1000 * 60 * 60 * 24));
+}
+
 async function generarMensajeIA(payload) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/generate_message`, {
     method: "POST",
@@ -118,6 +149,11 @@ export default function Superadmin() {
   const [iaLoading, setIaLoading] = useState(false);
   const [iaError, setIaError] = useState("");
   const [mensajeUsuario, setMensajeUsuario] = useState("");
+  const [notes, setNotes] = useState<any[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [newNote, setNewNote] = useState("");
+  const [newEstado, setNewEstado] = useState("contactado");
+  const [savingNote, setSavingNote] = useState(false);
 
   useEffect(() => {
     const role = localStorage.getItem("korai_admin_role");
@@ -144,6 +180,9 @@ export default function Superadmin() {
       dni: p?.dni || r.dni_real || "",
     });
     setIaMensaje(""); setIaError(""); setMensajeUsuario("");
+    setNotes([]); setNewNote("");
+    setNotesLoading(true);
+    fetchNotes(r.id).then(n => { setNotes(n); setNotesLoading(false); });
   };
 
   const saveEdit = async () => {
@@ -176,6 +215,22 @@ export default function Superadmin() {
       setIaError(e.message || "Error al generar mensaje");
     }
     setIaLoading(false);
+  };
+
+  const handleAddNote = async () => {
+    if (!editingUser || !newNote.trim()) return;
+    setSavingNote(true);
+    try {
+      const nota = await addNote(editingUser.id, newNote.trim(), newEstado);
+      setNotes(prev => [nota, ...prev]);
+      setNewNote("");
+    } catch { alert("Error al guardar la nota."); }
+    setSavingNote(false);
+  };
+
+  const handleDeleteNote = async (id: string) => {
+    await deleteNote(id);
+    setNotes(prev => prev.filter(n => n.id !== id));
   };
 
   const barrios = useMemo(() => {
@@ -296,6 +351,7 @@ export default function Superadmin() {
                       <div className="font-bold text-sm text-[#1E1040] truncate">{nombre}</div>
                       <div className="text-xs text-[#9B8EC4]">{barrio} · {fecha}{dni ? " · DNI: " + dni : ""}</div>
                     </div>
+                    {(() => { const dias = diasDesde(r.submitted_at); return dias >= 7 ? <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-500 border border-orange-500/30 flex-shrink-0">{dias}d sin contacto</span> : null; })()}
                     <div className="flex items-center gap-1">{scores.map(s => <div key={s.dimensionId} className={`w-2.5 h-2.5 rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} />)}</div>
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${rojas >= 2 ? "bg-red-500/20 text-red-400 border-red-500/30" : rojas === 1 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-green-500/20 text-green-400 border-green-500/30"}`}>{rojas} criticas</span>
                     {telefono && (
@@ -431,6 +487,36 @@ export default function Superadmin() {
             <div className="flex gap-2 pt-2">
               <button onClick={() => setEditingUser(null)} className="flex-1 h-10 rounded-xl border border-[#B8A9E8] text-sm font-bold text-[#6B5FA0]">Cancelar</button>
               <button onClick={saveEdit} disabled={savingEdit} className="flex-1 h-10 rounded-xl bg-[#5c40c0] text-white text-sm font-bold disabled:opacity-50">{savingEdit ? "Guardando..." : "Guardar"}</button>
+            </div>
+
+            <div className="border-t border-[#EDE9FE] pt-4 space-y-3">
+              <h4 className="font-black text-sm">📋 Historial de acompañamiento</h4>
+              <div className="flex gap-2">
+                <select value={newEstado} onChange={e => setNewEstado(e.target.value)} className="h-9 px-2 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-xs font-bold text-[#1E1040] focus:outline-none">
+                  <option value="contactado">Contactado</option>
+                  <option value="en_proceso">En proceso</option>
+                  <option value="con_dificultades">Con dificultades</option>
+                  <option value="cerrado">Cerrado</option>
+                </select>
+                <input value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Anotá lo que hablaron..." className="flex-1 h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm focus:outline-none" onKeyDown={e => e.key === "Enter" && handleAddNote()} />
+                <button onClick={handleAddNote} disabled={savingNote || !newNote.trim()} className="h-9 px-3 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40">{savingNote ? "..." : "+"}</button>
+              </div>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {notesLoading && <p className="text-xs text-[#9B8EC4]">Cargando...</p>}
+                {notes.length === 0 && !notesLoading && <p className="text-xs text-[#9B8EC4]">Sin notas todavía.</p>}
+                {notes.map(n => (
+                  <div key={n.id} className="flex items-start gap-2 p-2 rounded-xl bg-[#f0eef8]">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${n.estado === "cerrado" ? "bg-green-500/20 text-green-600" : n.estado === "con_dificultades" ? "bg-red-500/20 text-red-500" : n.estado === "en_proceso" ? "bg-blue-500/20 text-blue-500" : "bg-purple-500/20 text-[#5c40c0]"}`}>{n.estado?.replace("_", " ")}</span>
+                        <span className="text-[10px] text-[#9B8EC4]">{new Date(n.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                      </div>
+                      <p className="text-xs text-[#1E1040]">{n.texto}</p>
+                    </div>
+                    <button onClick={() => handleDeleteNote(n.id)} className="text-[10px] text-red-400 hover:text-red-600 flex-shrink-0">✕</button>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="border-t border-[#EDE9FE] pt-4 space-y-3">
