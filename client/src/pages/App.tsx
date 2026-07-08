@@ -13,13 +13,14 @@ import Prioridades from "@/pages/prioridades";
 import Metas from "@/pages/metas";
 import Confirmar from "@/pages/confirmar";
 import Privacidad from "@/pages/privacidad";
+import Login from "@/pages/login";
 import { Loader2 } from "lucide-react";
 
 function ProtectedDashboard() {
   const [, setLocation] = useLocation();
-  
+
   const isAuth = localStorage.getItem("korai_admin_auth") === "true";
-  
+
   if (!isAuth) {
     setLocation("/admin");
     return null;
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/metas" component={Metas} />
       <Route path="/confirmar" component={Confirmar} />
       <Route path="/privacidad" component={Privacidad} />
+      <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/dashboard" component={ProtectedDashboard} />
       <Route component={NotFound} />
