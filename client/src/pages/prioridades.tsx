@@ -236,6 +236,13 @@ export default function Prioridades() {
         <p style={{ textAlign: "center", fontSize: "11px", color: "#9b8ec4", margin: "0 0 12px" }}>Te mandamos cada paso directo a tu celular</p>
         <button onClick={() => setLocation("/survey")} style={{ width: "100%", height: "44px", borderRadius: "14px", border: "2px solid #5c40c0", background: "white", color: "#5c40c0", fontWeight: 700, fontSize: "14px", cursor: "pointer", marginBottom: "16px" }}>Ver mi diagnostico completo</button>
 
+        <div style={{ background: "#f0eef8", borderRadius: "14px", padding: "14px 16px", textAlign: "center" }}>
+          <p style={{ fontSize: "12px", color: "#6B5FA0", margin: "0 0 8px", fontWeight: 600 }}>¿Querés guardar tu plan y volver a verlo después?</p>
+          <button onClick={() => setLocation("/login")} style={{ background: "none", border: "none", color: "#5c40c0", fontSize: "13px", fontWeight: 800, cursor: "pointer", textDecoration: "underline" }}>
+            Ingresá con tu email →
+          </button>
+        </div>
+
       </div>
     </div>
   );
