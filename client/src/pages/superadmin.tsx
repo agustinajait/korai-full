@@ -69,11 +69,11 @@ async function addNote(responseId: string, texto: string, estado: string) {
   });
   if (!res.ok) throw new Error("Error al guardar nota");
   const data = await res.json();
-  // Actualizar ultimo_contacto en el response
+  // Actualizar ultimo_contacto y ultimo_estado en el response
   await fetch(`${SUPABASE_URL}/rest/v1/responses?id=eq.${responseId}`, {
     method: "PATCH",
     headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
-    body: JSON.stringify({ ultimo_contacto: new Date().toISOString() }),
+    body: JSON.stringify({ ultimo_contacto: new Date().toISOString(), ultimo_estado: estado }),
   });
   return data[0];
 }
@@ -392,7 +392,16 @@ export default function Superadmin() {
                       <div className="font-bold text-sm text-[#1E1040] truncate">{nombre}</div>
                       <div className="text-xs text-[#9B8EC4]">{barrio} · {fecha}{dni ? " · DNI: " + dni : ""}</div>
                     </div>
-                    {(() => { const dias = diasDesde(r.ultimo_contacto || r.submitted_at); return dias >= 7 ? <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-500 border border-orange-500/30 flex-shrink-0">{dias}d sin contacto</span> : null; })()}
+                    {r.ultimo_estado && (
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border flex-shrink-0 ${
+                        r.ultimo_estado === "cerrado" ? "bg-green-500/20 text-green-600 border-green-500/30" :
+                        r.ultimo_estado === "sin_respuesta" ? "bg-orange-500/20 text-orange-500 border-orange-500/30" :
+                        r.ultimo_estado === "con_dificultades" ? "bg-red-500/20 text-red-500 border-red-500/30" :
+                        r.ultimo_estado === "en_proceso" ? "bg-blue-500/20 text-blue-500 border-blue-500/30" :
+                        "bg-purple-500/20 text-[#5c40c0] border-purple-500/30"
+                      }`}>{r.ultimo_estado.replace(/_/g, " ")}</span>
+                    )}
+                    {(() => { const dias = diasDesde(r.ultimo_contacto || r.submitted_at); return dias >= 7 ? <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-gray-200 text-gray-500 border border-gray-300 flex-shrink-0">{dias}d sin contacto</span> : null; })()}
                     <div className="flex items-center gap-1">{scores.map(s => <div key={s.dimensionId} className={`w-2.5 h-2.5 rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} />)}</div>
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${rojas >= 2 ? "bg-red-500/20 text-red-400 border-red-500/30" : rojas === 1 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-green-500/20 text-green-400 border-green-500/30"}`}>{rojas} criticas</span>
                     {telefono && (
@@ -544,6 +553,7 @@ export default function Superadmin() {
               <div className="flex gap-2">
                 <select value={newEstado} onChange={e => setNewEstado(e.target.value)} className="h-9 px-2 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-xs font-bold text-[#1E1040] focus:outline-none">
                   <option value="contactado">Contactado</option>
+                  <option value="sin_respuesta">Sin respuesta</option>
                   <option value="en_proceso">En proceso</option>
                   <option value="con_dificultades">Con dificultades</option>
                   <option value="cerrado">Cerrado</option>
@@ -558,7 +568,7 @@ export default function Superadmin() {
                   <div key={n.id} className="flex items-start gap-2 p-2 rounded-xl bg-[#f0eef8]">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${n.estado === "cerrado" ? "bg-green-500/20 text-green-600" : n.estado === "con_dificultades" ? "bg-red-500/20 text-red-500" : n.estado === "en_proceso" ? "bg-blue-500/20 text-blue-500" : "bg-purple-500/20 text-[#5c40c0]"}`}>{n.estado?.replace("_", " ")}</span>
+                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${n.estado === "cerrado" ? "bg-green-500/20 text-green-600" : n.estado === "con_dificultades" ? "bg-red-500/20 text-red-500" : n.estado === "sin_respuesta" ? "bg-orange-500/20 text-orange-500" : n.estado === "en_proceso" ? "bg-blue-500/20 text-blue-500" : "bg-purple-500/20 text-[#5c40c0]"}`}>{n.estado?.replace(/_/g, " ")}</span>
                         <span className="text-[10px] text-[#9B8EC4]">{new Date(n.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                       </div>
                       <p className="text-xs text-[#1E1040]">{n.texto}</p>
