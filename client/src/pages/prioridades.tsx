@@ -85,6 +85,31 @@ export default function Prioridades() {
       ? `https://wa.me/5491161210313?text=${encoded}`
       : `https://web.whatsapp.com/send?phone=5491161210313&text=${encoded}`;
     window.open(url, "_blank");
+
+    // Registrar aceptacion de seguimiento
+    const dniHash = context.demographics?.dniHash || localStorage.getItem("korai_user_dni_hash_v1");
+    if (dniHash) {
+      fetch(
+        `https://jgqqkgfppovkbwklctol.supabase.co/rest/v1/responses?campaign_id=eq.53813f5a-3613-4faf-8ca1-b369e4e908cb&dni_hash=eq.${dniHash}&order=submitted_at.desc&limit=1`,
+        { headers: { "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4", "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4` } }
+      ).then(r => r.json()).then(data => {
+        if (data && data[0]?.id) {
+          fetch(
+            `https://jgqqkgfppovkbwklctol.supabase.co/rest/v1/responses?id=eq.${data[0].id}`,
+            {
+              method: "PATCH",
+              headers: {
+                "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4",
+                "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4`,
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal",
+              },
+              body: JSON.stringify({ acepto_seguimiento: true, fecha_aceptacion: new Date().toISOString() }),
+            }
+          ).catch(() => {});
+        }
+      }).catch(() => {});
+    }
   };
 
   if (plan.length === 0) {
