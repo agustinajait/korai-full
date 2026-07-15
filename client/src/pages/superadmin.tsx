@@ -385,11 +385,11 @@ export default function Superadmin() {
                 msg += "\nEn 7 dias te vamos a contactar.";
                 return (
                   <div key={r.id || i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#f0eef8] transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-[#5c40c0] flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-[#5c40c0] flex items-center justify-center flex-shrink-0 cursor-pointer" onClick={() => openEdit(r)}>
                       <span className="text-white text-xs font-black">{nombre ? nombre.charAt(0).toUpperCase() : "?"}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-[#1E1040] truncate">{nombre}</div>
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => openEdit(r)}>
+                      <div className="font-bold text-sm text-[#1E1040] truncate hover:text-[#5c40c0] transition-colors">{nombre}</div>
                       <div className="text-xs text-[#9B8EC4]">{barrio} · {fecha}{dni ? " · DNI: " + dni : ""}</div>
                     </div>
                     {r.ultimo_estado && (
@@ -410,8 +410,8 @@ export default function Superadmin() {
                         addNote(r.id, "Contacto por WhatsApp (enviado desde admin)", "contactado").catch(() => {});
                       }} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WA</button>
                     )}
+                    <button onClick={() => addNote(r.id, "Sin respuesta al contacto", "sin_respuesta").catch(() => {})} className="text-xs bg-orange-500/20 text-orange-500 border border-orange-500/30 px-3 py-1.5 rounded-lg font-bold">Sin resp.</button>
                     <button onClick={() => { navigator.clipboard.writeText(msg); alert("Plan copiado!"); }} className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-3 py-1.5 rounded-lg font-bold">Copiar</button>
-                    <button onClick={() => openEdit(r)} className="text-xs bg-blue-500/20 text-blue-500 border border-blue-500/30 px-3 py-1.5 rounded-lg font-bold">Ver/Editar</button>
                     {confirmDeleteId === r.id ? (
                       <div className="flex gap-1">
                         <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} className="text-[10px] text-[#1E1040] bg-red-500 px-2 py-1 rounded-lg font-bold">{deletingId === r.id ? "..." : "Confirmar"}</button>
