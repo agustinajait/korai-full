@@ -856,7 +856,29 @@ export default function Dashboard() {
         </div>
 
         {/* ── KPIs ejecutivos ───────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+          {/* Personas únicas */}
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl p-5 flex flex-col gap-1.5 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-base">👤</span>
+              <span className="text-[10px] font-black uppercase text-[#5c40c0] tracking-wider">Personas únicas</span>
+            </div>
+            <div className="text-4xl font-black text-[#5c40c0] leading-none">{stats.usuariosUnicos}</div>
+            <div className="text-sm text-[#6B5FA0] leading-snug">personas distintas relevadas</div>
+            <div className="text-[10px] text-[#9B8EC4]">Deduplicado por DNI</div>
+          </div>
+
+          {/* Diagnósticos totales */}
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl p-5 flex flex-col gap-1.5 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-base">📋</span>
+              <span className="text-[10px] font-black uppercase text-[#6B5FA0] tracking-wider">Diagnósticos</span>
+            </div>
+            <div className="text-4xl font-black text-[#1E1040] leading-none">{stats.total}</div>
+            <div className="text-sm text-[#6B5FA0] leading-snug">diagnósticos realizados</div>
+            <div className="text-[10px] text-[#9B8EC4]">Incluye rediagnósticos</div>
+          </div>
 
           {/* Personas en situación crítica — clickeable */}
           <div
