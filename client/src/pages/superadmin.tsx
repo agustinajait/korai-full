@@ -461,7 +461,13 @@ export default function Superadmin() {
             </div>
             <div className="bg-gradient-to-br from-[#5c40c0]/20 to-transparent border border-[#7c5cff]/30 rounded-3xl p-5">
               <h3 className="text-base font-black mb-1">Sumar mas territorio</h3>
-              <Link href="/"><Button className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-11 text-sm mt-3">Ir al diagnostico ciudadano</Button></Link>
+              <p className="text-xs text-[#6B5FA0] mt-1">Compartí el enlace público del diagnóstico con vecinos y organizaciones.</p>
+              <Button
+                className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-11 text-sm mt-3"
+                onClick={() => { navigator.clipboard?.writeText(window.location.origin + "/"); }}
+              >
+                Copiar enlace de diagnóstico
+              </Button>
             </div>
           </div>
         </div>

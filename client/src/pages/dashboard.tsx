@@ -676,9 +676,13 @@ export default function Dashboard() {
             >
               <Users className="w-4 h-4" /> {showCaseList ? "Ver resumen" : "Ver casos individuales"}
             </Button>
-            <Link href="/">
-              <Button variant="ghost" className="text-[#1E1040] hover:bg-[#ede9fe] text-sm">Diagnóstico ciudadano</Button>
-            </Link>
+            <Button
+              variant="ghost"
+              className="text-[#1E1040] hover:bg-[#ede9fe] text-sm"
+              onClick={() => { navigator.clipboard?.writeText(window.location.origin + "/"); }}
+            >
+              Copiar enlace
+            </Button>
             <Button variant="ghost" onClick={handleLogout} className="text-[#9B8EC4] hover:text-[#1E1040] hover:bg-[#ede9fe]">
               <LogOut className="w-4 h-4" />
             </Button>
@@ -1255,7 +1259,12 @@ export default function Dashboard() {
             <div className="bg-gradient-to-br from-[#5c40c0]/20 to-transparent border border-[#7c5cff]/30 rounded-3xl p-5">
               <h3 className="text-base font-black mb-1">Sumar más territorio</h3>
               <p className="text-xs text-[#6B5FA0] mb-4">Cada diagnóstico individual enriquece la inteligencia territorial de KORAI.</p>
-              <Link href="/"><Button className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-11 text-sm">Ir al diagnóstico ciudadano</Button></Link>
+              <Button
+                className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-11 text-sm"
+                onClick={() => { navigator.clipboard?.writeText(window.location.origin + "/"); }}
+              >
+                Copiar enlace de diagnóstico
+              </Button>
             </div>
           </div>
         </div>
