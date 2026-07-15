@@ -696,7 +696,12 @@ export default function Survey() {
               const nombre = context.nombre || "";
               const dni = context.dni || "";
               const msg = "Hola Korai, terminé mi diagnóstico.\nMi nombre es " + nombre + "\nDNI: " + dni + "\nQuiero recibir mi plan de acción y comenzar este proceso de acompañamiento con vos.";
-              window.open("https://wa.me/5491161210313?text=" + encodeURIComponent(msg), "_blank");
+              const encoded = encodeURIComponent(msg);
+              const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+              const url = isMobile
+                ? `https://wa.me/5491161210313?text=${encoded}`
+                : `https://web.whatsapp.com/send?phone=5491161210313&text=${encoded}`;
+              window.open(url, "_blank");
             }}
             style={{ width: "100%", height: "52px", borderRadius: "14px", border: "none", background: "#25D366", color: "white", fontWeight: 800, fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "10px" }}
           >

@@ -312,8 +312,13 @@ export default function Superadmin() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          {[{ label: "Total usuarios", value: responses.length }, { label: "Con seguimiento", value: responses.filter(r => r.acepto_seguimiento).length }, { label: "Con telefono", value: responses.filter(r => getTelefono(r)).length }].map(s => (
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { label: "Usuarios únicos", value: new Set(responses.map(r => r.dni_hash).filter(Boolean)).size },
+            { label: "Diagnósticos", value: responses.length },
+            { label: "Con seguimiento", value: responses.filter(r => r.acepto_seguimiento).length },
+            { label: "Con teléfono", value: responses.filter(r => getTelefono(r)).length },
+          ].map(s => (
             <div key={s.label} className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm"><div className="text-2xl font-black">{s.value}</div><div className="text-xs text-[#6B5FA0] mt-1">{s.label}</div></div>
           ))}
         </div>
