@@ -69,6 +69,12 @@ async function addNote(responseId: string, texto: string, estado: string) {
   });
   if (!res.ok) throw new Error("Error al guardar nota");
   const data = await res.json();
+  // Actualizar ultimo_contacto en el response
+  await fetch(`${SUPABASE_URL}/rest/v1/responses?id=eq.${responseId}`, {
+    method: "PATCH",
+    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+    body: JSON.stringify({ ultimo_contacto: new Date().toISOString() }),
+  });
   return data[0];
 }
 
@@ -386,11 +392,14 @@ export default function Superadmin() {
                       <div className="font-bold text-sm text-[#1E1040] truncate">{nombre}</div>
                       <div className="text-xs text-[#9B8EC4]">{barrio} · {fecha}{dni ? " · DNI: " + dni : ""}</div>
                     </div>
-                    {(() => { const dias = diasDesde(r.submitted_at); return dias >= 7 ? <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-500 border border-orange-500/30 flex-shrink-0">{dias}d sin contacto</span> : null; })()}
+                    {(() => { const dias = diasDesde(r.ultimo_contacto || r.submitted_at); return dias >= 7 ? <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-500 border border-orange-500/30 flex-shrink-0">{dias}d sin contacto</span> : null; })()}
                     <div className="flex items-center gap-1">{scores.map(s => <div key={s.dimensionId} className={`w-2.5 h-2.5 rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} />)}</div>
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${rojas >= 2 ? "bg-red-500/20 text-red-400 border-red-500/30" : rojas === 1 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-green-500/20 text-green-400 border-green-500/30"}`}>{rojas} criticas</span>
                     {telefono && (
-                      <button onClick={() => window.open("https://wa.me/549" + telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(msg), "_blank")} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WA</button>
+                      <button onClick={() => {
+                        window.open("https://wa.me/549" + telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(msg), "_blank");
+                        addNote(r.id, "Contacto por WhatsApp (enviado desde admin)", "contactado").catch(() => {});
+                      }} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WA</button>
                     )}
                     <button onClick={() => { navigator.clipboard.writeText(msg); alert("Plan copiado!"); }} className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-3 py-1.5 rounded-lg font-bold">Copiar</button>
                     <button onClick={() => openEdit(r)} className="text-xs bg-blue-500/20 text-blue-500 border border-blue-500/30 px-3 py-1.5 rounded-lg font-bold">Ver/Editar</button>
@@ -582,7 +591,10 @@ export default function Superadmin() {
                   <div className="flex gap-2">
                     <button onClick={() => { navigator.clipboard.writeText(iaMensaje); alert("Mensaje copiado!"); }} className="flex-1 h-9 rounded-lg bg-purple-500/20 text-purple-500 text-xs font-bold">Copiar</button>
                     {editForm.telefono && (
-                      <button onClick={() => window.open("https://wa.me/549" + editForm.telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(iaMensaje), "_blank")} className="flex-1 h-9 rounded-lg bg-green-500/20 text-green-500 text-xs font-bold">Abrir WhatsApp</button>
+                      <button onClick={() => {
+                        window.open("https://wa.me/549" + editForm.telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(iaMensaje), "_blank");
+                        addNote(editingUser.id, "Contacto por WhatsApp con mensaje IA (enviado desde admin)", "contactado").catch(() => {});
+                      }} className="flex-1 h-9 rounded-lg bg-green-500/20 text-green-500 text-xs font-bold">Abrir WhatsApp</button>
                     )}
                   </div>
                 </div>
