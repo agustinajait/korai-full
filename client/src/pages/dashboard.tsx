@@ -569,8 +569,11 @@ export default function Dashboard() {
       else if (seg === "rojo" || seg === "amarillo") demografico.seguridad.inseguro++;
     });
 
+    const usuariosUnicos = new Set(filtered.map(r => r.dni_hash).filter(Boolean)).size;
+
     return {
       total,
+      usuariosUnicos,
       dist: { rojo: total ? rojo / total : 0, amarillo: total ? amarillo / total : 0, verde: total ? verde / total : 0 },
       byDim,
       mostCritical,
@@ -811,7 +814,7 @@ export default function Dashboard() {
             <div className="text-center md:text-left">
               <h2 className="text-2xl font-black uppercase tracking-tighter">Estado General del Territorio</h2>
               <p className="text-[#6B5FA0] text-sm mt-1">
-                Basado en <span className="font-black text-[#1E1040]">{stats.total}</span> diagnósticos · {barrioFilter === "all" ? "Ciudad de Buenos Aires" : `Barrio ${barrioFilter}`}
+                <span className="font-black text-[#1E1040]">{stats.usuariosUnicos}</span> personas únicas · <span className="font-black text-[#1E1040]">{stats.total}</span> diagnósticos · {barrioFilter === "all" ? "Ciudad de Buenos Aires" : `Barrio ${barrioFilter}`}
               </p>
             </div>
             <div className="md:ml-auto flex gap-6 text-center">
