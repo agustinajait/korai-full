@@ -215,12 +215,58 @@ export default function Superadmin() {
     try {
       const nombre = getNombrePersona(editingUser);
       const plan = planDeUsuario(editingUser);
-      const mensaje = await generarMensajeIA({ tipo, nombre, plan, mensajeUsuario });
+      const historial = notes.filter(n => n.tipo === "entrante" || n.tipo === "saliente").map(n => ({ tipo: n.tipo, texto: n.texto, created_at: n.created_at }));
+      const mensaje = await generarMensajeIA({ tipo, nombre, plan, mensajeUsuario, historial });
       setIaMensaje(mensaje);
     } catch (e) {
       setIaError(e.message || "Error al generar mensaje");
     }
     setIaLoading(false);
+  };
+
+  const handleMensajeEntrante = async () => {
+    if (!editingUser || !mensajeUsuario.trim()) return;
+    setSavingNote(true);
+    try {
+      const nota = await addNote(editingUser.id, mensajeUsuario.trim(), "contactado");
+      const notaConTipo = { ...nota, tipo: "entrante" };
+      await fetch(`${SUPABASE_URL}/rest/v1/case_notes?id=eq.${nota.id}`, {
+        method: "PATCH",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({ tipo: "entrante" }),
+      });
+      setNotes(prev => [{ ...nota, tipo: "entrante" }, ...prev]);
+      setMensajeUsuario("");
+      // Generar respuesta IA automáticamente
+      setIaLoading(true); setIaError(""); setIaMensaje("");
+      const nombre = getNombrePersona(editingUser);
+      const plan = planDeUsuario(editingUser);
+      const historial = [{ tipo: "entrante", texto: mensajeUsuario.trim(), created_at: new Date().toISOString() }, ...notes.filter(n => n.tipo === "entrante" || n.tipo === "saliente").map(n => ({ tipo: n.tipo, texto: n.texto, created_at: n.created_at }))];
+      const mensaje = await generarMensajeIA({ tipo: "respuesta", nombre, plan, mensajeUsuario: mensajeUsuario.trim(), historial });
+      setIaMensaje(mensaje);
+      setIaLoading(false);
+    } catch (e) {
+      setIaError(e.message || "Error"); setSavingNote(false); setIaLoading(false);
+    }
+    setSavingNote(false);
+  };
+
+  const handleEnviarRespuesta = async () => {
+    if (!editingUser || !iaMensaje.trim()) return;
+    const telefono = editForm.telefono;
+    if (telefono) {
+      window.open("https://wa.me/549" + telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(iaMensaje), "_blank");
+    }
+    try {
+      const nota = await addNote(editingUser.id, iaMensaje.trim(), "contactado");
+      await fetch(`${SUPABASE_URL}/rest/v1/case_notes?id=eq.${nota.id}`, {
+        method: "PATCH",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({ tipo: "saliente" }),
+      });
+      setNotes(prev => [{ ...nota, tipo: "saliente" }, ...prev]);
+      setIaMensaje("");
+    } catch {}
   };
 
   const handleAddNote = async () => {
@@ -580,32 +626,55 @@ export default function Superadmin() {
             </div>
 
             <div className="border-t border-[#EDE9FE] pt-4 space-y-3">
-              <h4 className="font-black text-sm flex items-center gap-2">✨ Acompañamiento con IA</h4>
+              <h4 className="font-black text-sm flex items-center gap-2">💬 Conversación</h4>
+
+              {/* Historial tipo chat */}
+              <div className="space-y-2 max-h-52 overflow-y-auto flex flex-col-reverse bg-[#f8f6ff] rounded-2xl p-3">
+                {notesLoading && <p className="text-xs text-[#9B8EC4] text-center">Cargando...</p>}
+                {!notesLoading && notes.filter(n => n.tipo === "entrante" || n.tipo === "saliente").length === 0 && (
+                  <p className="text-xs text-[#9B8EC4] text-center py-2">Sin conversación todavía. Generá el primer mensaje o cargá uno entrante.</p>
+                )}
+                {[...notes].reverse().filter(n => n.tipo === "entrante" || n.tipo === "saliente").map(n => (
+                  <div key={n.id} className={`flex ${n.tipo === "saliente" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-xs ${n.tipo === "saliente" ? "bg-[#5c40c0] text-white rounded-br-sm" : "bg-white text-[#1E1040] border border-[#B8A9E8] rounded-bl-sm"}`}>
+                      <p className="whitespace-pre-wrap">{n.texto}</p>
+                      <p className={`text-[10px] mt-1 ${n.tipo === "saliente" ? "text-white/60" : "text-[#9B8EC4]"}`}>{new Date(n.created_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })} · {new Date(n.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Cargar mensaje entrante */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Mensaje recibido del usuario</label>
+                <div className="flex gap-2">
+                  <textarea value={mensajeUsuario} onChange={e => setMensajeUsuario(e.target.value)} className="flex-1 h-14 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-sm focus:outline-none resize-none" placeholder="Pegá lo que te escribió por WhatsApp..." />
+                  <button onClick={handleMensajeEntrante} disabled={savingNote || iaLoading || !mensajeUsuario.trim()} className="h-14 px-3 rounded-xl bg-[#25D366] text-white text-xs font-bold disabled:opacity-40 flex flex-col items-center justify-center gap-0.5">
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Cargar y<br/>responder</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Acciones rápidas IA */}
               <div className="flex gap-2 flex-wrap">
-                <button onClick={() => handleGenerarIA("plan")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">Generar plan</button>
-                <button onClick={() => handleGenerarIA("seguimiento")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">Generar seguimiento</button>
+                <button onClick={() => handleGenerarIA("plan")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">✨ Generar plan inicial</button>
+                <button onClick={() => handleGenerarIA("seguimiento")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">🔄 Generar seguimiento</button>
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-[#6B5FA0]">¿Qué te escribió el usuario? (opcional, para generar respuesta)</label>
-                <textarea value={mensajeUsuario} onChange={e => setMensajeUsuario(e.target.value)} className="w-full h-16 px-3 py-2 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none resize-none" placeholder="Pegá aquí lo que te escribió..." />
-                <button onClick={() => handleGenerarIA("respuesta")} disabled={iaLoading || !mensajeUsuario.trim()} className="mt-2 text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">Generar respuesta</button>
-              </div>
-
-              {iaLoading && <p className="text-xs text-[#9B8EC4] flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Generando con IA...</p>}
+              {iaLoading && <p className="text-xs text-[#9B8EC4] flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Korai está pensando la respuesta...</p>}
               {iaError && <p className="text-xs text-red-500">{iaError}</p>}
 
+              {/* Respuesta IA lista para enviar */}
               {iaMensaje && (
-                <div className="space-y-2">
-                  <textarea value={iaMensaje} onChange={e => setIaMensaje(e.target.value)} className="w-full h-40 px-3 py-2 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm focus:outline-none resize-none" />
+                <div className="space-y-2 bg-[#ede9fe] rounded-2xl p-3">
+                  <p className="text-[10px] font-bold text-[#5c40c0] uppercase tracking-wide">✨ Respuesta sugerida por IA — podés editarla</p>
+                  <textarea value={iaMensaje} onChange={e => setIaMensaje(e.target.value)} className="w-full h-36 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-sm focus:outline-none resize-none" />
                   <div className="flex gap-2">
-                    <button onClick={() => { navigator.clipboard.writeText(iaMensaje); alert("Mensaje copiado!"); }} className="flex-1 h-9 rounded-lg bg-purple-500/20 text-purple-500 text-xs font-bold">Copiar</button>
-                    {editForm.telefono && (
-                      <button onClick={() => {
-                        window.open("https://wa.me/549" + editForm.telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(iaMensaje), "_blank");
-                        addNote(editingUser.id, "Contacto por WhatsApp con mensaje IA (enviado desde admin)", "contactado").catch(() => {});
-                      }} className="flex-1 h-9 rounded-lg bg-green-500/20 text-green-500 text-xs font-bold">Abrir WhatsApp</button>
-                    )}
+                    <button onClick={() => { navigator.clipboard.writeText(iaMensaje); }} className="flex-1 h-9 rounded-lg bg-white border border-[#B8A9E8] text-[#5c40c0] text-xs font-bold">Copiar</button>
+                    <button onClick={handleEnviarRespuesta} className="flex-1 h-9 rounded-lg bg-[#25D366] text-white text-xs font-bold flex items-center justify-center gap-1">
+                      <MessageCircle className="w-3 h-3" /> Enviar por WhatsApp
+                    </button>
                   </div>
                 </div>
               )}

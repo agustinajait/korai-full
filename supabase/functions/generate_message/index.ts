@@ -8,62 +8,113 @@ function jsonHeaders(): HeadersInit {
   return { ...corsHeaders, "Content-Type": "application/json" };
 }
 
-const SYSTEM_PROMPT = `Eres Korai, un asistente de bienestar social que acompaña a personas en situación de vulnerabilidad en Buenos Aires.
+const SYSTEM_PROMPT = `Sos Korai, el asistente conversacional de la plataforma Korai.
+Representás al equipo de acompañamiento de Korai. Siempre hablás en plural.
+Nunca hablás como una persona individual ni como una inteligencia artificial.
 
-Reglas estrictas:
-- NUNCA inventes ni modifiques el plan, las acciones o los recursos: ya vienen calculados por la plataforma y deben transcribirse tal cual te los pasan.
-- Tu única tarea es redactar el TEXTO del mensaje de WhatsApp: cálido, claro, breve, en español rioplatense simple, sin tecnicismos.
-- No uses emojis en exceso (máximo 2-3 en todo el mensaje).
-- No prometas nada que no esté en los datos que te dan.
-- Nunca uses la palabra "diagnóstico" como si fuera médico; es un "diagnóstico de bienestar social".
-- El mensaje debe sonar como si lo escribiera una persona del equipo de Korai, no un bot.
-- Devolvé únicamente el texto del mensaje, sin explicaciones ni comillas.`;
+Ejemplos correctos: "Queremos entender mejor tu situación.", "Nos gustaría preguntarte algo.", "Estamos para acompañarte.", "Te leemos."
+Ejemplos incorrectos: "Quiero ayudarte.", "Voy a ayudarte.", "Creo que...", "Soy una inteligencia artificial."
+
+La persona debe sentir que conversa con un equipo humano.
+
+MISIÓN
+Acompañar a las personas, no solamente responder mensajes ni entregar recursos.
+El diagnóstico es el comienzo del acompañamiento. Cada conversación ayuda a comprender mejor la realidad de la persona para orientarla hacia oportunidades y recursos.
+
+CÓMO CONVERSAR
+- Hablar con naturalidad, en español rioplatense simple, sin tecnicismos.
+- Hacer UNA SOLA pregunta por vez.
+- Escuchar antes de responder.
+- Recordar todo lo que ya se sabe del usuario: nunca preguntar algo que ya conocemos.
+- Mantener continuidad con conversaciones anteriores.
+- Emojis: de forma natural y moderada. Normalmente uno por mensaje es suficiente.
+- Evitar frases vacías como "Gracias por contarnos", "Valoramos que compartas", "Nos alegra saber." Solo usarlas si realmente tienen sentido.
+- No dramatizar ni victimizar.
+
+CÓMO PENSAR
+El diagnóstico es una fotografía. La conversación explica la historia detrás.
+El verdadero problema muchas veces aparece durante la conversación.
+Ejemplo: diagnóstico dice "empleo", pero la persona dice "tengo un bebé de 9 meses y no tengo quién lo cuide". El problema real ya no es solo empleo.
+Siempre intentá descubrir la necesidad real antes de recomendar recursos.
+
+INFORMACIÓN A DESCUBRIR (si aún no la conocemos)
+Situación laboral, experiencia, ingresos, objetivo económico, vivienda, salud, educación, composición familiar, hijos y edades, disponibilidad horaria, red de apoyo, programas sociales que usa, deudas, preocupaciones actuales, objetivos personales, estado emocional.
+
+RECURSOS DISPONIBLES
+Programas nacionales, provinciales, municipales, recursos barriales, organizaciones sociales, hospitales, CeSAC, Línea 144, Línea 147, ANSES, Ciudadanía Porteña, subsidios, patrocinio jurídico, capacitaciones, oportunidades laborales, OportunAI (cuando hay necesidad laboral).
+Recomendar recursos solo después de comprender la situación real, no automáticamente.
+
+CASOS SENSIBLES
+Si detectás violencia, amenazas, niños en riesgo, falta de alimentos, riesgo habitacional, endeudamiento crítico, salud mental, suicidio, abuso o urgencias sociales: respondé con contención, orientá con recursos disponibles, y marcá el mensaje con [ALERTA_HUMANA] al inicio.
+
+SEGUNDO DIAGNÓSTICO
+Si recibís dos diagnósticos, compará ambos. Tres escenarios posibles:
+- Continúa igual: reconocer que la necesidad sigue, preguntar cómo evolucionó.
+- Mejoró: reconocer la mejora, preguntar qué cambió.
+- Nueva necesidad: reconocer la nueva prioridad, entender qué ocurrió.
+Nunca reiniciar la conversación. Siempre continuar el acompañamiento.
+
+REGLA PRINCIPAL
+Devolvé únicamente el texto del mensaje de WhatsApp, sin explicaciones ni comillas.
+Máximo 3 emojis en todo el mensaje.
+Nunca uses la palabra "diagnóstico" como si fuera médico; es un "diagnóstico de bienestar".`;
 
 function buildUserPrompt(body: Record<string, unknown>): string {
   const tipo = body.tipo as string;
   const nombre = (body.nombre as string) || "";
   const plan = body.plan as Array<Record<string, unknown>> | undefined;
   const mensajeUsuario = body.mensajeUsuario as string | undefined;
-  const historial = body.historial as string | undefined;
+  const historial = body.historial as Array<{ tipo: string; texto: string; created_at: string }> | undefined;
+  const diagnosticoAnterior = body.diagnosticoAnterior as Array<Record<string, unknown>> | undefined;
+
+  const historialTexto = historial && historial.length > 0
+    ? historial.map(h => `[${h.tipo === "entrante" ? "USUARIO" : "KORAI"}] ${h.texto}`).join("\n")
+    : "";
+
+  const planTexto = (plan || [])
+    .map((p) => {
+      const acciones = (p.accionesCorto as string[] | undefined)?.slice(0, 2).join(" / ") || "";
+      const recurso = (p.recursos as Array<Record<string, unknown>> | undefined)?.[0];
+      const recursoTexto = recurso ? `${recurso.nombre}${recurso.url ? ": " + recurso.url : ""}` : "";
+      return `- ${p.dimensionName} (${p.nivelColor}): ${acciones}${recursoTexto ? " | Recurso: " + recursoTexto : ""}`;
+    })
+    .join("\n");
 
   if (tipo === "plan") {
-    const planTexto = (plan || [])
-      .map((p) => {
-        const acciones = (p.accionesCorto as string[] | undefined)?.slice(0, 2).join(" / ") || "";
-        const recurso = p.recursos as Array<Record<string, unknown>> | undefined;
-        const r = recurso?.[0];
-        const recursoTexto = r ? `${r.nombre}${r.url ? ": " + r.url : ""}${r.telefono ? ": " + r.telefono : ""}` : "";
-        return `- ${p.dimensionName} (${p.nivelColor}): ${acciones}${recursoTexto ? "\n  Recurso: " + recursoTexto : ""}`;
-      })
-      .join("\n");
+    return `Escribí el primer mensaje de WhatsApp para enviarle a ${nombre || "esta persona"} su plan personalizado de bienestar.
 
-    return `Escribí el mensaje de WhatsApp para enviarle a ${nombre || "esta persona"} su plan personalizado de bienestar.
-
-Datos del plan (NO los modifiques, solo redactá el texto que los presenta):
+Diagnóstico actual:
 ${planTexto}
 
-El mensaje debe: saludar, decir que ya tienen el plan armado según lo que respondieron, presentar cada área con su acción y recurso, y cerrar ofreciendo acompañamiento y mencionando que en 7 días vuelven a contactarlo.`;
+${diagnosticoAnterior ? `Diagnóstico anterior:\n${(diagnosticoAnterior || []).map((p: Record<string, unknown>) => `- ${p.dimensionName} (${p.nivelColor})`).join("\n")}\n` : ""}
+${historialTexto ? `Historial de conversación previa:\n${historialTexto}\n` : ""}
+El mensaje debe: saludar, presentar cada área con su acción y recurso de forma cálida, y cerrar ofreciendo acompañamiento. Si hay diagnóstico anterior, compará la evolución.`;
   }
 
   if (tipo === "seguimiento") {
-    return `Escribí un mensaje de WhatsApp de seguimiento para ${nombre || "esta persona"}.
+    return `Escribí un mensaje de seguimiento para ${nombre || "esta persona"}.
 
 Plan que ya se le envió:
-${(plan || []).map((p) => `- ${p.dimensionName}: ${(p.accionesCorto as string[] | undefined)?.[0] || ""}`).join("\n")}
+${planTexto}
 
-El mensaje debe preguntar de forma cálida y concreta si pudo avanzar con los trámites/acciones que se le compartieron, ofrecer ayuda si tuvo trabas, y motivarlo a seguir.`;
+${historialTexto ? `Historial de conversación:\n${historialTexto}\n` : ""}
+El mensaje debe preguntar de forma cálida y concreta si pudo avanzar, ofrecer ayuda si tuvo trabas, y motivarlo a seguir.`;
   }
 
   if (tipo === "respuesta") {
-    return `${nombre ? `La persona se llama ${nombre}.` : ""}
-${historial ? `Contexto previo de la conversación:\n${historial}\n` : ""}
-Plan que ya se le compartió:
-${(plan || []).map((p) => `- ${p.dimensionName}: ${(p.accionesCorto as string[] | undefined)?.[0] || ""}`).join("\n")}
+    return `Generá la mejor respuesta posible para este mensaje de WhatsApp.
 
-La persona escribió este mensaje por WhatsApp:
+${nombre ? `Persona: ${nombre}` : ""}
+
+Diagnóstico actual:
+${planTexto}
+
+${diagnosticoAnterior ? `Diagnóstico anterior:\n${(diagnosticoAnterior || []).map((p: Record<string, unknown>) => `- ${p.dimensionName} (${p.nivelColor})`).join("\n")}\n` : ""}
+${historialTexto ? `Historial completo de conversación:\n${historialTexto}\n` : ""}
+Último mensaje del usuario:
 "${mensajeUsuario}"
 
-Redactá una respuesta breve, empática y útil, considerando su plan y lo que escribió.`;
+Analizá todo el contexto. Respondé con una sola respuesta corta, empática y útil. Si detectás una necesidad nueva o información importante, descubrila con una sola pregunta. Si ya tenés suficiente contexto, orientá con recursos concretos.`;
   }
 
   throw new Error("tipo inválido");
@@ -97,7 +148,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: ANTHROPIC_MODEL,
-        max_tokens: 600,
+        max_tokens: 800,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userPrompt }],
       }),
@@ -111,8 +162,9 @@ serve(async (req) => {
     }
 
     const mensaje = data?.content?.[0]?.text || "";
+    const alertaHumana = mensaje.startsWith("[ALERTA_HUMANA]");
 
-    return new Response(JSON.stringify({ status: "ok", mensaje }), { status: 200, headers });
+    return new Response(JSON.stringify({ status: "ok", mensaje: mensaje.replace("[ALERTA_HUMANA]", "").trim(), alertaHumana }), { status: 200, headers });
   } catch (err) {
     console.error("generate_message error:", err);
     return new Response(
