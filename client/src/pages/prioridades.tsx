@@ -78,7 +78,7 @@ export default function Prioridades() {
     const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
     const nombre = context.nombre || "";
     const dni = context.dni ? `\nDNI: ${context.dni}` : "";
-    const msg = `Hola Korai. Terminé mi diagnóstico.\n\nMi nombre es ${nombre} y quiero que me envíes mi plan personalizado y me acompañes en el proceso.${dni}`;
+    const msg = `Hola Korai. Terminé mi diagnóstico.\n\nMi nombre es ${nombre} y quiero que me envíes mi plan personalizado y me acompañes en el proceso.${dni}\n\n📲 Ya te agendé como "Korai" para recibir mis novedades.`;
     const encoded = encodeURIComponent(msg);
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const url = isMobile
@@ -251,6 +251,9 @@ export default function Prioridades() {
         </div>
 
         {/* WhatsApp button */}
+        <div style={{ background: "#f0fff4", border: "1px solid #86efac", borderRadius: "12px", padding: "10px 14px", marginBottom: "8px", fontSize: "12px", color: "#166534" }}>
+          📲 <strong>Antes de continuar:</strong> guardá el número de Korai en tus contactos como <strong>"Korai"</strong> para recibir tu plan y seguimiento.
+        </div>
         <button
           onClick={() => handleWhatsApp(item)}
           style={{ width: "100%", height: "52px", borderRadius: "14px", border: "none", background: "#25D366", color: "white", fontWeight: 800, fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "6px" }}
