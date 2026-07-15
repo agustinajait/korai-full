@@ -312,16 +312,46 @@ export default function Superadmin() {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-3">
-          {[
-            { label: "Usuarios únicos", value: new Set(responses.map(r => r.dni_hash).filter(Boolean)).size },
-            { label: "Diagnósticos", value: responses.length },
-            { label: "Con seguimiento", value: responses.filter(r => r.acepto_seguimiento).length },
-            { label: "Con teléfono", value: responses.filter(r => getTelefono(r)).length },
-          ].map(s => (
-            <div key={s.label} className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm"><div className="text-2xl font-black">{s.value}</div><div className="text-xs text-[#6B5FA0] mt-1">{s.label}</div></div>
-          ))}
-        </div>
+        {(() => {
+          const uniqueUsers = new Set(responses.map(r => r.dni_hash).filter(Boolean)).size;
+          const totalDiag = responses.length;
+          const rediag = totalDiag - uniqueUsers;
+          const tasaRetorno = uniqueUsers > 0 ? Math.round((rediag / uniqueUsers) * 100) : 0;
+          const conSeguimiento = responses.filter(r => r.acepto_seguimiento).length;
+          const conTelefono = responses.filter(r => getTelefono(r)).length;
+          return (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm">
+                <div className="text-2xl font-black text-[#5c40c0]">{uniqueUsers}</div>
+                <div className="text-xs font-bold text-[#1E1040] mt-1">Personas únicas</div>
+                <div className="text-[10px] text-[#9B8EC4] mt-0.5">Deduplicado por DNI</div>
+              </div>
+              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm">
+                <div className="text-2xl font-black text-[#1E1040]">{totalDiag}</div>
+                <div className="text-xs font-bold text-[#1E1040] mt-1">Diagnósticos totales</div>
+                <div className="text-[10px] text-[#9B8EC4] mt-0.5">Incluye rediagnósticos</div>
+              </div>
+              <div className="bg-gradient-to-br from-[#ede9fe] to-[#f0eef8] border border-[#7c5cff]/40 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-end gap-1.5">
+                  <div className="text-2xl font-black text-[#7c5cff]">{rediag}</div>
+                  <div className="text-sm font-black text-[#7c5cff] mb-0.5">({tasaRetorno}%)</div>
+                </div>
+                <div className="text-xs font-bold text-[#1E1040] mt-1">Retornos</div>
+                <div className="text-[10px] text-[#9B8EC4] mt-0.5">Personas que volvieron a diagnosticarse</div>
+              </div>
+              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm">
+                <div className="text-2xl font-black text-green-600">{conSeguimiento}</div>
+                <div className="text-xs font-bold text-[#1E1040] mt-1">Con seguimiento</div>
+                <div className="text-[10px] text-[#9B8EC4] mt-0.5">Aceptaron acompañamiento</div>
+              </div>
+              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm">
+                <div className="text-2xl font-black text-[#1E1040]">{conTelefono}</div>
+                <div className="text-xs font-bold text-[#1E1040] mt-1">Con teléfono</div>
+                <div className="text-[10px] text-[#9B8EC4] mt-0.5">Contactables por WhatsApp</div>
+              </div>
+            </div>
+          );
+        })()}
 
         {showCaseList && (
           <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-3xl overflow-hidden shadow-sm">

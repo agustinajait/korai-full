@@ -583,10 +583,14 @@ export default function Dashboard() {
     });
 
     const usuariosUnicos = new Set(filtered.map(r => r.dni_hash).filter(Boolean)).size;
+    const retornos = total - usuariosUnicos;
+    const tasaRetorno = usuariosUnicos > 0 ? Math.round((retornos / usuariosUnicos) * 100) : 0;
 
     return {
       total,
       usuariosUnicos,
+      retornos,
+      tasaRetorno,
       dist: { rojo: total ? rojo / total : 0, amarillo: total ? amarillo / total : 0, verde: total ? verde / total : 0 },
       byDim,
       mostCritical,
@@ -856,7 +860,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── KPIs ejecutivos ───────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
 
           {/* Personas únicas */}
           <div className="bg-white border border-[#B8A9E8] rounded-2xl p-5 flex flex-col gap-1.5 shadow-sm">
@@ -878,6 +882,20 @@ export default function Dashboard() {
             <div className="text-4xl font-black text-[#1E1040] leading-none">{stats.total}</div>
             <div className="text-sm text-[#6B5FA0] leading-snug">diagnósticos realizados</div>
             <div className="text-[10px] text-[#9B8EC4]">Incluye rediagnósticos</div>
+          </div>
+
+          {/* Retornos */}
+          <div className="bg-[#ede9fe] border border-[#7c5cff]/40 rounded-2xl p-5 flex flex-col gap-1.5 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🔄</span>
+              <span className="text-[10px] font-black uppercase text-[#5c40c0] tracking-wider">Retorno</span>
+            </div>
+            <div className="flex items-end gap-2 leading-none">
+              <div className="text-4xl font-black text-[#5c40c0]">{stats.retornos}</div>
+              <div className="text-lg font-black text-[#7c5cff] mb-1">({stats.tasaRetorno}%)</div>
+            </div>
+            <div className="text-sm text-[#6B5FA0] leading-snug">personas que volvieron a diagnosticarse</div>
+            <div className="text-[10px] text-[#9B8EC4]">Indicador de retención y enganche</div>
           </div>
 
           {/* Personas en situación crítica — clickeable */}
