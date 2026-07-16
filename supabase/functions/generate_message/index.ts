@@ -88,7 +88,12 @@ ${planTexto}
 
 ${diagnosticoAnterior ? `Diagnóstico anterior:\n${(diagnosticoAnterior || []).map((p: Record<string, unknown>) => `- ${p.dimensionName} (${p.nivelColor})`).join("\n")}\n` : ""}
 ${historialTexto ? `Historial de conversación previa:\n${historialTexto}\n` : ""}
-El mensaje debe: saludar, presentar cada área con su acción y recurso de forma cálida, y cerrar ofreciendo acompañamiento. Si hay diagnóstico anterior, compará la evolución.`;
+El mensaje DEBE:
+1. Comenzar presentándose: "Hola [nombre], somos Korai 👋" o similar — esto es obligatorio, la persona no nos conoce todavía.
+2. Explicar brevemente qué es Korai en una línea: somos una plataforma de acompañamiento social.
+3. Presentar cada área con su acción y recurso de forma cálida.
+4. Cerrar diciendo que en los próximos días nos vamos a volver a contactar para ver cómo van.
+5. Si hay diagnóstico anterior, reconocer la evolución en vez de empezar de cero.`;
   }
 
   if (tipo === "seguimiento") {
