@@ -466,7 +466,7 @@ export default function Superadmin() {
               <h3 className="font-black text-lg mb-3">Usuarios registrados</h3>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, DNI o barrio..." className="w-full h-11 px-4 rounded-xl bg-white border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none" />
             </div>
-            <div className="divide-y divide-[#EDE9FE] max-h-[600px] overflow-y-scroll user-list-scroll" style={{ scrollbarColor: "#5c40c0 #ede9fe", scrollbarWidth: "auto" }}>
+            <div className="divide-y divide-[#EDE9FE] overflow-y-scroll user-list-scroll" style={{ maxHeight: "calc(100vh - 280px)", scrollbarColor: "#5c40c0 #ede9fe", scrollbarWidth: "auto" }}>
               {filtered.map((r, i) => {
                 const nombre = getNombrePersona(r);
                 const telefono = getTelefono(r);
