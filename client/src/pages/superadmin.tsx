@@ -160,6 +160,9 @@ export default function Superadmin() {
   const [newNote, setNewNote] = useState("");
   const [newEstado, setNewEstado] = useState("contactado");
   const [savingNote, setSavingNote] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importLoading, setImportLoading] = useState(false);
 
   useEffect(() => {
     const role = localStorage.getItem("korai_admin_role");
@@ -187,8 +190,58 @@ export default function Superadmin() {
     });
     setIaMensaje(""); setIaError(""); setMensajeUsuario("");
     setNotes([]); setNewNote("");
+    setShowImport(false); setImportText("");
     setNotesLoading(true);
     fetchNotes(r.id).then(n => { setNotes(n); setNotesLoading(false); });
+  };
+
+  const handleImportarConversacion = async () => {
+    if (!editingUser || !importText.trim()) return;
+    setImportLoading(true);
+    // Parsear el texto exportado de WhatsApp
+    // Formato: "DD/MM/YYYY, HH:MM - Nombre: mensaje"
+    const lines = importText.trim().split("\n");
+    const myName = editForm.nombre || editForm.telefono || "Korai";
+    const notasParsed: Array<{ texto: string; tipo: string }> = [];
+    let current: { tipo: string; texto: string } | null = null;
+
+    for (const line of lines) {
+      const match = line.match(/^\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[ap]\.?\s*m\.?)?\s*[-–]\s*(.+?):\s*(.*)$/i);
+      if (match) {
+        if (current) notasParsed.push(current);
+        const sender = match[1].trim();
+        const texto = match[2].trim();
+        if (!texto || texto === "<Multimedia omitido>" || texto === "<Media omitted>") { current = null; continue; }
+        // Si el remitente contiene el nombre del usuario o su teléfono → entrante; si contiene el nombre del equipo/Korai → saliente
+        const esKorai = sender.toLowerCase().includes("korai") || sender.toLowerCase().includes(myName.toLowerCase().split(" ")[0].toLowerCase());
+        current = { tipo: esKorai ? "saliente" : "entrante", texto };
+      } else if (current && line.trim() && !line.startsWith("‎")) {
+        current.texto += "\n" + line.trim();
+      }
+    }
+    if (current) notasParsed.push(current);
+
+    // Guardar cada nota secuencialmente
+    let guardadas = 0;
+    for (const n of notasParsed) {
+      try {
+        const nota = await addNote(editingUser.id, n.texto, "contactado");
+        await fetch(`${SUPABASE_URL}/rest/v1/case_notes?id=eq.${nota.id}`, {
+          method: "PATCH",
+          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+          body: JSON.stringify({ tipo: n.tipo }),
+        });
+        guardadas++;
+      } catch {}
+    }
+
+    // Recargar notas
+    const nuevas = await fetchNotes(editingUser.id);
+    setNotes(nuevas);
+    setImportText("");
+    setShowImport(false);
+    setImportLoading(false);
+    alert(`✅ Se importaron ${guardadas} mensajes correctamente.`);
   };
 
   const saveEdit = async () => {
@@ -626,7 +679,32 @@ export default function Superadmin() {
             </div>
 
             <div className="border-t border-[#EDE9FE] pt-4 space-y-3">
-              <h4 className="font-black text-sm flex items-center gap-2">💬 Conversación</h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-black text-sm flex items-center gap-2">💬 Conversación</h4>
+                <button onClick={() => { setShowImport(s => !s); setImportText(""); }} className="text-[10px] bg-[#f0eef8] border border-[#B8A9E8] text-[#5c40c0] px-2 py-1 rounded-lg font-bold">
+                  {showImport ? "✕ Cancelar" : "📥 Importar de WhatsApp"}
+                </button>
+              </div>
+
+              {showImport && (
+                <div className="bg-[#f8f6ff] border border-[#B8A9E8] rounded-2xl p-3 space-y-2">
+                  <p className="text-[10px] text-[#6B5FA0] font-bold uppercase tracking-wide">Pegá el texto exportado de WhatsApp</p>
+                  <p className="text-[10px] text-[#9B8EC4]">En WhatsApp: abrí el chat → ⋮ → Más → Exportar chat → Sin archivos → copiá todo el texto acá.</p>
+                  <textarea
+                    value={importText}
+                    onChange={e => setImportText(e.target.value)}
+                    className="w-full h-40 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-xs focus:outline-none resize-none font-mono"
+                    placeholder={"15/07/2024, 10:23 - Korai: Hola María!\n15/07/2024, 10:25 - María García: Hola, soy María..."}
+                  />
+                  <button
+                    onClick={handleImportarConversacion}
+                    disabled={importLoading || !importText.trim()}
+                    className="w-full h-9 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40 flex items-center justify-center gap-2"
+                  >
+                    {importLoading ? <><Loader2 className="w-3 h-3 animate-spin" /> Importando...</> : "✅ Importar conversación"}
+                  </button>
+                </div>
+              )}
 
               {/* Historial tipo chat */}
               <div className="space-y-2 max-h-52 overflow-y-auto flex flex-col-reverse bg-[#f8f6ff] rounded-2xl p-3">
