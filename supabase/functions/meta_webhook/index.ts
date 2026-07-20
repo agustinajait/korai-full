@@ -1,26 +1,99 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERIFY_TOKEN = "korai_webhook_2026";
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const VERIFY_TOKEN = "Camilo2016#";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://jgqqkgfppovkbwklctol.supabase.co";
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const META_TOKEN = Deno.env.get("META_TOKEN") ?? "";
-const META_PHONE_ID = Deno.env.get("META_PHONE_ID") ?? "";
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
+const WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_TOKEN") ?? "";
+const CAMPAIGN_ID = "53813f5a-3613-4faf-8ca1-b369e4e908cb";
 
-async function enviarMensaje(to: string, mensaje: string) {
-  await fetch(`https://graph.facebook.com/v19.0/${META_PHONE_ID}/messages`, {
+async function buscarUsuarioPorTelefono(telefono: string) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/responses?campaign_id=eq.${CAMPAIGN_ID}&order=submitted_at.desc`,
+    { headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}` } }
+  );
+  const responses = await res.json();
+  const clean = (t: string) => t.replace(/\D/g, "").slice(-10);
+  const telLimpio = clean(telefono);
+  for (const r of responses) {
+    try {
+      const raw = r.perfil_contextual;
+      const p = typeof raw === "string" ? JSON.parse(raw) : (raw || {});
+      const telGuardado = clean(p?.telefono || "");
+      if (telGuardado && telGuardado === telLimpio) return r;
+    } catch {}
+  }
+  return null;
+}
+
+async function fetchHistorial(responseId: string) {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/case_notes?response_id=eq.${responseId}&order=created_at.asc`,
+    { headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}` } }
+  );
+  return res.json();
+}
+
+async function guardarNota(responseId: string, texto: string, tipo: string, estado: string) {
+  await fetch(`${SUPABASE_URL}/rest/v1/case_notes`, {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${META_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body: mensaje },
-    }),
+    headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ response_id: responseId, texto, tipo, estado }),
   });
+  await fetch(`${SUPABASE_URL}/rest/v1/responses?id=eq.${responseId}`, {
+    method: "PATCH",
+    headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+    body: JSON.stringify({ ultimo_contacto: new Date().toISOString(), ultimo_estado: estado }),
+  });
+}
+
+async function generarRespuestaIA(usuario: any, mensajeUsuario: string, historial: any[]) {
+  const raw = usuario.perfil_contextual;
+  const perfil = (() => { try { return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); } catch { return {}; } })();
+  const nombre = perfil?.nombre || perfil?.demographics?.nombre || "";
+  const answers = usuario.answers || {};
+  const planSimple = Object.entries(answers)
+    .filter(([, v]) => v === "rojo" || v === "amarillo")
+    .slice(0, 4)
+    .map(([k, v]) => `- ${k}: ${v}`)
+    .join("\n") || "Sin datos de diagnóstico";
+
+  const historialTexto = historial
+    .filter(n => n.tipo === "entrante" || n.tipo === "saliente")
+    .slice(-20)
+    .map(n => `[${n.tipo === "entrante" ? "USUARIO" : "KORAI"}] ${n.texto}`)
+    .join("\n");
+
+  const systemPrompt = `Sos Korai, el asistente conversacional de la plataforma Korai.
+Representás al equipo de acompañamiento. Siempre hablás en plural.
+Nunca decís que sos una IA. La persona debe sentir que habla con un equipo humano.
+Respondé con naturalidad, en español rioplatense, una sola pregunta por vez si es necesario.
+Devolvé únicamente el texto del mensaje, sin explicaciones ni comillas. Máximo 3 emojis.
+Si detectás violencia, emergencia o riesgo grave, iniciá con [ALERTA_HUMANA].`;
+
+  const userPrompt = `${nombre ? `Persona: ${nombre}` : ""}
+Áreas prioritarias del diagnóstico:
+${planSimple}
+${historialTexto ? `\nHistorial:\n${historialTexto}\n` : ""}
+Último mensaje del usuario: "${mensajeUsuario}"
+Generá la mejor respuesta posible.`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
+    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 600, system: systemPrompt, messages: [{ role: "user", content: userPrompt }] }),
+  });
+  const data = await res.json();
+  return data?.content?.[0]?.text || "";
+}
+
+async function enviarWhatsApp(telefono: string, mensaje: string, wabaId: string) {
+  const res = await fetch(`https://graph.facebook.com/v19.0/${wabaId}/messages`, {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${WHATSAPP_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ messaging_product: "whatsapp", to: telefono, type: "text", text: { body: mensaje } }),
+  });
+  console.log("WhatsApp API:", JSON.stringify(await res.json()));
 }
 
 function generarMensajeKorai(response: any): string {
@@ -119,80 +192,67 @@ function generarMensajeKorai(response: any): string {
 }
 
 serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok");
+
   if (req.method === "GET") {
     const url = new URL(req.url);
     const mode = url.searchParams.get("hub.mode");
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
     if (mode === "subscribe" && token === VERIFY_TOKEN) {
+      console.log("Webhook verificado por Meta");
       return new Response(challenge, { status: 200 });
     }
     return new Response("Forbidden", { status: 403 });
   }
 
-  if (req.method === "POST") {
+  if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
+
+  try {
     const body = await req.json();
-    console.log("Meta webhook:", JSON.stringify(body));
+    console.log("Webhook recibido:", JSON.stringify(body));
 
     const entry = body?.entry?.[0];
-    const change = entry?.changes?.[0];
-    const message = change?.value?.messages?.[0];
+    const changes = entry?.changes?.[0];
+    const value = changes?.value;
+    const messages = value?.messages;
 
-    if (message) {
-      const from = message.from;
-      const text = (message.text?.body || "").toLowerCase().trim();
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    if (!messages || messages.length === 0) return new Response("ok", { status: 200 });
 
-      // Guardar número
-      await supabase.from("whatsapp_joins").upsert(
-        { telefono: `+${from}`, joined_at: new Date().toISOString() },
-        { onConflict: "telefono" }
-      );
+    const message = messages[0];
+    const telefonoUsuario = message.from;
+    const textoMensaje = message?.text?.body || "";
+    const wabaId = value?.metadata?.phone_number_id;
 
-      // Detectar mensaje de inicio del usuario
-      const esInicio = text.includes("hola korai") || text.includes("terminé mi diagnóstico") || text.includes("termine mi diagnostico") || text.includes("plan de acción") || text.includes("plan de accion");
+    if (!textoMensaje) return new Response("ok", { status: 200 });
 
-      // También responder a "plan:DNI_HASH" (compatibilidad)
-      const esPlan = text.startsWith("plan:");
+    console.log(`Mensaje de ${telefonoUsuario}: ${textoMensaje}`);
 
-      if (esInicio || esPlan) {
-        let response = null;
-
-        if (esPlan) {
-          // Buscar por hash
-          const dniHash = text.replace("plan:", "").trim();
-          const { data } = await supabase
-            .from("responses")
-            .select("*")
-            .eq("dni_hash", dniHash)
-            .order("submitted_at", { ascending: false })
-            .limit(1)
-            .single();
-          response = data;
-        } else {
-          // Buscar por número de teléfono (más reciente)
-          const telefonoNormalizado = from.startsWith("549") ? from : `549${from}`;
-          const { data } = await supabase
-            .from("responses")
-            .select("*")
-            .or(`telefono.eq.${telefonoNormalizado},telefono.eq.+${telefonoNormalizado},telefono.eq.${from}`)
-            .order("submitted_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          response = data;
-        }
-
-        if (response) {
-          const plan = generarMensajeKorai(response);
-          await enviarMensaje(from, plan);
-        } else {
-          await enviarMensaje(from, "Hola 👋 Soy Korai. No encontramos tu diagnóstico. Por favor completá el formulario en app.korai.lat");
-        }
-      }
+    const usuario = await buscarUsuarioPorTelefono(telefonoUsuario);
+    if (!usuario) {
+      console.log("Usuario no encontrado para:", telefonoUsuario);
+      return new Response("ok", { status: 200 });
     }
 
+    await guardarNota(usuario.id, textoMensaje, "entrante", "contactado");
+    const historial = await fetchHistorial(usuario.id);
+    const respuesta = await generarRespuestaIA(usuario, textoMensaje, historial);
+
+    const alertaHumana = respuesta.startsWith("[ALERTA_HUMANA]");
+    const mensajeLimpio = respuesta.replace("[ALERTA_HUMANA]", "").trim();
+
+    if (alertaHumana) {
+      await guardarNota(usuario.id, "⚠️ ALERTA: caso requiere revisión humana urgente. Mensaje: " + textoMensaje, "nota", "con_dificultades");
+      console.log("ALERTA HUMANA para usuario:", usuario.id);
+      return new Response("ok", { status: 200 });
+    }
+
+    await enviarWhatsApp(telefonoUsuario, mensajeLimpio, wabaId);
+    await guardarNota(usuario.id, mensajeLimpio, "saliente", "contactado");
+
+    return new Response("ok", { status: 200 });
+  } catch (err) {
+    console.error("Error en meta_webhook:", err);
     return new Response("ok", { status: 200 });
   }
-
-  return new Response("Method not allowed", { status: 405 });
 });
