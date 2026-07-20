@@ -269,7 +269,8 @@ export default function Superadmin() {
       const nombre = getNombrePersona(editingUser);
       const plan = planDeUsuario(editingUser);
       const historial = notes.filter(n => n.tipo === "entrante" || n.tipo === "saliente").map(n => ({ tipo: n.tipo, texto: n.texto, created_at: n.created_at }));
-      const mensaje = await generarMensajeIA({ tipo, nombre, plan, mensajeUsuario, historial });
+      const notasContexto = notes.filter(n => n.tipo === "nota" || (!n.tipo)).map(n => n.texto);
+      const mensaje = await generarMensajeIA({ tipo, nombre, plan, mensajeUsuario, historial, notasContexto });
       setIaMensaje(mensaje);
     } catch (e) {
       setIaError(e.message || "Error al generar mensaje");
@@ -295,7 +296,8 @@ export default function Superadmin() {
       const nombre = getNombrePersona(editingUser);
       const plan = planDeUsuario(editingUser);
       const historial = [{ tipo: "entrante", texto: mensajeUsuario.trim(), created_at: new Date().toISOString() }, ...notes.filter(n => n.tipo === "entrante" || n.tipo === "saliente").map(n => ({ tipo: n.tipo, texto: n.texto, created_at: n.created_at }))];
-      const mensaje = await generarMensajeIA({ tipo: "respuesta", nombre, plan, mensajeUsuario: mensajeUsuario.trim(), historial });
+      const notasContexto = notes.filter(n => n.tipo === "nota" || (!n.tipo)).map(n => n.texto);
+      const mensaje = await generarMensajeIA({ tipo: "respuesta", nombre, plan, mensajeUsuario: mensajeUsuario.trim(), historial, notasContexto });
       setIaMensaje(mensaje);
       setIaLoading(false);
     } catch (e) {

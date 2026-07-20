@@ -66,9 +66,14 @@ function buildUserPrompt(body: Record<string, unknown>): string {
   const mensajeUsuario = body.mensajeUsuario as string | undefined;
   const historial = body.historial as Array<{ tipo: string; texto: string; created_at: string }> | undefined;
   const diagnosticoAnterior = body.diagnosticoAnterior as Array<Record<string, unknown>> | undefined;
+  const notasContexto = body.notasContexto as string[] | undefined;
 
   const historialTexto = historial && historial.length > 0
     ? historial.map(h => `[${h.tipo === "entrante" ? "USUARIO" : "KORAI"}] ${h.texto}`).join("\n")
+    : "";
+
+  const notasTexto = notasContexto && notasContexto.length > 0
+    ? notasContexto.join("\n---\n")
     : "";
 
   const planTexto = (plan || [])
@@ -87,6 +92,7 @@ Diagnóstico actual:
 ${planTexto}
 
 ${diagnosticoAnterior ? `Diagnóstico anterior:\n${(diagnosticoAnterior || []).map((p: Record<string, unknown>) => `- ${p.dimensionName} (${p.nivelColor})`).join("\n")}\n` : ""}
+${notasTexto ? `Notas de contexto sobre esta persona:\n${notasTexto}\n` : ""}
 ${historialTexto ? `Historial de conversación previa:\n${historialTexto}\n` : ""}
 El mensaje DEBE:
 1. Comenzar presentándose: "Hola [nombre], somos Korai 👋" o similar — esto es obligatorio, la persona no nos conoce todavía.
@@ -102,6 +108,7 @@ El mensaje DEBE:
 Plan que ya se le envió:
 ${planTexto}
 
+${notasTexto ? `Notas de contexto sobre esta persona:\n${notasTexto}\n` : ""}
 ${historialTexto ? `Historial de conversación:\n${historialTexto}\n` : ""}
 El mensaje debe preguntar de forma cálida y concreta si pudo avanzar, ofrecer ayuda si tuvo trabas, y motivarlo a seguir.`;
   }
@@ -115,6 +122,7 @@ Diagnóstico actual:
 ${planTexto}
 
 ${diagnosticoAnterior ? `Diagnóstico anterior:\n${(diagnosticoAnterior || []).map((p: Record<string, unknown>) => `- ${p.dimensionName} (${p.nivelColor})`).join("\n")}\n` : ""}
+${notasTexto ? `Notas de contexto sobre esta persona:\n${notasTexto}\n` : ""}
 ${historialTexto ? `Historial completo de conversación:\n${historialTexto}\n` : ""}
 Último mensaje del usuario:
 "${mensajeUsuario}"
