@@ -451,7 +451,7 @@ export default function Superadmin() {
       </header>
 
       {/* ── KPIs ── */}
-      <div className="sticky top-14 z-10 bg-white border-b border-[#B8A9E8] flex-shrink-0 py-3">
+      <div className="sticky top-14 z-10 bg-white border-b border-[#B8A9E8] flex-shrink-0 py-4">
         <div className="max-w-screen-2xl mx-auto px-8">
           <div className="grid grid-cols-5 gap-3">
             {[
@@ -461,12 +461,12 @@ export default function Superadmin() {
               { label: "Con seguimiento", value: conSeguimiento, sub: "aceptaron acomp.", color: "#16a34a", bg: "#f0fdf4" },
               { label: "Con teléfono", value: conTelefono, sub: "contactables WA", color: "#1E1040", bg: "#f0eef8" },
             ].map(kpi => (
-              <div key={kpi.label} className="flex items-center justify-between px-4 py-3 rounded-2xl" style={{ background: kpi.bg }}>
+              <div key={kpi.label} className="flex items-center justify-between px-5 py-4 rounded-2xl" style={{ background: kpi.bg }}>
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-[#1E1040] leading-tight truncate">{kpi.label}</div>
-                  <div className="text-[10px] text-[#9B8EC4] mt-0.5">{kpi.sub}</div>
+                  <div className="text-sm font-bold text-[#1E1040] leading-tight truncate">{kpi.label}</div>
+                  <div className="text-xs text-[#9B8EC4] mt-1">{kpi.sub}</div>
                 </div>
-                <div className="text-2xl font-black ml-3 flex-shrink-0 leading-none" style={{ color: kpi.color }}>{kpi.value}</div>
+                <div className="text-3xl font-black ml-4 flex-shrink-0 leading-none" style={{ color: kpi.color }}>{kpi.value}</div>
               </div>
             ))}
           </div>
@@ -474,7 +474,7 @@ export default function Superadmin() {
       </div>
 
       {/* ── TABS ── */}
-      <div className="sticky z-10 bg-white border-b border-[#B8A9E8] flex-shrink-0" style={{ top: "144px" }}>
+      <div className="sticky z-10 bg-white border-b border-[#B8A9E8] flex-shrink-0" style={{ top: "152px" }}>
         <div className="max-w-screen-2xl mx-auto px-8 flex gap-1">
           {(["usuarios", "analisis"] as const).map(tab => (
             <button
@@ -753,9 +753,9 @@ export default function Superadmin() {
 
         {/* TAB: Lista de usuarios — pantalla completa */}
         {activeTab === "usuarios" && (
-        <div className="w-full overflow-y-auto" style={{ height: "calc(100vh - 196px)" }}>
-        <div className="max-w-screen-2xl mx-auto px-8 py-6">
-          <div className="bg-white border border-[#B8A9E8] rounded-2xl overflow-hidden flex flex-col" style={{ height: "calc(100vh - 260px)" }}>
+        <div className="w-full flex flex-col min-h-0 p-6">
+        <div className="max-w-screen-2xl w-full mx-auto flex flex-col flex-1 min-h-0">
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl overflow-hidden flex flex-col flex-1 min-h-0">
           {/* Buscador y filtros */}
           <div className="px-5 pt-4 pb-3 border-b border-[#EDE9FE] space-y-3 flex-shrink-0">
             <div className="flex items-center justify-between">
