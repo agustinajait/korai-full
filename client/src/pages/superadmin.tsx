@@ -423,11 +423,11 @@ export default function Superadmin() {
   const conTelefono = responses.filter(r => getTelefono(r)).length;
 
   return (
-    <div className="min-h-screen bg-[#f0eef8] text-[#1E1040] font-sans flex flex-col">
+    <div className="min-h-screen bg-[#f0eef8] text-[#1E1040] font-sans">
 
       {/* ── HEADER ── */}
-      <header className="sticky top-0 z-20 bg-white border-b border-[#B8A9E8] flex-shrink-0 h-14">
-        <div className="max-w-screen-2xl mx-auto px-8 h-full flex items-center gap-3">
+      <header className="sticky top-0 z-20 bg-white border-b border-[#B8A9E8] h-14">
+        <div className="mx-auto px-10 h-full flex items-center gap-3" style={{ maxWidth: 1400 }}>
           <img src={koraiLogo} alt="KORAI" className="w-8 h-8 object-contain flex-shrink-0" />
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-black text-[#1E1040]">KORAI</span>
@@ -451,9 +451,9 @@ export default function Superadmin() {
       </header>
 
       {/* ── KPIs ── */}
-      <div className="sticky top-14 z-10 bg-white border-b border-[#B8A9E8] flex-shrink-0 py-4">
-        <div className="max-w-screen-2xl mx-auto px-8">
-          <div className="grid grid-cols-5 gap-3">
+      <div className="sticky top-14 z-10 bg-white border-b border-[#B8A9E8] py-4">
+        <div className="mx-auto px-10" style={{ maxWidth: 1400 }}>
+          <div className="grid grid-cols-5 gap-4">
             {[
               { label: "Personas únicas", value: uniqueUsers, sub: "dedup. por DNI", color: "#5c40c0", bg: "#ede9fe" },
               { label: "Diagnósticos", value: totalDiag, sub: "incluye rediag.", color: "#1E1040", bg: "#f0eef8" },
@@ -463,7 +463,7 @@ export default function Superadmin() {
             ].map(kpi => (
               <div key={kpi.label} className="flex items-center justify-between px-5 py-4 rounded-2xl" style={{ background: kpi.bg }}>
                 <div className="min-w-0">
-                  <div className="text-sm font-bold text-[#1E1040] leading-tight truncate">{kpi.label}</div>
+                  <div className="text-sm font-bold text-[#1E1040] leading-tight">{kpi.label}</div>
                   <div className="text-xs text-[#9B8EC4] mt-1">{kpi.sub}</div>
                 </div>
                 <div className="text-3xl font-black ml-4 flex-shrink-0 leading-none" style={{ color: kpi.color }}>{kpi.value}</div>
@@ -474,8 +474,8 @@ export default function Superadmin() {
       </div>
 
       {/* ── TABS ── */}
-      <div className="sticky z-10 bg-white border-b border-[#B8A9E8] flex-shrink-0" style={{ top: "152px" }}>
-        <div className="max-w-screen-2xl mx-auto px-8 flex gap-1">
+      <div className="sticky z-10 bg-white border-b border-[#B8A9E8]" style={{ top: "152px" }}>
+        <div className="mx-auto px-10 flex gap-1" style={{ maxWidth: 1400 }}>
           {(["usuarios", "analisis"] as const).map(tab => (
             <button
               key={tab}
@@ -505,17 +505,12 @@ export default function Superadmin() {
         </div>
       </div>
 
-      {/* ── MAIN: pantalla completa según tab activo ── */}
-      {/* header=56px + kpis=~88px + tabs=~48px => offset≈192px */}
-      <div className="flex flex-1 min-h-0">
+      {/* ── MAIN ── */}
+      <div>
 
-        {/* TAB: Análisis territorial — pantalla completa */}
+        {/* TAB: Análisis territorial */}
         {activeTab === "analisis" && (
-        <div
-          className="overflow-y-auto w-full py-8"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}
-        >
-        <div className="max-w-screen-2xl mx-auto px-8 space-y-5">
+        <div className="py-8 mx-auto px-10 space-y-5" style={{ maxWidth: 1400 }}>
           {/* Estado general */}
           <div className={`p-6 rounded-3xl border relative overflow-hidden ${overallColor === "rojo" ? "bg-red-500/10 border-red-500/30" : overallColor === "amarillo" ? "bg-yellow-500/10 border-yellow-500/30" : "bg-green-500/10 border-green-500/30"}`}>
             <div className="flex items-center gap-4 flex-wrap">
@@ -748,14 +743,13 @@ export default function Superadmin() {
             </div>
           </div>
         </div>
-        </div>
         )}
 
-        {/* TAB: Lista de usuarios — pantalla completa */}
+        {/* TAB: Lista de usuarios */}
         {activeTab === "usuarios" && (
-        <div className="w-full flex flex-col min-h-0 p-6">
-        <div className="max-w-screen-2xl w-full mx-auto flex flex-col flex-1 min-h-0">
-          <div className="bg-white border border-[#B8A9E8] rounded-2xl overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="py-6 mx-auto px-10" style={{ maxWidth: 1400 }}>
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl overflow-hidden" style={{ height: "calc(100vh - 280px)" }}>
+          <div className="h-full flex flex-col">
           {/* Buscador y filtros */}
           <div className="px-5 pt-4 pb-3 border-b border-[#EDE9FE] space-y-3 flex-shrink-0">
             <div className="flex items-center justify-between">
@@ -861,17 +855,14 @@ export default function Superadmin() {
             )}
           </div>
           </div>
-        </div>
+          </div>
         </div>
         )}
 
-        {/* TAB: Perfil de usuario — pantalla completa */}
+        {/* TAB: Perfil de usuario */}
         {activeTab === "usuario" && editingUser && (
-        <div
-          className="overflow-y-auto w-full py-6"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}
-        >
-        <div className="max-w-screen-2xl mx-auto px-8">
+        <div className="py-6 mx-auto px-10" style={{ maxWidth: 1400 }}>
+        <div>
           {/* Encabezado de perfil */}
           <div className="flex items-center gap-3 mb-6">
             <button
