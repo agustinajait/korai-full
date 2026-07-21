@@ -161,7 +161,7 @@ export default function Superadmin() {
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
   const [importLoading, setImportLoading] = useState(false);
-  const [rightView, setRightView] = useState<"analisis" | "usuario">("analisis");
+  const [activeTab, setActiveTab] = useState<"analisis" | "usuarios">("usuarios");
 
   useEffect(() => {
     const role = localStorage.getItem("korai_admin_role");
@@ -468,14 +468,33 @@ export default function Superadmin() {
         </div>
       </div>
 
-      {/* ── MAIN: 2 columnas ── */}
-      {/* header=56px kpis=~88px => offset≈144px */}
+      {/* ── TABS ── */}
+      {/* header=56px kpis=~88px => tabs sticky at 144px */}
+      <div className="sticky z-10 bg-white border-b border-[#B8A9E8] px-6 flex gap-2 flex-shrink-0" style={{ top: "144px" }}>
+        {(["usuarios", "analisis"] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="px-5 py-3 text-sm font-black rounded-t-xl transition-colors capitalize"
+            style={activeTab === tab
+              ? { background: "#5c40c0", color: "#fff" }
+              : { background: "#f0eef8", color: "#9B8EC4" }
+            }
+          >
+            {tab === "usuarios" ? "Usuarios" : "Análisis"}
+          </button>
+        ))}
+      </div>
+
+      {/* ── MAIN: pantalla completa según tab activo ── */}
+      {/* header=56px + kpis=~88px + tabs=~48px => offset≈192px */}
       <div className="flex flex-1 min-h-0">
 
-        {/* Columna izquierda 60%: Análisis territorial */}
+        {/* TAB: Análisis territorial — pantalla completa */}
+        {activeTab === "analisis" && (
         <div
-          className="overflow-y-auto p-6 space-y-5"
-          style={{ width: "60%", scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}
+          className="overflow-y-auto p-6 space-y-5 w-full"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}
         >
           {/* Estado general */}
           <div className={`p-6 rounded-3xl border relative overflow-hidden ${overallColor === "rojo" ? "bg-red-500/10 border-red-500/30" : overallColor === "amarillo" ? "bg-yellow-500/10 border-yellow-500/30" : "bg-green-500/10 border-green-500/30"}`}>
@@ -709,11 +728,13 @@ export default function Superadmin() {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Columna derecha 40%: Lista de usuarios (siempre visible, scroll interno) */}
+        {/* TAB: Lista de usuarios — pantalla completa */}
+        {activeTab === "usuarios" && (
         <div
-          className="flex flex-col border-l border-[#B8A9E8] bg-white flex-shrink-0"
-          style={{ width: "40%", position: "sticky", top: "144px", height: "calc(100vh - 144px)", overflowY: "hidden" }}
+          className="flex flex-col bg-white w-full"
+          style={{ height: "calc(100vh - 192px)", overflowY: "hidden" }}
         >
           {/* Buscador y filtros */}
           <div className="px-4 pt-4 pb-3 border-b border-[#B8A9E8] space-y-3 flex-shrink-0">
@@ -818,6 +839,7 @@ export default function Superadmin() {
             )}
           </div>
         </div>
+        )}
       </div>
 
       {/* ── MODAL FLOTANTE: Edición de usuario ── */}
