@@ -49,7 +49,11 @@
   * {
     border-color: hsl(var(--border));
   }
-  
+
+  html {
+    overflow-y: scroll;
+  }
+
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary-foreground;
     font-family: var(--font-sans);
@@ -58,7 +62,6 @@
       radial-gradient(circle at 85% 10%, hsla(142, 71%, 45%, 0.1), transparent 40%),
       radial-gradient(circle at 50% 110%, hsla(38, 92%, 50%, 0.1), transparent 50%);
     background-attachment: fixed;
-    overflow-y: scroll;
   }
 
   h1, h2, h3, h4, h5, h6 {

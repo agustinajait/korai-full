@@ -461,12 +461,12 @@ export default function Superadmin() {
               { label: "Con seguimiento", value: conSeguimiento, sub: "aceptaron acomp.", color: "#16a34a", bg: "#f0fdf4" },
               { label: "Con teléfono", value: conTelefono, sub: "contactables WA", color: "#1E1040", bg: "#f0eef8" },
             ].map(kpi => (
-              <div key={kpi.label} className="flex items-center justify-between px-5 py-4 rounded-2xl" style={{ background: kpi.bg }}>
-                <div className="min-w-0">
-                  <div className="text-sm font-bold text-[#1E1040] leading-tight">{kpi.label}</div>
-                  <div className="text-xs text-[#9B8EC4] mt-1">{kpi.sub}</div>
+              <div key={kpi.label} className="flex flex-col justify-between px-5 py-4 rounded-2xl" style={{ background: kpi.bg }}>
+                <div>
+                  <div className="text-xs font-bold text-[#1E1040] leading-tight">{kpi.label}</div>
+                  <div className="text-[11px] text-[#9B8EC4] mt-0.5">{kpi.sub}</div>
                 </div>
-                <div className="text-3xl font-black ml-4 flex-shrink-0 leading-none" style={{ color: kpi.color }}>{kpi.value}</div>
+                <div className="text-2xl font-black mt-2 leading-none" style={{ color: kpi.color }}>{kpi.value}</div>
               </div>
             ))}
           </div>
