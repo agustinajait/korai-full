@@ -811,6 +811,9 @@ export default function Superadmin() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="font-bold text-sm text-[#1E1040] truncate">{nombre}</span>
+                        {r.bot_pausado && (
+                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 border border-orange-300 flex-shrink-0">⚠️ ALERTA</span>
+                        )}
                         {r.ultimo_estado && (
                           <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border flex-shrink-0 ${
                             r.ultimo_estado === "cerrado" ? "bg-green-500/20 text-green-600 border-green-500/30" :
@@ -869,9 +872,30 @@ export default function Superadmin() {
               <span className="text-white text-sm font-black">{getNombrePersona(editingUser).charAt(0).toUpperCase()}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-black text-xl text-[#1E1040]">{getNombrePersona(editingUser)}</div>
+              <div className="flex items-center gap-2">
+                <div className="font-black text-xl text-[#1E1040]">{getNombrePersona(editingUser)}</div>
+                {editingUser.bot_pausado && (
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 border border-orange-300">⚠️ BOT PAUSADO</span>
+                )}
+              </div>
               <div className="text-xs text-[#9B8EC4]">{editingUser.territorio?.barrio || "Sin barrio"} · {new Date(editingUser.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })}</div>
             </div>
+            {editingUser.bot_pausado && (
+              <button
+                onClick={async () => {
+                  await fetch(`https://jgqqkgfppovkbwklctol.supabase.co/rest/v1/responses?id=eq.${editingUser.id}`, {
+                    method: "PATCH",
+                    headers: { "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4", "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+                    body: JSON.stringify({ bot_pausado: false }),
+                  });
+                  setResponses(prev => prev.map(r => r.id === editingUser.id ? { ...r, bot_pausado: false } : r));
+                  setEditingUser(prev => prev ? { ...prev, bot_pausado: false } : null);
+                }}
+                className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-xs font-bold text-green-700 bg-green-100 border border-green-300 hover:bg-green-200 transition-colors flex-shrink-0"
+              >
+                ✅ Reactivar bot
+              </button>
+            )}
           </div>
 
           {/* Grid 2 columnas: izquierda datos + notas | derecha conversación */}

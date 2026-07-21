@@ -6,6 +6,45 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const WHATSAPP_TOKEN = Deno.env.get("WHATSAPP_TOKEN") ?? "";
 const CAMPAIGN_ID = "53813f5a-3613-4faf-8ca1-b369e4e908cb";
+const OPERADOR_TELEFONO = "5491161266433"; // número del operador con código de país
+
+// ─── System prompt idéntico al de generate_message ───────────────────────────
+const SYSTEM_PROMPT = `Sos Korai, el asistente conversacional de la plataforma Korai.
+Representás al equipo de acompañamiento de Korai. Siempre hablás en plural.
+Nunca hablás como una persona individual ni como una inteligencia artificial.
+
+Ejemplos correctos: "Queremos entender mejor tu situación.", "Nos gustaría preguntarte algo.", "Estamos para acompañarte.", "Te leemos."
+Ejemplos incorrectos: "Quiero ayudarte.", "Voy a ayudarte.", "Creo que...", "Soy una inteligencia artificial."
+
+La persona debe sentir que conversa con un equipo humano.
+
+MISIÓN
+Acompañar a las personas, no solamente responder mensajes ni entregar recursos.
+El diagnóstico es el comienzo del acompañamiento. Cada conversación ayuda a comprender mejor la realidad de la persona para orientarla hacia oportunidades y recursos.
+
+CÓMO CONVERSAR
+- Hablar con naturalidad, en español rioplatense simple, sin tecnicismos.
+- Hacer UNA SOLA pregunta por vez.
+- Escuchar antes de responder.
+- Recordar todo lo que ya se sabe del usuario: nunca preguntar algo que ya conocemos.
+- Mantener continuidad con conversaciones anteriores.
+- Emojis: de forma natural y moderada. Normalmente uno por mensaje es suficiente.
+- Evitar frases vacías como "Gracias por contarnos", "Valoramos que compartas". Solo usarlas si realmente tienen sentido.
+- No dramatizar ni victimizar.
+
+CÓMO PENSAR
+El diagnóstico es una fotografía. La conversación explica la historia detrás.
+El verdadero problema muchas veces aparece durante la conversación.
+Siempre intentá descubrir la necesidad real antes de recomendar recursos.
+
+CASOS SENSIBLES
+Si detectás violencia, amenazas, niños en riesgo, falta de alimentos, riesgo habitacional, endeudamiento crítico, salud mental, suicidio, abuso o urgencias sociales: respondé con contención, orientá con recursos disponibles, y marcá el mensaje con [ALERTA_HUMANA] al inicio.
+
+REGLA PRINCIPAL
+Devolvé únicamente el texto del mensaje de WhatsApp, sin explicaciones ni comillas.
+Máximo 3 emojis en todo el mensaje.`;
+
+// ─── Helpers de Supabase ──────────────────────────────────────────────────────
 
 async function buscarUsuarioPorTelefono(telefono: string) {
   const res = await fetch(
@@ -34,58 +73,123 @@ async function fetchHistorial(responseId: string) {
   return res.json();
 }
 
-async function guardarNota(responseId: string, texto: string, tipo: string, estado: string) {
+// Verifica si el message_id de WhatsApp ya fue procesado (deduplicación)
+async function mensajeYaProcesado(responseId: string, waMessageId: string): Promise<boolean> {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/case_notes?response_id=eq.${responseId}&wa_message_id=eq.${waMessageId}&limit=1`,
+    { headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}` } }
+  );
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function guardarNota(responseId: string, texto: string, tipo: string, estado: string, waMessageId?: string) {
+  const body: Record<string, string> = { response_id: responseId, texto, tipo, estado };
+  if (waMessageId) body.wa_message_id = waMessageId;
+
   await fetch(`${SUPABASE_URL}/rest/v1/case_notes`, {
     method: "POST",
-    headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ response_id: responseId, texto, tipo, estado }),
+    headers: {
+      "apikey": SUPABASE_SERVICE_KEY,
+      "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
   });
   await fetch(`${SUPABASE_URL}/rest/v1/responses?id=eq.${responseId}`, {
     method: "PATCH",
-    headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+    headers: {
+      "apikey": SUPABASE_SERVICE_KEY,
+      "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": "return=minimal",
+    },
     body: JSON.stringify({ ultimo_contacto: new Date().toISOString(), ultimo_estado: estado }),
   });
 }
 
-async function generarRespuestaIA(usuario: any, mensajeUsuario: string, historial: any[]) {
+async function pausarBot(responseId: string) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/responses?id=eq.${responseId}`, {
+    method: "PATCH",
+    headers: {
+      "apikey": SUPABASE_SERVICE_KEY,
+      "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": "return=minimal",
+    },
+    body: JSON.stringify({ bot_pausado: true }),
+  });
+  return res.ok;
+}
+
+// ─── IA ──────────────────────────────────────────────────────────────────────
+
+async function generarRespuestaIA(usuario: any, mensajeUsuario: string, historial: any[]): Promise<string> {
   const raw = usuario.perfil_contextual;
   const perfil = (() => { try { return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); } catch { return {}; } })();
   const nombre = perfil?.nombre || perfil?.demographics?.nombre || "";
-  const answers = usuario.answers || {};
-  const planSimple = Object.entries(answers)
-    .filter(([, v]) => v === "rojo" || v === "amarillo")
-    .slice(0, 4)
-    .map(([k, v]) => `- ${k}: ${v}`)
-    .join("\n") || "Sin datos de diagnóstico";
 
+  // Plan: dimensiones con nivel de alerta
+  const answers = usuario.answers || {};
+  const DIMENSIONES: Record<string, string> = {
+    empleo: "Empleo", prevision: "Ingresos", vivienda: "Vivienda",
+    salud: "Salud", educacion: "Educación", red: "Red de apoyo",
+  };
+  const planTexto = Object.entries(DIMENSIONES).map(([prefix, nombre]) => {
+    const items = Object.entries(answers).filter(([k]) => k.startsWith(prefix + "_"));
+    if (!items.length) return null;
+    const rojos = items.filter(([, v]) => v === "rojo").length;
+    const amarillos = items.filter(([, v]) => v === "amarillo").length;
+    const nivel = rojos / items.length >= 0.5 ? "crítico 🔴" : (rojos + amarillos) / items.length >= 0.4 ? "alerta 🟡" : "estable 🟢";
+    return `- ${nombre}: ${nivel}`;
+  }).filter(Boolean).join("\n") || "Sin datos de diagnóstico";
+
+  // Historial de conversación (últimos 20 mensajes)
   const historialTexto = historial
     .filter(n => n.tipo === "entrante" || n.tipo === "saliente")
     .slice(-20)
     .map(n => `[${n.tipo === "entrante" ? "USUARIO" : "KORAI"}] ${n.texto}`)
     .join("\n");
 
-  const systemPrompt = `Sos Korai, el asistente conversacional de la plataforma Korai.
-Representás al equipo de acompañamiento. Siempre hablás en plural.
-Nunca decís que sos una IA. La persona debe sentir que habla con un equipo humano.
-Respondé con naturalidad, en español rioplatense, una sola pregunta por vez si es necesario.
-Devolvé únicamente el texto del mensaje, sin explicaciones ni comillas. Máximo 3 emojis.
-Si detectás violencia, emergencia o riesgo grave, iniciá con [ALERTA_HUMANA].`;
+  // Notas de contexto (resúmenes cargados por el equipo)
+  const notasTexto = historial
+    .filter(n => !n.tipo || n.tipo === "nota")
+    .map(n => n.texto)
+    .join("\n---\n");
 
-  const userPrompt = `${nombre ? `Persona: ${nombre}` : ""}
-Áreas prioritarias del diagnóstico:
-${planSimple}
-${historialTexto ? `\nHistorial:\n${historialTexto}\n` : ""}
-Último mensaje del usuario: "${mensajeUsuario}"
-Generá la mejor respuesta posible.`;
+  const userPrompt = `Generá la mejor respuesta posible para este mensaje de WhatsApp.
+
+${nombre ? `Persona: ${nombre}` : ""}
+
+Diagnóstico actual:
+${planTexto}
+
+${notasTexto ? `Notas de contexto:\n${notasTexto}\n` : ""}
+${historialTexto ? `Historial de conversación:\n${historialTexto}\n` : ""}
+Último mensaje del usuario:
+"${mensajeUsuario}"
+
+Analizá todo el contexto. Respondé con una sola respuesta corta, empática y útil.`;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 600, system: systemPrompt, messages: [{ role: "user", content: userPrompt }] }),
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001", // Haiku: mismo resultado, 5x más barato que Sonnet
+      max_tokens: 500,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userPrompt }],
+    }),
   });
   const data = await res.json();
   return data?.content?.[0]?.text || "";
 }
+
+// ─── WhatsApp ─────────────────────────────────────────────────────────────────
 
 async function enviarWhatsApp(telefono: string, mensaje: string, wabaId: string) {
   const res = await fetch(`https://graph.facebook.com/v19.0/${wabaId}/messages`, {
@@ -93,115 +197,21 @@ async function enviarWhatsApp(telefono: string, mensaje: string, wabaId: string)
     headers: { "Authorization": `Bearer ${WHATSAPP_TOKEN}`, "Content-Type": "application/json" },
     body: JSON.stringify({ messaging_product: "whatsapp", to: telefono, type: "text", text: { body: mensaje } }),
   });
-  console.log("WhatsApp API:", JSON.stringify(await res.json()));
+  const data = await res.json();
+  console.log("WhatsApp send:", JSON.stringify(data));
+  return data;
 }
 
-function generarMensajeKorai(response: any): string {
-  const answers = response.answers || {};
-  const perfil = (() => {
-    try {
-      const raw = response.perfil_contextual;
-      return typeof raw === "string" ? JSON.parse(raw) : (raw || {});
-    } catch { return {}; }
-  })();
-  const nombre = perfil.nombre || response.dni_real || "";
-  const profundizacion = perfil.profundizacion || {};
-
-  // Calcular dimensiones críticas desde answers
-  const dimensiones: Record<string, { nombre: string; emoji: string; rojo: number; total: number }> = {
-    empleo:    { nombre: "Empleo",        emoji: "💼", rojo: 0, total: 0 },
-    prevision: { nombre: "Ingresos",      emoji: "🧾", rojo: 0, total: 0 },
-    vivienda:  { nombre: "Vivienda",      emoji: "🏠", rojo: 0, total: 0 },
-    salud:     { nombre: "Salud",         emoji: "🩺", rojo: 0, total: 0 },
-    educacion: { nombre: "Educación",     emoji: "📚", rojo: 0, total: 0 },
-    red:       { nombre: "Red/Vínculos",  emoji: "🤝", rojo: 0, total: 0 },
-  };
-
-  const prefijos: Record<string, string> = {
-    empleo_: "empleo", prevision_: "prevision", vivienda_: "vivienda",
-    salud_: "salud", educacion_: "educacion", red_: "red",
-  };
-
-  for (const [key, val] of Object.entries(answers)) {
-    for (const [prefix, dimId] of Object.entries(prefijos)) {
-      if (key.startsWith(prefix)) {
-        dimensiones[dimId].total++;
-        if (val === "rojo") dimensiones[dimId].rojo++;
-      }
-    }
-  }
-
-  // Ordenar por severidad
-  const criticas = Object.entries(dimensiones)
-    .filter(([_, d]) => d.total > 0)
-    .sort((a, b) => (b[1].rojo / (b[1].total || 1)) - (a[1].rojo / (a[1].total || 1)))
-    .slice(0, 2)
-    .map(([_, d]) => d);
-
-  if (criticas.length === 0) {
-    return `Hola ${nombre} 👋\nSoy Korai, tu asistente de bienestar social.\nRecibimos tu diagnóstico. Podés ver tu plan en app.korai.lat\n\nSaludos,\nEquipo Korai`;
-  }
-
-  const areasResumen = criticas.map(d => `${d.emoji} ${d.nombre}`).join("\n");
-
-  // Acciones por dimensión
-  const acciones: Record<string, string[]> = {
-    empleo:    ["Registrarte en el CIL para crear o mejorar tu CV.", "Inscribirte en TrabajoBA para acceder a búsquedas laborales activas."],
-    prevision: ["Consultar en ANSES las asignaciones o prestaciones disponibles para vos.", "Armar un presupuesto mensual simple para organizar mejor tus gastos."],
-    vivienda:  ["Consultar programas de mejora habitacional en tu municipio.", "Verificar el acceso a servicios básicos con tu municipio."],
-    salud:     ["Sacar turno en el centro de salud más cercano.", "Consultar el programa SUMAR si no tenés obra social."],
-    educacion: ["Inscribirte en el Plan FinEs para terminar el secundario.", "Buscar cursos gratuitos en el Centro de Formación Profesional de tu barrio."],
-    red:       ["Contactar al centro comunitario de tu barrio.", "Acercarte a organizaciones sociales locales para apoyo."],
-  };
-
-  const recursos: Record<string, string> = {
-    empleo:    "CIL – Centro de Integración Laboral\nformulario-sigeci.buenosaires.gob.ar",
-    prevision: "ANSES – Turnos online\nturnos.anses.gob.ar",
-    vivienda:  "Municipio – Programas habitacionales\napp.korai.lat",
-    salud:     "SUMAR (sin obra social): 0800-222-5462",
-    educacion: "Plan FinEs\nwww.argentina.gob.ar/educacion/fines",
-    red:       "Korai – app.korai.lat",
-  };
-
-  const dimKey = (nombre: string): string => {
-    const map: Record<string, string> = {
-      "Empleo": "empleo", "Ingresos": "prevision", "Vivienda": "vivienda",
-      "Salud": "salud", "Educación": "educacion", "Red/Vínculos": "red",
-    };
-    return map[nombre] || "empleo";
-  };
-
-  let msg = `Hola ${nombre} 👋\n`;
-  msg += `Soy Korai, tu asistente de bienestar social.\n`;
-  msg += `Analizamos tu diagnóstico y detectamos que hoy podrías necesitar apoyo principalmente en:\n`;
-  msg += `${areasResumen}\n\n`;
-  msg += `*📌 En 7 días vamos a volver a contactarte para acompañarte y guiarte en los próximos pasos de tu proceso.*\n\n`;
-  msg += `Este es tu plan de acción personalizado para empezar esta semana:\n\n`;
-
-  for (const dim of criticas) {
-    const key = dimKey(dim.nombre);
-    const acts = acciones[key] || [];
-    msg += `${dim.emoji} *${dim.nombre}*\n`;
-    acts.forEach((a, i) => { msg += `${i + 1}. ${a}\n`; });
-    if (recursos[key]) msg += `\nRecurso útil:\n${recursos[key]}\n`;
-    msg += "\n";
-  }
-
-  msg += `Saludos,\nEquipo Korai`;
-  return msg;
-}
+// ─── Servidor ─────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok");
 
+  // Verificación del webhook de Meta
   if (req.method === "GET") {
     const url = new URL(req.url);
-    const mode = url.searchParams.get("hub.mode");
-    const token = url.searchParams.get("hub.verify_token");
-    const challenge = url.searchParams.get("hub.challenge");
-    if (mode === "subscribe" && token === VERIFY_TOKEN) {
-      console.log("Webhook verificado por Meta");
-      return new Response(challenge, { status: 200 });
+    if (url.searchParams.get("hub.mode") === "subscribe" && url.searchParams.get("hub.verify_token") === VERIFY_TOKEN) {
+      return new Response(url.searchParams.get("hub.challenge"), { status: 200 });
     }
     return new Response("Forbidden", { status: 403 });
   }
@@ -210,31 +220,45 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    console.log("Webhook recibido:", JSON.stringify(body));
 
-    const entry = body?.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const value = changes?.value;
+    const value = body?.entry?.[0]?.changes?.[0]?.value;
     const messages = value?.messages;
-
-    if (!messages || messages.length === 0) return new Response("ok", { status: 200 });
+    if (!messages?.length) return new Response("ok", { status: 200 });
 
     const message = messages[0];
     const telefonoUsuario = message.from;
     const textoMensaje = message?.text?.body || "";
+    const waMessageId = message.id;
     const wabaId = value?.metadata?.phone_number_id;
 
     if (!textoMensaje) return new Response("ok", { status: 200 });
 
     console.log(`Mensaje de ${telefonoUsuario}: ${textoMensaje}`);
 
+    // Buscar usuario registrado
     const usuario = await buscarUsuarioPorTelefono(telefonoUsuario);
     if (!usuario) {
-      console.log("Usuario no encontrado para:", telefonoUsuario);
+      console.log("Usuario no registrado:", telefonoUsuario);
       return new Response("ok", { status: 200 });
     }
 
-    await guardarNota(usuario.id, textoMensaje, "entrante", "contactado");
+    // ── C: Deduplicación ── evitar que Meta reintente y se duplique
+    const duplicado = await mensajeYaProcesado(usuario.id, waMessageId);
+    if (duplicado) {
+      console.log("Mensaje duplicado, ignorando:", waMessageId);
+      return new Response("ok", { status: 200 });
+    }
+
+    // Guardar mensaje entrante con el ID de WhatsApp
+    await guardarNota(usuario.id, textoMensaje, "entrante", "contactado", waMessageId);
+
+    // ── Bot pausado: operador está manejando el caso manualmente ──
+    if (usuario.bot_pausado) {
+      console.log("Bot pausado para usuario:", usuario.id, "— operador atiende");
+      return new Response("ok", { status: 200 });
+    }
+
+    // Generar respuesta IA
     const historial = await fetchHistorial(usuario.id);
     const respuesta = await generarRespuestaIA(usuario, textoMensaje, historial);
 
@@ -242,17 +266,37 @@ serve(async (req) => {
     const mensajeLimpio = respuesta.replace("[ALERTA_HUMANA]", "").trim();
 
     if (alertaHumana) {
-      await guardarNota(usuario.id, "⚠️ ALERTA: caso requiere revisión humana urgente. Mensaje: " + textoMensaje, "nota", "con_dificultades");
-      console.log("ALERTA HUMANA para usuario:", usuario.id);
+      // ── D: Alerta humana ──────────────────────────────────────────────────
+
+      // 1. Guardar alerta en el historial del caso
+      await guardarNota(usuario.id, "⚠️ ALERTA HUMANA — el bot pausó la respuesta automática. Mensaje del usuario: " + textoMensaje, "nota", "con_dificultades");
+
+      // 2. Pausar el bot para este usuario
+      await pausarBot(usuario.id);
+
+      // 3. Enviar mensaje de contención al usuario (no dejarlo en silencio)
+      const perfil = (() => { try { const r = usuario.perfil_contextual; return typeof r === "string" ? JSON.parse(r) : (r || {}); } catch { return {}; } })();
+      const nombre = perfil?.nombre || "amig@";
+      const mensajeContencion = `${nombre}, te leemos 🤝\nEntendemos que estás pasando por algo difícil. Uno de nuestros acompañantes va a comunicarse con vos en breve para estar presentes.\nCualquier urgencia: Línea 144 (violencia) o 911.`;
+      await enviarWhatsApp(telefonoUsuario, mensajeContencion, wabaId);
+      await guardarNota(usuario.id, mensajeContencion, "saliente", "con_dificultades");
+
+      // 4. Notificar al operador por WhatsApp con contexto del caso
+      const linkAdmin = `app.korai.lat/superadmin`;
+      const notifOperador = `⚠️ *ALERTA KORAI*\n\n*Caso:* ${nombre}\n*Teléfono:* ${telefonoUsuario}\n*Mensaje:* "${textoMensaje}"\n\nEl bot está pausado. Respondé directamente desde esta app al número del usuario.\n\nVer caso completo: ${linkAdmin}`;
+      await enviarWhatsApp(OPERADOR_TELEFONO, notifOperador, wabaId);
+
+      console.log("ALERTA HUMANA procesada para usuario:", usuario.id);
       return new Response("ok", { status: 200 });
     }
 
+    // ── Respuesta normal ──────────────────────────────────────────────────────
     await enviarWhatsApp(telefonoUsuario, mensajeLimpio, wabaId);
     await guardarNota(usuario.id, mensajeLimpio, "saliente", "contactado");
 
     return new Response("ok", { status: 200 });
   } catch (err) {
     console.error("Error en meta_webhook:", err);
-    return new Response("ok", { status: 200 });
+    return new Response("ok", { status: 200 }); // siempre 200 para que Meta no reintente
   }
 });
