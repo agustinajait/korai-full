@@ -427,7 +427,7 @@ export default function Superadmin() {
 
       {/* ── HEADER ── */}
       <header className="sticky top-0 z-20 bg-white border-b border-[#B8A9E8] h-14">
-        <div className="mx-auto px-10 h-full flex items-center gap-3" style={{ maxWidth: 1400 }}>
+        <div className="mx-auto px-10 h-full flex items-center gap-3" style={{ maxWidth: 1100 }}>
           <img src={koraiLogo} alt="KORAI" className="w-8 h-8 object-contain flex-shrink-0" />
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-black text-[#1E1040]">KORAI</span>
@@ -452,7 +452,7 @@ export default function Superadmin() {
 
       {/* ── KPIs ── */}
       <div className="sticky top-14 z-10 bg-white border-b border-[#B8A9E8] py-4">
-        <div className="mx-auto px-10" style={{ maxWidth: 1400 }}>
+        <div className="mx-auto px-10" style={{ maxWidth: 1100 }}>
           <div className="grid grid-cols-5 gap-4">
             {[
               { label: "Personas únicas", value: uniqueUsers, sub: "dedup. por DNI", color: "#5c40c0", bg: "#ede9fe" },
@@ -475,7 +475,7 @@ export default function Superadmin() {
 
       {/* ── TABS ── */}
       <div className="sticky z-10 bg-white border-b border-[#B8A9E8]" style={{ top: "152px" }}>
-        <div className="mx-auto px-10 flex gap-1" style={{ maxWidth: 1400 }}>
+        <div className="mx-auto px-10 flex gap-1" style={{ maxWidth: 1100 }}>
           {(["usuarios", "analisis"] as const).map(tab => (
             <button
               key={tab}
@@ -510,7 +510,7 @@ export default function Superadmin() {
 
         {/* TAB: Análisis territorial */}
         {activeTab === "analisis" && (
-        <div className="py-8 mx-auto px-10 space-y-5" style={{ maxWidth: 1400 }}>
+        <div className="py-8 mx-auto px-10 space-y-5" style={{ maxWidth: 1100 }}>
           {/* Estado general */}
           <div className={`p-6 rounded-3xl border relative overflow-hidden ${overallColor === "rojo" ? "bg-red-500/10 border-red-500/30" : overallColor === "amarillo" ? "bg-yellow-500/10 border-yellow-500/30" : "bg-green-500/10 border-green-500/30"}`}>
             <div className="flex items-center gap-4 flex-wrap">
@@ -747,11 +747,10 @@ export default function Superadmin() {
 
         {/* TAB: Lista de usuarios */}
         {activeTab === "usuarios" && (
-        <div className="py-6 mx-auto px-10" style={{ maxWidth: 1400 }}>
-          <div className="bg-white border border-[#B8A9E8] rounded-2xl overflow-hidden">
+        <div className="py-6 mx-auto px-10" style={{ maxWidth: 860 }}>
 
-          {/* Buscador sticky justo debajo de los tabs */}
-          <div className="px-5 pt-4 pb-3 border-b border-[#EDE9FE] space-y-3 bg-white" style={{ position: "sticky", top: 196, zIndex: 5 }}>
+          {/* Buscador y filtros */}
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl px-5 pt-4 pb-3 mb-3 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="font-black text-base text-[#1E1040]">Usuarios</h2>
               <span className="text-xs text-[#9B8EC4] font-bold bg-[#f0eef8] px-2 py-1 rounded-lg">{filtered.length} de {responses.length}</span>
@@ -780,7 +779,7 @@ export default function Superadmin() {
           </div>
 
           {/* Lista — crece con el contenido, la página scrollea */}
-          <div className="divide-y divide-[#EDE9FE]">
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl overflow-hidden divide-y divide-[#EDE9FE]">
             {filtered.map((r, i) => {
               const nombre = getNombrePersona(r);
               const telefono = getTelefono(r);
@@ -854,13 +853,12 @@ export default function Superadmin() {
               <div className="text-center py-12 text-[#9B8EC4] text-sm">No se encontraron usuarios</div>
             )}
           </div>
-          </div>
         </div>
         )}
 
         {/* TAB: Perfil de usuario — dos columnas */}
         {activeTab === "usuario" && editingUser && (
-        <div className="py-6 mx-auto px-10" style={{ maxWidth: 1400 }}>
+        <div className="py-6 mx-auto px-10" style={{ maxWidth: 1100 }}>
 
           {/* Encabezado */}
           <div className="flex items-center gap-3 mb-5">
