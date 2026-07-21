@@ -426,78 +426,83 @@ export default function Superadmin() {
     <div className="min-h-screen bg-[#f0eef8] text-[#1E1040] font-sans flex flex-col">
 
       {/* ── HEADER ── */}
-      <header className="sticky top-0 z-20 bg-white border-b border-[#B8A9E8] flex items-center gap-3 px-6 h-14 flex-shrink-0">
-        <img src={koraiLogo} alt="KORAI" className="w-8 h-8 object-contain flex-shrink-0" />
-        <div className="flex flex-col leading-tight">
-          <span className="text-sm font-black text-[#1E1040]">KORAI</span>
-          <span className="text-[10px] text-[#9B8EC4]">Panel Superadmin</span>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={() => navigator.clipboard?.writeText(window.location.origin + "/")}
-            className="flex items-center gap-1.5 px-3 h-8 rounded-xl text-xs font-bold text-[#5c40c0] bg-[#ede9fe] hover:bg-[#ddd6fe] transition-colors"
-          >
-            <ExternalLink className="w-3.5 h-3.5" /> Copiar enlace
-          </button>
-          <button
-            onClick={() => { localStorage.removeItem("korai_admin_auth"); localStorage.removeItem("korai_admin_role"); setLocation("/admin"); }}
-            className="flex items-center gap-1.5 px-3 h-8 rounded-xl text-xs font-bold text-[#9B8EC4] hover:text-[#1E1040] hover:bg-[#f0eef8] transition-colors border border-[#B8A9E8]"
-          >
-            <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
-          </button>
+      <header className="sticky top-0 z-20 bg-white border-b border-[#B8A9E8] flex-shrink-0 h-14">
+        <div className="max-w-screen-2xl mx-auto px-8 h-full flex items-center gap-3">
+          <img src={koraiLogo} alt="KORAI" className="w-8 h-8 object-contain flex-shrink-0" />
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-black text-[#1E1040]">KORAI</span>
+            <span className="text-[10px] text-[#9B8EC4]">Panel Superadmin</span>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => navigator.clipboard?.writeText(window.location.origin + "/")}
+              className="flex items-center gap-1.5 px-3 h-8 rounded-xl text-xs font-bold text-[#5c40c0] bg-[#ede9fe] hover:bg-[#ddd6fe] transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Copiar enlace
+            </button>
+            <button
+              onClick={() => { localStorage.removeItem("korai_admin_auth"); localStorage.removeItem("korai_admin_role"); setLocation("/admin"); }}
+              className="flex items-center gap-1.5 px-3 h-8 rounded-xl text-xs font-bold text-[#9B8EC4] hover:text-[#1E1040] hover:bg-[#f0eef8] transition-colors border border-[#B8A9E8]"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
+            </button>
+          </div>
         </div>
       </header>
 
       {/* ── KPIs ── */}
-      <div className="sticky top-14 z-10 bg-white border-b border-[#B8A9E8] px-6 py-3 flex-shrink-0">
-        <div className="grid grid-cols-5 gap-3">
-          {[
-            { label: "Personas únicas", value: uniqueUsers, sub: "dedup. por DNI", color: "#5c40c0", bg: "#ede9fe" },
-            { label: "Diagnósticos", value: totalDiag, sub: "incluye rediag.", color: "#1E1040", bg: "#f0eef8" },
-            { label: "Retornos", value: `${rediag} (${tasaRetorno}%)`, sub: "volvieron a diag.", color: "#7c5cff", bg: "#ede9fe" },
-            { label: "Con seguimiento", value: conSeguimiento, sub: "aceptaron acomp.", color: "#16a34a", bg: "#f0fdf4" },
-            { label: "Con teléfono", value: conTelefono, sub: "contactables WA", color: "#1E1040", bg: "#f0eef8" },
-          ].map(kpi => (
-            <div key={kpi.label} className="flex items-center justify-between px-4 py-3 rounded-2xl" style={{ background: kpi.bg }}>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-[#1E1040] leading-tight truncate">{kpi.label}</div>
-                <div className="text-[10px] text-[#9B8EC4] mt-0.5">{kpi.sub}</div>
+      <div className="sticky top-14 z-10 bg-white border-b border-[#B8A9E8] flex-shrink-0 py-3">
+        <div className="max-w-screen-2xl mx-auto px-8">
+          <div className="grid grid-cols-5 gap-3">
+            {[
+              { label: "Personas únicas", value: uniqueUsers, sub: "dedup. por DNI", color: "#5c40c0", bg: "#ede9fe" },
+              { label: "Diagnósticos", value: totalDiag, sub: "incluye rediag.", color: "#1E1040", bg: "#f0eef8" },
+              { label: "Retornos", value: `${rediag} (${tasaRetorno}%)`, sub: "volvieron a diag.", color: "#7c5cff", bg: "#ede9fe" },
+              { label: "Con seguimiento", value: conSeguimiento, sub: "aceptaron acomp.", color: "#16a34a", bg: "#f0fdf4" },
+              { label: "Con teléfono", value: conTelefono, sub: "contactables WA", color: "#1E1040", bg: "#f0eef8" },
+            ].map(kpi => (
+              <div key={kpi.label} className="flex items-center justify-between px-4 py-3 rounded-2xl" style={{ background: kpi.bg }}>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-[#1E1040] leading-tight truncate">{kpi.label}</div>
+                  <div className="text-[10px] text-[#9B8EC4] mt-0.5">{kpi.sub}</div>
+                </div>
+                <div className="text-2xl font-black ml-3 flex-shrink-0 leading-none" style={{ color: kpi.color }}>{kpi.value}</div>
               </div>
-              <div className="text-2xl font-black ml-3 flex-shrink-0 leading-none" style={{ color: kpi.color }}>{kpi.value}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ── TABS ── */}
-      {/* header=56px kpis=~88px => tabs sticky at 144px */}
-      <div className="sticky z-10 bg-white border-b border-[#B8A9E8] px-6 flex gap-2 flex-shrink-0" style={{ top: "144px" }}>
-        {(["usuarios", "analisis"] as const).map(tab => (
+      <div className="sticky z-10 bg-white border-b border-[#B8A9E8] flex-shrink-0" style={{ top: "144px" }}>
+        <div className="max-w-screen-2xl mx-auto px-8 flex gap-1">
+          {(["usuarios", "analisis"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="px-5 py-3 text-sm font-bold transition-colors"
+              style={activeTab === tab
+                ? { color: "#5c40c0", borderBottom: "2px solid #5c40c0" }
+                : { color: "#9B8EC4", borderBottom: "2px solid transparent" }
+              }
+            >
+              {tab === "usuarios" ? "Usuarios" : "Análisis"}
+            </button>
+          ))}
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className="px-5 py-3 text-sm font-black rounded-t-xl transition-colors capitalize"
-            style={activeTab === tab
-              ? { background: "#5c40c0", color: "#fff" }
-              : { background: "#f0eef8", color: "#9B8EC4" }
+            onClick={() => editingUser && setActiveTab("usuario")}
+            className="px-5 py-3 text-sm font-bold transition-colors"
+            style={
+              activeTab === "usuario"
+                ? { color: "#5c40c0", borderBottom: "2px solid #5c40c0" }
+                : editingUser
+                ? { color: "#9B8EC4", borderBottom: "2px solid transparent" }
+                : { color: "#9B8EC4", borderBottom: "2px solid transparent", opacity: 0.4, cursor: "not-allowed" }
             }
           >
-            {tab === "usuarios" ? "Usuarios" : "Análisis"}
+            {editingUser ? getNombrePersona(editingUser).split(" ")[0] : "Usuario"}
           </button>
-        ))}
-        <button
-          onClick={() => editingUser && setActiveTab("usuario")}
-          className="px-5 py-3 text-sm font-black rounded-t-xl transition-colors"
-          style={
-            activeTab === "usuario"
-              ? { background: "#5c40c0", color: "#fff" }
-              : editingUser
-              ? { background: "#f0eef8", color: "#9B8EC4" }
-              : { background: "#f0eef8", color: "#9B8EC4", opacity: 0.4, cursor: "not-allowed" }
-          }
-        >
-          {editingUser ? getNombrePersona(editingUser).split(" ")[0] : "Usuario"}
-        </button>
+        </div>
       </div>
 
       {/* ── MAIN: pantalla completa según tab activo ── */}
@@ -507,9 +512,10 @@ export default function Superadmin() {
         {/* TAB: Análisis territorial — pantalla completa */}
         {activeTab === "analisis" && (
         <div
-          className="overflow-y-auto p-6 space-y-5 w-full"
+          className="overflow-y-auto w-full py-8"
           style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}
         >
+        <div className="max-w-screen-2xl mx-auto px-8 space-y-5">
           {/* Estado general */}
           <div className={`p-6 rounded-3xl border relative overflow-hidden ${overallColor === "rojo" ? "bg-red-500/10 border-red-500/30" : overallColor === "amarillo" ? "bg-yellow-500/10 border-yellow-500/30" : "bg-green-500/10 border-green-500/30"}`}>
             <div className="flex items-center gap-4 flex-wrap">
@@ -742,38 +748,40 @@ export default function Superadmin() {
             </div>
           </div>
         </div>
+        </div>
         )}
 
         {/* TAB: Lista de usuarios — pantalla completa */}
         {activeTab === "usuarios" && (
-        <div
-          className="flex flex-col bg-white w-full"
-          style={{ height: "calc(100vh - 192px)", overflowY: "hidden" }}
-        >
+        <div className="w-full overflow-y-auto" style={{ height: "calc(100vh - 196px)" }}>
+        <div className="max-w-screen-2xl mx-auto px-8 py-6">
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl overflow-hidden flex flex-col" style={{ height: "calc(100vh - 260px)" }}>
           {/* Buscador y filtros */}
-          <div className="px-4 pt-4 pb-3 border-b border-[#B8A9E8] space-y-3 flex-shrink-0">
+          <div className="px-5 pt-4 pb-3 border-b border-[#EDE9FE] space-y-3 flex-shrink-0">
             <div className="flex items-center justify-between">
               <h2 className="font-black text-base text-[#1E1040]">Usuarios</h2>
-              <span className="text-xs text-[#9B8EC4] font-bold">{filtered.length} de {responses.length}</span>
+              <span className="text-xs text-[#9B8EC4] font-bold bg-[#f0eef8] px-2 py-1 rounded-lg">{filtered.length} de {responses.length}</span>
             </div>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar por nombre, DNI, barrio o teléfono..."
-              className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none focus:border-[#5c40c0]"
-            />
-            <div className="flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5 text-[#5c40c0] flex-shrink-0" />
-              <select
-                value={barrioFilter}
-                onChange={e => setBarrioFilter(e.target.value)}
-                className="flex-1 h-8 px-2 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-xs font-bold text-[#1E1040] focus:outline-none focus:border-[#5c40c0] cursor-pointer"
-              >
-                <option value="all">Todos los barrios</option>
-                {barrios.map(b => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
+            <div className="flex gap-2">
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar por nombre, DNI, barrio o teléfono..."
+                className="flex-1 h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none focus:border-[#5c40c0]"
+              />
+              <div className="flex items-center gap-1.5 bg-[#f0eef8] border border-[#B8A9E8] rounded-xl px-3 h-9">
+                <MapPin className="w-3.5 h-3.5 text-[#5c40c0] flex-shrink-0" />
+                <select
+                  value={barrioFilter}
+                  onChange={e => setBarrioFilter(e.target.value)}
+                  className="bg-transparent text-xs font-bold text-[#1E1040] focus:outline-none cursor-pointer"
+                >
+                  <option value="all">Todos los barrios</option>
+                  {barrios.map(b => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -852,15 +860,18 @@ export default function Superadmin() {
               <div className="text-center py-12 text-[#9B8EC4] text-sm">No se encontraron usuarios</div>
             )}
           </div>
+          </div>
+        </div>
         </div>
         )}
 
         {/* TAB: Perfil de usuario — pantalla completa */}
         {activeTab === "usuario" && editingUser && (
         <div
-          className="overflow-y-auto p-6 w-full"
+          className="overflow-y-auto w-full py-6"
           style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}
         >
+        <div className="max-w-screen-2xl mx-auto px-8">
           {/* Encabezado de perfil */}
           <div className="flex items-center gap-3 mb-6">
             <button
@@ -878,7 +889,7 @@ export default function Superadmin() {
             </div>
           </div>
 
-          <div className="max-w-2xl mx-auto space-y-4">
+          <div className="max-w-3xl space-y-4">
             {/* Editar datos */}
             <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4 space-y-3">
               <h4 className="font-black text-sm text-[#1E1040]">Datos del usuario</h4>
@@ -1009,6 +1020,7 @@ export default function Superadmin() {
               )}
             </div>
           </div>
+        </div>
         </div>
         )}
       </div>
