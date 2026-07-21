@@ -161,7 +161,7 @@ export default function Superadmin() {
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
   const [importLoading, setImportLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"analisis" | "usuarios">("usuarios");
+  const [activeTab, setActiveTab] = useState<"analisis" | "usuarios" | "usuario">("usuarios");
 
   useEffect(() => {
     const role = localStorage.getItem("korai_admin_role");
@@ -192,6 +192,7 @@ export default function Superadmin() {
     setShowImport(false); setImportText("");
     setNotesLoading(true);
     fetchNotes(r.id).then(n => { setNotes(n); setNotesLoading(false); });
+    setActiveTab("usuario");
   };
 
   const handleImportarConversacion = async () => {
@@ -484,6 +485,19 @@ export default function Superadmin() {
             {tab === "usuarios" ? "Usuarios" : "Análisis"}
           </button>
         ))}
+        <button
+          onClick={() => editingUser && setActiveTab("usuario")}
+          className="px-5 py-3 text-sm font-black rounded-t-xl transition-colors"
+          style={
+            activeTab === "usuario"
+              ? { background: "#5c40c0", color: "#fff" }
+              : editingUser
+              ? { background: "#f0eef8", color: "#9B8EC4" }
+              : { background: "#f0eef8", color: "#9B8EC4", opacity: 0.4, cursor: "not-allowed" }
+          }
+        >
+          {editingUser ? getNombrePersona(editingUser).split(" ")[0] : "Usuario"}
+        </button>
       </div>
 
       {/* ── MAIN: pantalla completa según tab activo ── */}
@@ -840,172 +854,164 @@ export default function Superadmin() {
           </div>
         </div>
         )}
-      </div>
 
-      {/* ── MODAL FLOTANTE: Edición de usuario ── */}
-      {editingUser && (
+        {/* TAB: Perfil de usuario — pantalla completa */}
+        {activeTab === "usuario" && editingUser && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(30,16,64,0.5)" }}
-          onClick={() => setEditingUser(null)}
+          className="overflow-y-auto p-6 w-full"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}
         >
-          <div
-            className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col"
-            style={{ maxHeight: "90vh" }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Modal header */}
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-[#B8A9E8] flex-shrink-0">
-              <div className="w-10 h-10 rounded-full bg-[#5c40c0] flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm font-black">{getNombrePersona(editingUser).charAt(0).toUpperCase()}</span>
+          {/* Encabezado de perfil */}
+          <div className="flex items-center gap-3 mb-6">
+            <button
+              onClick={() => setActiveTab("usuarios")}
+              className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-xs font-bold text-[#5c40c0] bg-[#ede9fe] hover:bg-[#ddd6fe] transition-colors flex-shrink-0"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Volver a usuarios
+            </button>
+            <div className="w-10 h-10 rounded-full bg-[#5c40c0] flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-sm font-black">{getNombrePersona(editingUser).charAt(0).toUpperCase()}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-black text-lg text-[#1E1040] truncate">{getNombrePersona(editingUser)}</div>
+              <div className="text-[11px] text-[#9B8EC4]">{editingUser.territorio?.barrio || "Sin barrio"} · {new Date(editingUser.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}</div>
+            </div>
+          </div>
+
+          <div className="max-w-2xl mx-auto space-y-4">
+            {/* Editar datos */}
+            <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4 space-y-3">
+              <h4 className="font-black text-sm text-[#1E1040]">Datos del usuario</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Nombre</label>
+                  <input value={editForm.nombre} onChange={e => setEditForm(f => ({ ...f, nombre: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Apellido</label>
+                  <input value={editForm.apellido} onChange={e => setEditForm(f => ({ ...f, apellido: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Teléfono</label>
+                  <input value={editForm.telefono} onChange={e => setEditForm(f => ({ ...f, telefono: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" placeholder="11xxxxxxxx" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">DNI</label>
+                  <input value={editForm.dni} onChange={e => setEditForm(f => ({ ...f, dni: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" />
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-black text-base text-[#1E1040] truncate">{getNombrePersona(editingUser)}</div>
-                <div className="text-[10px] text-[#9B8EC4]">{editingUser.territorio?.barrio || "Sin barrio"} · {new Date(editingUser.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}</div>
-              </div>
-              <button
-                onClick={() => setEditingUser(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center border border-[#B8A9E8] hover:bg-[#f0eef8] transition-colors flex-shrink-0 text-[#6B5FA0] font-black text-sm"
-              >
-                ✕
+              <button onClick={saveEdit} disabled={savingEdit} className="w-full h-9 rounded-xl bg-[#5c40c0] text-white text-sm font-bold disabled:opacity-50 mt-1">
+                {savingEdit ? "Guardando..." : "Guardar cambios"}
               </button>
             </div>
 
-            {/* Modal body */}
-            <div className="overflow-y-auto p-5 space-y-4 flex-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}>
-              {/* Editar datos */}
-              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4 space-y-3">
-                <h4 className="font-black text-sm text-[#1E1040]">Datos del usuario</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Nombre</label>
-                    <input value={editForm.nombre} onChange={e => setEditForm(f => ({ ...f, nombre: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" />
+            {/* Historial de acompañamiento */}
+            <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4 space-y-3">
+              <h4 className="font-black text-sm text-[#1E1040]">Historial de acompañamiento</h4>
+              <div className="flex gap-2">
+                <select value={newEstado} onChange={e => setNewEstado(e.target.value)} className="h-9 px-2 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-xs font-bold text-[#1E1040] focus:outline-none">
+                  <option value="contactado">Contactado</option>
+                  <option value="sin_respuesta">Sin respuesta</option>
+                  <option value="en_proceso">En proceso</option>
+                  <option value="con_dificultades">Con dificultades</option>
+                  <option value="cerrado">Cerrado</option>
+                </select>
+                <input value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Anotá lo que hablaron..." className="flex-1 h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm focus:outline-none" onKeyDown={e => e.key === "Enter" && handleAddNote()} />
+                <button onClick={handleAddNote} disabled={savingNote || !newNote.trim()} className="h-9 px-3 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40">{savingNote ? "..." : "+"}</button>
+              </div>
+              <div className="space-y-2 max-h-64 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+                {notesLoading && <p className="text-xs text-[#9B8EC4]">Cargando...</p>}
+                {notes.length === 0 && !notesLoading && <p className="text-xs text-[#9B8EC4]">Sin notas todavía.</p>}
+                {notes.filter(n => !n.tipo || n.tipo === "nota").map(n => (
+                  <div key={n.id} className="flex items-start gap-2 p-2 rounded-xl bg-[#f0eef8]">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${n.estado === "cerrado" ? "bg-green-500/20 text-green-600" : n.estado === "con_dificultades" ? "bg-red-500/20 text-red-500" : n.estado === "sin_respuesta" ? "bg-orange-500/20 text-orange-500" : n.estado === "en_proceso" ? "bg-blue-500/20 text-blue-500" : "bg-purple-500/20 text-[#5c40c0]"}`}>{n.estado?.replace(/_/g, " ")}</span>
+                        <span className="text-[10px] text-[#9B8EC4]">{new Date(n.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                      </div>
+                      <p className="text-xs text-[#1E1040]">{n.texto}</p>
+                    </div>
+                    <button onClick={() => handleDeleteNote(n.id)} className="text-[10px] text-red-400 hover:text-red-600 flex-shrink-0">✕</button>
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Apellido</label>
-                    <input value={editForm.apellido} onChange={e => setEditForm(f => ({ ...f, apellido: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Teléfono</label>
-                    <input value={editForm.telefono} onChange={e => setEditForm(f => ({ ...f, telefono: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" placeholder="11xxxxxxxx" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">DNI</label>
-                    <input value={editForm.dni} onChange={e => setEditForm(f => ({ ...f, dni: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" />
-                  </div>
-                </div>
-                <button onClick={saveEdit} disabled={savingEdit} className="w-full h-9 rounded-xl bg-[#5c40c0] text-white text-sm font-bold disabled:opacity-50 mt-1">
-                  {savingEdit ? "Guardando..." : "Guardar cambios"}
+                ))}
+              </div>
+            </div>
+
+            {/* Conversación */}
+            <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-black text-sm text-[#1E1040] flex items-center gap-2"><MessageCircle className="w-4 h-4 text-[#5c40c0]" /> Conversación</h4>
+                <button onClick={() => { setShowImport(s => !s); setImportText(""); }} className="text-[10px] bg-[#f0eef8] border border-[#B8A9E8] text-[#5c40c0] px-2 py-1 rounded-lg font-bold">
+                  {showImport ? "✕ Cancelar" : "📥 Importar WA"}
                 </button>
               </div>
 
-              {/* Historial de acompañamiento */}
-              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4 space-y-3">
-                <h4 className="font-black text-sm text-[#1E1040]">Historial de acompañamiento</h4>
-                <div className="flex gap-2">
-                  <select value={newEstado} onChange={e => setNewEstado(e.target.value)} className="h-9 px-2 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-xs font-bold text-[#1E1040] focus:outline-none">
-                    <option value="contactado">Contactado</option>
-                    <option value="sin_respuesta">Sin respuesta</option>
-                    <option value="en_proceso">En proceso</option>
-                    <option value="con_dificultades">Con dificultades</option>
-                    <option value="cerrado">Cerrado</option>
-                  </select>
-                  <input value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Anotá lo que hablaron..." className="flex-1 h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm focus:outline-none" onKeyDown={e => e.key === "Enter" && handleAddNote()} />
-                  <button onClick={handleAddNote} disabled={savingNote || !newNote.trim()} className="h-9 px-3 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40">{savingNote ? "..." : "+"}</button>
-                </div>
-                <div className="space-y-2 max-h-48 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
-                  {notesLoading && <p className="text-xs text-[#9B8EC4]">Cargando...</p>}
-                  {notes.length === 0 && !notesLoading && <p className="text-xs text-[#9B8EC4]">Sin notas todavía.</p>}
-                  {notes.filter(n => !n.tipo || n.tipo === "nota").map(n => (
-                    <div key={n.id} className="flex items-start gap-2 p-2 rounded-xl bg-[#f0eef8]">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${n.estado === "cerrado" ? "bg-green-500/20 text-green-600" : n.estado === "con_dificultades" ? "bg-red-500/20 text-red-500" : n.estado === "sin_respuesta" ? "bg-orange-500/20 text-orange-500" : n.estado === "en_proceso" ? "bg-blue-500/20 text-blue-500" : "bg-purple-500/20 text-[#5c40c0]"}`}>{n.estado?.replace(/_/g, " ")}</span>
-                          <span className="text-[10px] text-[#9B8EC4]">{new Date(n.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
-                        </div>
-                        <p className="text-xs text-[#1E1040]">{n.texto}</p>
-                      </div>
-                      <button onClick={() => handleDeleteNote(n.id)} className="text-[10px] text-red-400 hover:text-red-600 flex-shrink-0">✕</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Conversación */}
-              <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-black text-sm text-[#1E1040] flex items-center gap-2"><MessageCircle className="w-4 h-4 text-[#5c40c0]" /> Conversación</h4>
-                  <button onClick={() => { setShowImport(s => !s); setImportText(""); }} className="text-[10px] bg-[#f0eef8] border border-[#B8A9E8] text-[#5c40c0] px-2 py-1 rounded-lg font-bold">
-                    {showImport ? "✕ Cancelar" : "📥 Importar WA"}
+              {showImport && (
+                <div className="bg-[#f8f6ff] border border-[#B8A9E8] rounded-2xl p-3 space-y-2">
+                  <p className="text-[10px] text-[#6B5FA0] font-bold uppercase tracking-wide">Pegá el texto exportado de WhatsApp</p>
+                  <p className="text-[10px] text-[#9B8EC4]">En WhatsApp: abrí el chat → ⋮ → Más → Exportar chat → Sin archivos → copiá todo el texto acá.</p>
+                  <textarea value={importText} onChange={e => setImportText(e.target.value)} className="w-full h-32 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-xs focus:outline-none resize-none font-mono" placeholder={"15/07/2024, 10:23 - Korai: Hola María!\n15/07/2024, 10:25 - María García: Hola, soy María..."} />
+                  <button onClick={handleImportarConversacion} disabled={importLoading || !importText.trim()} className="w-full h-9 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40 flex items-center justify-center gap-2">
+                    {importLoading ? <><Loader2 className="w-3 h-3 animate-spin" /> Importando...</> : "✅ Importar conversación"}
                   </button>
                 </div>
+              )}
 
-                {showImport && (
-                  <div className="bg-[#f8f6ff] border border-[#B8A9E8] rounded-2xl p-3 space-y-2">
-                    <p className="text-[10px] text-[#6B5FA0] font-bold uppercase tracking-wide">Pegá el texto exportado de WhatsApp</p>
-                    <p className="text-[10px] text-[#9B8EC4]">En WhatsApp: abrí el chat → ⋮ → Más → Exportar chat → Sin archivos → copiá todo el texto acá.</p>
-                    <textarea value={importText} onChange={e => setImportText(e.target.value)} className="w-full h-32 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-xs focus:outline-none resize-none font-mono" placeholder={"15/07/2024, 10:23 - Korai: Hola María!\n15/07/2024, 10:25 - María García: Hola, soy María..."} />
-                    <button onClick={handleImportarConversacion} disabled={importLoading || !importText.trim()} className="w-full h-9 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40 flex items-center justify-center gap-2">
-                      {importLoading ? <><Loader2 className="w-3 h-3 animate-spin" /> Importando...</> : "✅ Importar conversación"}
-                    </button>
-                  </div>
+              {/* Historial tipo chat */}
+              <div className="space-y-2 max-h-80 overflow-y-auto flex flex-col-reverse bg-[#f8f6ff] rounded-2xl p-3" style={{ scrollbarWidth: "thin" }}>
+                {notesLoading && <p className="text-xs text-[#9B8EC4] text-center">Cargando...</p>}
+                {!notesLoading && notes.filter(n => n.tipo === "entrante" || n.tipo === "saliente").length === 0 && (
+                  <p className="text-xs text-[#9B8EC4] text-center py-2">Sin conversación todavía. Generá el primer mensaje o cargá uno entrante.</p>
                 )}
-
-                {/* Historial tipo chat */}
-                <div className="space-y-2 max-h-60 overflow-y-auto flex flex-col-reverse bg-[#f8f6ff] rounded-2xl p-3" style={{ scrollbarWidth: "thin" }}>
-                  {notesLoading && <p className="text-xs text-[#9B8EC4] text-center">Cargando...</p>}
-                  {!notesLoading && notes.filter(n => n.tipo === "entrante" || n.tipo === "saliente").length === 0 && (
-                    <p className="text-xs text-[#9B8EC4] text-center py-2">Sin conversación todavía. Generá el primer mensaje o cargá uno entrante.</p>
-                  )}
-                  {[...notes].reverse().filter(n => n.tipo === "entrante" || n.tipo === "saliente").map(n => (
-                    <div key={n.id} className={`flex ${n.tipo === "saliente" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-xs ${n.tipo === "saliente" ? "bg-[#5c40c0] text-white rounded-br-sm" : "bg-white text-[#1E1040] border border-[#B8A9E8] rounded-bl-sm"}`}>
-                        <p className="whitespace-pre-wrap">{n.texto}</p>
-                        <p className={`text-[10px] mt-1 ${n.tipo === "saliente" ? "text-white/60" : "text-[#9B8EC4]"}`}>{new Date(n.created_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })} · {new Date(n.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Mensaje entrante */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Mensaje recibido del usuario</label>
-                  <div className="flex gap-2">
-                    <textarea value={mensajeUsuario} onChange={e => setMensajeUsuario(e.target.value)} className="flex-1 h-14 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-sm focus:outline-none resize-none" placeholder="Pegá lo que te escribió por WhatsApp..." />
-                    <button onClick={handleMensajeEntrante} disabled={savingNote || iaLoading || !mensajeUsuario.trim()} className="h-14 px-3 rounded-xl bg-[#25D366] text-white text-xs font-bold disabled:opacity-40 flex flex-col items-center justify-center gap-0.5">
-                      <MessageCircle className="w-4 h-4" />
-                      <span>Cargar y<br/>responder</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Acciones IA */}
-                <div className="flex gap-2 flex-wrap">
-                  <button onClick={() => handleGenerarIA("plan")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">✨ Generar plan inicial</button>
-                  <button onClick={() => handleGenerarIA("seguimiento")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">🔄 Generar seguimiento</button>
-                </div>
-
-                {iaLoading && <p className="text-xs text-[#9B8EC4] flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Korai está pensando la respuesta...</p>}
-                {iaError && <p className="text-xs text-red-500">{iaError}</p>}
-
-                {/* Respuesta IA */}
-                {iaMensaje && (
-                  <div className="space-y-2 bg-[#ede9fe] rounded-2xl p-3">
-                    <p className="text-[10px] font-bold text-[#5c40c0] uppercase tracking-wide">✨ Respuesta sugerida por IA — podés editarla</p>
-                    <textarea value={iaMensaje} onChange={e => setIaMensaje(e.target.value)} className="w-full h-36 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-sm focus:outline-none resize-none" />
-                    <div className="flex gap-2">
-                      <button onClick={() => navigator.clipboard.writeText(iaMensaje)} className="flex-1 h-9 rounded-lg bg-white border border-[#B8A9E8] text-[#5c40c0] text-xs font-bold">Copiar</button>
-                      <button onClick={handleEnviarRespuesta} className="flex-1 h-9 rounded-lg bg-[#25D366] text-white text-xs font-bold flex items-center justify-center gap-1">
-                        <MessageCircle className="w-3 h-3" /> Enviar por WhatsApp
-                      </button>
+                {[...notes].reverse().filter(n => n.tipo === "entrante" || n.tipo === "saliente").map(n => (
+                  <div key={n.id} className={`flex ${n.tipo === "saliente" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-xs ${n.tipo === "saliente" ? "bg-[#5c40c0] text-white rounded-br-sm" : "bg-white text-[#1E1040] border border-[#B8A9E8] rounded-bl-sm"}`}>
+                      <p className="whitespace-pre-wrap">{n.texto}</p>
+                      <p className={`text-[10px] mt-1 ${n.tipo === "saliente" ? "text-white/60" : "text-[#9B8EC4]"}`}>{new Date(n.created_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })} · {new Date(n.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</p>
                     </div>
                   </div>
-                )}
+                ))}
               </div>
+
+              {/* Mensaje entrante */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Mensaje recibido del usuario</label>
+                <div className="flex gap-2">
+                  <textarea value={mensajeUsuario} onChange={e => setMensajeUsuario(e.target.value)} className="flex-1 h-14 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-sm focus:outline-none resize-none" placeholder="Pegá lo que te escribió por WhatsApp..." />
+                  <button onClick={handleMensajeEntrante} disabled={savingNote || iaLoading || !mensajeUsuario.trim()} className="h-14 px-3 rounded-xl bg-[#25D366] text-white text-xs font-bold disabled:opacity-40 flex flex-col items-center justify-center gap-0.5">
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Cargar y<br/>responder</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Acciones IA */}
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={() => handleGenerarIA("plan")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">✨ Generar plan inicial</button>
+                <button onClick={() => handleGenerarIA("seguimiento")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">🔄 Generar seguimiento</button>
+              </div>
+
+              {iaLoading && <p className="text-xs text-[#9B8EC4] flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Korai está pensando la respuesta...</p>}
+              {iaError && <p className="text-xs text-red-500">{iaError}</p>}
+
+              {/* Respuesta IA */}
+              {iaMensaje && (
+                <div className="space-y-2 bg-[#ede9fe] rounded-2xl p-3">
+                  <p className="text-[10px] font-bold text-[#5c40c0] uppercase tracking-wide">✨ Respuesta sugerida por IA — podés editarla</p>
+                  <textarea value={iaMensaje} onChange={e => setIaMensaje(e.target.value)} className="w-full h-36 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-sm focus:outline-none resize-none" />
+                  <div className="flex gap-2">
+                    <button onClick={() => navigator.clipboard.writeText(iaMensaje)} className="flex-1 h-9 rounded-lg bg-white border border-[#B8A9E8] text-[#5c40c0] text-xs font-bold">Copiar</button>
+                    <button onClick={handleEnviarRespuesta} className="flex-1 h-9 rounded-lg bg-[#25D366] text-white text-xs font-bold flex items-center justify-center gap-1">
+                      <MessageCircle className="w-3 h-3" /> Enviar por WhatsApp
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
