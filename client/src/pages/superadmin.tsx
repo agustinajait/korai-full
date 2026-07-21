@@ -69,7 +69,6 @@ async function addNote(responseId: string, texto: string, estado: string) {
   });
   if (!res.ok) throw new Error("Error al guardar nota");
   const data = await res.json();
-  // Actualizar ultimo_contacto y ultimo_estado en el response
   await fetch(`${SUPABASE_URL}/rest/v1/responses?id=eq.${responseId}`, {
     method: "PATCH",
     headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
@@ -144,7 +143,6 @@ export default function Superadmin() {
   const [selectedDimension, setSelectedDimension] = useState(null);
   const [barrioFilter, setBarrioFilter] = useState("all");
   const [selectedCase, setSelectedCase] = useState(null);
-  const [showCaseList, setShowCaseList] = useState(false);
   const [search, setSearch] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
@@ -163,6 +161,7 @@ export default function Superadmin() {
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
   const [importLoading, setImportLoading] = useState(false);
+  const [rightView, setRightView] = useState<"analisis" | "usuario">("analisis");
 
   useEffect(() => {
     const role = localStorage.getItem("korai_admin_role");
@@ -174,7 +173,7 @@ export default function Superadmin() {
 
   const handleDelete = async (id) => {
     setDeletingId(id);
-    try { await deleteResponse(id); setResponses(prev => prev.filter(r => r.id !== id)); } catch { alert("Error al eliminar."); }
+    try { await deleteResponse(id); setResponses(prev => prev.filter(r => r.id !== id)); if (editingUser?.id === id) setEditingUser(null); } catch { alert("Error al eliminar."); }
     setDeletingId(null); setConfirmDeleteId(null);
   };
 
@@ -192,14 +191,13 @@ export default function Superadmin() {
     setNotes([]); setNewNote("");
     setShowImport(false); setImportText("");
     setNotesLoading(true);
+    setRightView("usuario");
     fetchNotes(r.id).then(n => { setNotes(n); setNotesLoading(false); });
   };
 
   const handleImportarConversacion = async () => {
     if (!editingUser || !importText.trim()) return;
     setImportLoading(true);
-    // Parsear el texto exportado de WhatsApp
-    // Formato: "DD/MM/YYYY, HH:MM - Nombre: mensaje"
     const lines = importText.trim().split("\n");
     const myName = editForm.nombre || editForm.telefono || "Korai";
     const notasParsed: Array<{ texto: string; tipo: string }> = [];
@@ -212,7 +210,6 @@ export default function Superadmin() {
         const sender = match[1].trim();
         const texto = match[2].trim();
         if (!texto || texto === "<Multimedia omitido>" || texto === "<Media omitted>") { current = null; continue; }
-        // Si el remitente contiene el nombre del usuario o su teléfono → entrante; si contiene el nombre del equipo/Korai → saliente
         const esKorai = sender.toLowerCase().includes("korai") || sender.toLowerCase().includes(myName.toLowerCase().split(" ")[0].toLowerCase());
         current = { tipo: esKorai ? "saliente" : "entrante", texto };
       } else if (current && line.trim() && !line.startsWith("‎")) {
@@ -221,7 +218,6 @@ export default function Superadmin() {
     }
     if (current) notasParsed.push(current);
 
-    // Guardar cada nota secuencialmente
     let guardadas = 0;
     for (const n of notasParsed) {
       try {
@@ -235,7 +231,6 @@ export default function Superadmin() {
       } catch {}
     }
 
-    // Recargar notas
     const nuevas = await fetchNotes(editingUser.id);
     setNotes(nuevas);
     setImportText("");
@@ -250,7 +245,7 @@ export default function Superadmin() {
     try {
       const merged = await updateResponseProfile(editingUser, editForm);
       setResponses(prev => prev.map(r => r.id === editingUser.id ? { ...r, perfil_contextual: JSON.stringify(merged) } : r));
-      setEditingUser(null);
+      setEditingUser(prev => prev ? { ...prev, perfil_contextual: JSON.stringify(merged) } : null);
     } catch { alert("Error al guardar los cambios."); }
     setSavingEdit(false);
   };
@@ -291,7 +286,6 @@ export default function Superadmin() {
       });
       setNotes(prev => [{ ...nota, tipo: "entrante" }, ...prev]);
       setMensajeUsuario("");
-      // Generar respuesta IA automáticamente
       setIaLoading(true); setIaError(""); setIaMensaje("");
       const nombre = getNombrePersona(editingUser);
       const plan = planDeUsuario(editingUser);
@@ -381,205 +375,272 @@ export default function Superadmin() {
     return { total, dist: { rojo: total ? rojo / total : 0, amarillo: total ? amarillo / total : 0, verde: total ? verde / total : 0 }, byDim, mostCritical, comentarios: comentarios.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)) };
   }, [filtered]);
 
-  const topCriticalDims = useMemo(() => {
-    if (!stats) return [];
-    return Object.entries(stats.byDim).filter(([, d]) => d.color === "rojo" || d.color === "amarillo").sort((a, b) => b[1].severity - a[1].severity).slice(0, 2).map(([id]) => id);
-  }, [stats]);
-
   const colorBadge = (c) => c === "rojo" ? "bg-red-500/20 text-red-400 border-red-500/30" : c === "amarillo" ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-green-500/20 text-green-400 border-green-500/30";
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#f0eef8]"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#f0eef8]"><Loader2 className="w-10 h-10 animate-spin text-[#5c40c0]" /></div>;
   if (error) return <div className="min-h-screen flex items-center justify-center bg-[#f0eef8] text-red-400">{error}</div>;
   if (!stats) return <div className="min-h-screen flex items-center justify-center bg-[#f0eef8] text-[#9B8EC4]">Sin datos aun</div>;
 
   const overallColor = stats.dist.rojo >= 0.33 ? "rojo" : stats.dist.amarillo >= 0.33 ? "amarillo" : "verde";
-  const overallBg = overallColor === "rojo" ? "bg-red-500/10 border-red-500/30" : overallColor === "amarillo" ? "bg-yellow-500/10 border-yellow-500/30" : "bg-green-500/10 border-green-500/30";
   const overallDot = overallColor === "rojo" ? "bg-red-500" : overallColor === "amarillo" ? "bg-yellow-500" : "bg-green-500";
 
+  const uniqueUsers = new Set(responses.map(r => r.dni_hash).filter(Boolean)).size;
+  const totalDiag = responses.length;
+  const rediag = totalDiag - uniqueUsers;
+  const tasaRetorno = uniqueUsers > 0 ? Math.round((rediag / uniqueUsers) * 100) : 0;
+  const conSeguimiento = responses.filter(r => r.acepto_seguimiento).length;
+  const conTelefono = responses.filter(r => getTelefono(r)).length;
+
   return (
-    <div className="min-h-screen bg-[#f0eef8] text-[#1E1040] font-sans">
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[1100px] h-[700px] bg-[#5c40c0]/5 rounded-full blur-[120px]" />
-      </div>
-      <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
-
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <img src={koraiLogo} alt="KORAI" className="w-12 h-12 object-contain" />
-            <div><div className="text-xl font-black">KORAI Superadmin</div><div className="text-xs text-[#6B5FA0]">Panel de control total</div></div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => setShowCaseList(s => !s)} className="text-[#1E1040] hover:bg-[#ede9fe] text-sm gap-2">
-              <Users className="w-4 h-4" /> {showCaseList ? "Ver resumen" : "Ver usuarios"}
-            </Button>
-            <Link href="/"><Button variant="ghost" className="text-[#1E1040] hover:bg-[#ede9fe] text-sm">Diagnostico</Button></Link>
-            <Button variant="ghost" onClick={() => { localStorage.removeItem("korai_admin_auth"); localStorage.removeItem("korai_admin_role"); setLocation("/admin"); }} className="text-[#9B8EC4] hover:text-[#1E1040] hover:bg-[#ede9fe]">
-              <LogOut className="w-4 h-4" />
-            </Button>
+    <div
+      className="flex bg-[#f0eef8] text-[#1E1040] font-sans"
+      style={{ height: "100vh", overflow: "hidden" }}
+    >
+      {/* ── SIDEBAR IZQUIERDA ── */}
+      <aside
+        className="flex flex-col border-r border-[#B8A9E8] bg-white flex-shrink-0"
+        style={{ width: 240, overflowY: "auto", overflowX: "hidden" }}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-2 px-4 pt-5 pb-4 border-b border-[#B8A9E8]">
+          <img src={koraiLogo} alt="KORAI" className="w-9 h-9 object-contain flex-shrink-0" />
+          <div>
+            <div className="text-sm font-black text-[#1E1040] leading-tight">KORAI</div>
+            <div className="text-[10px] text-[#9B8EC4] leading-tight">Superadmin</div>
           </div>
         </div>
 
-        {(() => {
-          const uniqueUsers = new Set(responses.map(r => r.dni_hash).filter(Boolean)).size;
-          const totalDiag = responses.length;
-          const rediag = totalDiag - uniqueUsers;
-          const tasaRetorno = uniqueUsers > 0 ? Math.round((rediag / uniqueUsers) * 100) : 0;
-          const conSeguimiento = responses.filter(r => r.acepto_seguimiento).length;
-          const conTelefono = responses.filter(r => getTelefono(r)).length;
-          return (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm">
-                <div className="text-2xl font-black text-[#5c40c0]">{uniqueUsers}</div>
-                <div className="text-xs font-bold text-[#1E1040] mt-1">Personas únicas</div>
-                <div className="text-[10px] text-[#9B8EC4] mt-0.5">Deduplicado por DNI</div>
+        {/* KPIs */}
+        <div className="px-3 py-4 space-y-2 border-b border-[#B8A9E8]">
+          <div className="text-[9px] font-black text-[#9B8EC4] uppercase tracking-widest px-1 mb-3">Métricas</div>
+          {[
+            { label: "Personas únicas", value: uniqueUsers, sub: "dedup. por DNI", color: "#5c40c0" },
+            { label: "Diagnósticos", value: totalDiag, sub: "incluye rediag.", color: "#1E1040" },
+            { label: "Retornos", value: `${rediag} (${tasaRetorno}%)`, sub: "volvieron a diag.", color: "#7c5cff" },
+            { label: "Con seguimiento", value: conSeguimiento, sub: "aceptaron acomp.", color: "#22c55e" },
+            { label: "Con teléfono", value: conTelefono, sub: "contactables WA", color: "#1E1040" },
+          ].map(kpi => (
+            <div key={kpi.label} className="flex items-center justify-between px-2 py-2 rounded-xl hover:bg-[#f0eef8] transition-colors">
+              <div className="min-w-0">
+                <div className="text-[10px] font-bold text-[#1E1040] truncate">{kpi.label}</div>
+                <div className="text-[9px] text-[#9B8EC4]">{kpi.sub}</div>
               </div>
-              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm">
-                <div className="text-2xl font-black text-[#1E1040]">{totalDiag}</div>
-                <div className="text-xs font-bold text-[#1E1040] mt-1">Diagnósticos totales</div>
-                <div className="text-[10px] text-[#9B8EC4] mt-0.5">Incluye rediagnósticos</div>
-              </div>
-              <div className="bg-gradient-to-br from-[#ede9fe] to-[#f0eef8] border border-[#7c5cff]/40 rounded-2xl p-4 shadow-sm">
-                <div className="flex items-end gap-1.5">
-                  <div className="text-2xl font-black text-[#7c5cff]">{rediag}</div>
-                  <div className="text-sm font-black text-[#7c5cff] mb-0.5">({tasaRetorno}%)</div>
-                </div>
-                <div className="text-xs font-bold text-[#1E1040] mt-1">Retornos</div>
-                <div className="text-[10px] text-[#9B8EC4] mt-0.5">Personas que volvieron a diagnosticarse</div>
-              </div>
-              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm">
-                <div className="text-2xl font-black text-green-600">{conSeguimiento}</div>
-                <div className="text-xs font-bold text-[#1E1040] mt-1">Con seguimiento</div>
-                <div className="text-[10px] text-[#9B8EC4] mt-0.5">Aceptaron acompañamiento</div>
-              </div>
-              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm">
-                <div className="text-2xl font-black text-[#1E1040]">{conTelefono}</div>
-                <div className="text-xs font-bold text-[#1E1040] mt-1">Con teléfono</div>
-                <div className="text-[10px] text-[#9B8EC4] mt-0.5">Contactables por WhatsApp</div>
-              </div>
+              <div className="text-base font-black ml-2 flex-shrink-0" style={{ color: kpi.color }}>{kpi.value}</div>
             </div>
-          );
-        })()}
+          ))}
+        </div>
 
-        {showCaseList && (
-          <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-3xl overflow-hidden shadow-sm">
-            <div className="p-5 border-b border-[#B8A9E8]">
-              <h3 className="font-black text-lg mb-3">Usuarios registrados</h3>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, DNI, barrio o teléfono..." className="w-full h-11 px-4 rounded-xl bg-white border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none" />
-            </div>
-            <div className="divide-y divide-[#EDE9FE] overflow-y-auto user-list-scroll" style={{ maxHeight: "60vh", scrollbarColor: "#5c40c0 #ede9fe", scrollbarWidth: "thin" }}>
-              {filtered.map((r, i) => {
-                const nombre = getNombrePersona(r);
-                const telefono = getTelefono(r);
-                const dni = getDni(r);
-                const barrio = r.territorio?.barrio || "Sin barrio";
-                const fecha = new Date(r.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" });
-                const sitLabR = (() => { try { const p = (() => { const raw = r.perfil_contextual; return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); })(); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
-                const scores = calcularScores(r.answers || {}, sitLabR);
-                const rojas = scores.filter(s => s.color === "rojo").length;
-                const answers = r.answers || {};
-                const plan = generatePlanDesdeScores(answers);
-                const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
-                const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
-                const areasTexto = areas.map(p => p.dimensionName).join(" y ");
-                let msg = "app.korai.lat\n\nHola " + nombre + "! Soy Korai, tu asistente de bienestar.\nDetectamos que podrias necesitar apoyo en " + areasTexto + ".\n\nTu plan:\n\n";
-                areas.forEach(p => { msg += p.emoji + " " + p.dimensionName + "\n"; p.accionesCorto.slice(0,2).forEach((a,i) => { msg += (i+1) + ". " + a + "\n"; }); const rec = p.recursos?.[0]; if (rec?.url) msg += "Recurso: " + rec.nombre + ": " + rec.url + "\n"; msg += "\n"; });
-                msg += "\nEn 7 dias te vamos a contactar.";
-                return (
-                  <div key={r.id || i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#f0eef8] transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-[#5c40c0] flex items-center justify-center flex-shrink-0 cursor-pointer" onClick={() => openEdit(r)}>
-                      <span className="text-white text-xs font-black">{nombre ? nombre.charAt(0).toUpperCase() : "?"}</span>
-                    </div>
-                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => openEdit(r)}>
-                      <div className="font-bold text-sm text-[#1E1040] truncate hover:text-[#5c40c0] transition-colors">{nombre}</div>
-                      <div className="text-xs text-[#9B8EC4]">{barrio} · {fecha}{dni ? " · DNI: " + dni : ""}</div>
-                    </div>
-                    {r.ultimo_estado && (
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border flex-shrink-0 ${
-                        r.ultimo_estado === "cerrado" ? "bg-green-500/20 text-green-600 border-green-500/30" :
-                        r.ultimo_estado === "sin_respuesta" ? "bg-orange-500/20 text-orange-500 border-orange-500/30" :
-                        r.ultimo_estado === "con_dificultades" ? "bg-red-500/20 text-red-500 border-red-500/30" :
-                        r.ultimo_estado === "en_proceso" ? "bg-blue-500/20 text-blue-500 border-blue-500/30" :
-                        "bg-purple-500/20 text-[#5c40c0] border-purple-500/30"
-                      }`}>{r.ultimo_estado.replace(/_/g, " ")}</span>
-                    )}
-                    {(() => { const dias = diasDesde(r.ultimo_contacto || r.submitted_at); return dias >= 7 ? <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-gray-200 text-gray-500 border border-gray-300 flex-shrink-0">{dias}d sin contacto</span> : null; })()}
-                    <div className="flex items-center gap-1">{scores.map(s => <div key={s.dimensionId} className={`w-2.5 h-2.5 rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} />)}</div>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${rojas >= 2 ? "bg-red-500/20 text-red-400 border-red-500/30" : rojas === 1 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-green-500/20 text-green-400 border-green-500/30"}`}>{rojas} criticas</span>
-                    {telefono && (
-                      <button onClick={() => {
-                        window.open("https://wa.me/549" + telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(msg), "_blank");
-                        addNote(r.id, "Contacto por WhatsApp (enviado desde admin)", "contactado").catch(() => {});
-                      }} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1"><MessageCircle className="w-3 h-3" /> WA</button>
-                    )}
-                    <button onClick={() => addNote(r.id, "Sin respuesta al contacto", "sin_respuesta").catch(() => {})} className="text-xs bg-orange-500/20 text-orange-500 border border-orange-500/30 px-3 py-1.5 rounded-lg font-bold">Sin resp.</button>
-                    <button onClick={() => { navigator.clipboard.writeText(msg); alert("Plan copiado!"); }} className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-3 py-1.5 rounded-lg font-bold">Copiar</button>
-                    {confirmDeleteId === r.id ? (
-                      <div className="flex gap-1">
-                        <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} className="text-[10px] text-[#1E1040] bg-red-500 px-2 py-1 rounded-lg font-bold">{deletingId === r.id ? "..." : "Confirmar"}</button>
-                        <button onClick={() => setConfirmDeleteId(null)} className="text-[10px] text-[#9B8EC4] bg-white px-2 py-1 rounded-lg">No</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setConfirmDeleteId(r.id)} className="text-[10px] text-red-500 bg-red-50 border border-red-300 px-2 py-1 rounded-lg hover:bg-red-100 font-bold">🗑 Eliminar</button>
-                    )}
+        {/* Navegación */}
+        <div className="px-3 py-4 space-y-1 border-b border-[#B8A9E8]">
+          <div className="text-[9px] font-black text-[#9B8EC4] uppercase tracking-widest px-1 mb-3">Vistas</div>
+          <button
+            onClick={() => { setEditingUser(null); setRightView("analisis"); }}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-all text-left ${rightView === "analisis" && !editingUser ? "bg-[#5c40c0] text-white" : "text-[#6B5FA0] hover:bg-[#f0eef8]"}`}
+          >
+            <TrendingUp className="w-4 h-4 flex-shrink-0" /> Análisis
+          </button>
+          <button
+            onClick={() => setRightView("usuario")}
+            disabled={!editingUser}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-all text-left disabled:opacity-40 ${rightView === "usuario" && editingUser ? "bg-[#5c40c0] text-white" : "text-[#6B5FA0] hover:bg-[#f0eef8] disabled:hover:bg-transparent"}`}
+          >
+            <User className="w-4 h-4 flex-shrink-0" /> Usuario
+          </button>
+        </div>
+
+        {/* Acciones */}
+        <div className="px-3 py-4 space-y-2 mt-auto">
+          <button
+            onClick={() => navigator.clipboard?.writeText(window.location.origin + "/")}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-[#5c40c0] bg-[#ede9fe] hover:bg-[#ddd6fe] transition-colors"
+          >
+            <ExternalLink className="w-3.5 h-3.5" /> Copiar enlace
+          </button>
+          <button
+            onClick={() => { localStorage.removeItem("korai_admin_auth"); localStorage.removeItem("korai_admin_role"); setLocation("/admin"); }}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-[#9B8EC4] hover:text-[#1E1040] hover:bg-[#f0eef8] transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
+          </button>
+        </div>
+      </aside>
+
+      {/* ── COLUMNA CENTRAL: Lista de usuarios ── */}
+      <div
+        className="flex flex-col border-r border-[#B8A9E8] bg-white flex-shrink-0"
+        style={{ width: 400, overflow: "hidden" }}
+      >
+        {/* Header + buscador */}
+        <div className="px-4 pt-5 pb-3 border-b border-[#B8A9E8] space-y-3 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <h2 className="font-black text-base text-[#1E1040]">Usuarios</h2>
+            <span className="text-xs text-[#9B8EC4] font-bold">{filtered.length} de {responses.length}</span>
+          </div>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar por nombre, DNI, barrio o teléfono..."
+            className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none focus:border-[#5c40c0]"
+          />
+          {/* Filtros de barrio */}
+          <div className="flex gap-1.5 flex-wrap">
+            <button
+              onClick={() => setBarrioFilter("all")}
+              className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${barrioFilter === "all" ? "bg-[#5c40c0] text-white" : "bg-[#f0eef8] text-[#6B5FA0] hover:bg-[#ede9fe]"}`}
+            >
+              Todos
+            </button>
+            {barrios.map(b => (
+              <button
+                key={b}
+                onClick={() => setBarrioFilter(b)}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all ${barrioFilter === b ? "bg-[#5c40c0] text-white" : "bg-[#f0eef8] text-[#6B5FA0] hover:bg-[#ede9fe]"}`}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Lista con scroll interno */}
+        <div className="flex-1 overflow-y-auto divide-y divide-[#EDE9FE]" style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}>
+          {filtered.map((r, i) => {
+            const nombre = getNombrePersona(r);
+            const telefono = getTelefono(r);
+            const dni = getDni(r);
+            const barrio = r.territorio?.barrio || "Sin barrio";
+            const fecha = new Date(r.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" });
+            const sitLabR = (() => { try { const p = (() => { const raw = r.perfil_contextual; return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); })(); return p?.profundizacion?.situacion_laboral; } catch { return undefined; } })();
+            const scores = calcularScores(r.answers || {}, sitLabR);
+            const rojas = scores.filter(s => s.color === "rojo").length;
+            const isActive = editingUser?.id === r.id;
+            const answers = r.answers || {};
+            const plan = generatePlanDesdeScores(answers);
+            const criticas = plan.filter(p => p.nivelColor === "rojo").slice(0, 2);
+            const areas = criticas.length > 0 ? criticas : plan.slice(0, 2);
+            const areasTexto = areas.map(p => p.dimensionName).join(" y ");
+            let msg = "app.korai.lat\n\nHola " + nombre + "! Soy Korai, tu asistente de bienestar.\nDetectamos que podrias necesitar apoyo en " + areasTexto + ".\n\nTu plan:\n\n";
+            areas.forEach(p => { msg += p.emoji + " " + p.dimensionName + "\n"; p.accionesCorto.slice(0,2).forEach((a,i) => { msg += (i+1) + ". " + a + "\n"; }); const rec = p.recursos?.[0]; if (rec?.url) msg += "Recurso: " + rec.nombre + ": " + rec.url + "\n"; msg += "\n"; });
+            msg += "\nEn 7 dias te vamos a contactar.";
+            return (
+              <div
+                key={r.id || i}
+                className={`px-4 py-3 transition-colors cursor-pointer ${isActive ? "bg-[#ede9fe] border-l-2 border-l-[#5c40c0]" : "hover:bg-[#f8f6ff]"}`}
+                onClick={() => openEdit(r)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#5c40c0] flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-white text-xs font-black">{nombre ? nombre.charAt(0).toUpperCase() : "?"}</span>
                   </div>
-                );
-              })}
-              {filtered.length === 0 && <div className="text-center py-8 text-[#9B8EC4]">No se encontraron usuarios</div>}
-            </div>
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 flex-wrap">
-          <MapPin className="w-4 h-4 text-primary" />
-          <span className="text-xs text-[#6B5FA0] uppercase font-bold tracking-wider">Filtrar por barrio:</span>
-          <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setBarrioFilter("all")} className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === "all" ? "bg-primary text-[#1E1040]" : "bg-white text-[#6B5FA0] hover:bg-[#ede9fe]"}`}>Todos ({responses.length})</button>
-            {barrios.map(b => <button key={b} onClick={() => setBarrioFilter(b)} className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${barrioFilter === b ? "bg-primary text-[#1E1040]" : "bg-white text-[#6B5FA0] hover:bg-[#ede9fe]"}`}>{b}</button>)}
-          </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-bold text-sm text-[#1E1040] truncate">{nombre}</span>
+                      {r.ultimo_estado && (
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border flex-shrink-0 ${
+                          r.ultimo_estado === "cerrado" ? "bg-green-500/20 text-green-600 border-green-500/30" :
+                          r.ultimo_estado === "sin_respuesta" ? "bg-orange-500/20 text-orange-500 border-orange-500/30" :
+                          r.ultimo_estado === "con_dificultades" ? "bg-red-500/20 text-red-500 border-red-500/30" :
+                          r.ultimo_estado === "en_proceso" ? "bg-blue-500/20 text-blue-500 border-blue-500/30" :
+                          "bg-purple-500/20 text-[#5c40c0] border-purple-500/30"
+                        }`}>{r.ultimo_estado.replace(/_/g, " ")}</span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-[#9B8EC4] mb-1.5">{barrio} · {fecha}{dni ? " · DNI: " + dni : ""}</div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1">{scores.map(s => <div key={s.dimensionId} className={`w-2 h-2 rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} />)}</div>
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border ${rojas >= 2 ? "bg-red-500/20 text-red-400 border-red-500/30" : rojas === 1 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" : "bg-green-500/20 text-green-400 border-green-500/30"}`}>{rojas} críticas</span>
+                      {(() => { const dias = diasDesde(r.ultimo_contacto || r.submitted_at); return dias >= 7 ? <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-500 border border-gray-300">{dias}d sin contacto</span> : null; })()}
+                    </div>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 flex-shrink-0 mt-2 transition-colors ${isActive ? "text-[#5c40c0]" : "text-[#B8A9E8]"}`} />
+                </div>
+                {/* Acciones rápidas inline */}
+                <div className="flex items-center gap-1.5 mt-2 ml-11 flex-wrap" onClick={e => e.stopPropagation()}>
+                  {telefono && (
+                    <button onClick={() => { window.open("https://wa.me/549" + telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(msg), "_blank"); addNote(r.id, "Contacto por WhatsApp (enviado desde admin)", "contactado").catch(() => {}); }} className="text-[9px] bg-green-500/20 text-green-600 border border-green-500/30 px-2 py-1 rounded-lg font-bold flex items-center gap-1"><MessageCircle className="w-2.5 h-2.5" /> WA</button>
+                  )}
+                  <button onClick={() => addNote(r.id, "Sin respuesta al contacto", "sin_respuesta").catch(() => {})} className="text-[9px] bg-orange-500/20 text-orange-500 border border-orange-500/30 px-2 py-1 rounded-lg font-bold">Sin resp.</button>
+                  <button onClick={() => { navigator.clipboard.writeText(msg); alert("Plan copiado!"); }} className="text-[9px] bg-purple-500/20 text-purple-500 border border-purple-500/30 px-2 py-1 rounded-lg font-bold">Copiar</button>
+                  {confirmDeleteId === r.id ? (
+                    <div className="flex gap-1">
+                      <button onClick={() => handleDelete(r.id)} disabled={deletingId === r.id} className="text-[9px] text-white bg-red-500 px-2 py-1 rounded-lg font-bold">{deletingId === r.id ? "..." : "Confirmar"}</button>
+                      <button onClick={() => setConfirmDeleteId(null)} className="text-[9px] text-[#9B8EC4] bg-white px-2 py-1 rounded-lg border border-[#B8A9E8]">No</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmDeleteId(r.id)} className="text-[9px] text-red-500 bg-red-50 border border-red-300 px-2 py-1 rounded-lg hover:bg-red-100 font-bold">Eliminar</button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="text-center py-12 text-[#9B8EC4] text-sm">No se encontraron usuarios</div>
+          )}
         </div>
+      </div>
 
-        <div className={`p-8 rounded-[40px] border relative overflow-hidden ${overallBg}`}>
-          <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-sm animate-pulse ${overallDot}`}><div className="text-[#1E1040] font-black text-lg">CABA</div></div>
-            <div className="text-center md:text-left"><h2 className="text-2xl font-black uppercase tracking-tighter">Estado General del Territorio</h2><p className="text-[#6B5FA0] text-sm mt-1">Basado en <span className="font-black text-[#1E1040]">{stats.total}</span> diagnosticos</p></div>
-            <div className="md:ml-auto flex gap-6 text-center">
-              <div><div className="text-2xl font-black text-red-400">{Math.round(stats.dist.rojo * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Critico</div></div>
-              <div><div className="text-2xl font-black text-yellow-400">{Math.round(stats.dist.amarillo * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Alerta</div></div>
-              <div><div className="text-2xl font-black text-green-400">{Math.round(stats.dist.verde * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Estable</div></div>
+      {/* ── COLUMNA DERECHA: Análisis o Panel de usuario ── */}
+      <div className="flex-1 overflow-hidden flex flex-col min-w-0">
+        {(!editingUser || rightView === "analisis") ? (
+          /* ── PANEL ANÁLISIS TERRITORIAL ── */
+          <div className="flex-1 overflow-y-auto p-6 space-y-5" style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}>
+            {/* Estado general */}
+            <div className={`p-6 rounded-3xl border relative overflow-hidden ${overallColor === "rojo" ? "bg-red-500/10 border-red-500/30" : overallColor === "amarillo" ? "bg-yellow-500/10 border-yellow-500/30" : "bg-green-500/10 border-green-500/30"}`}>
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-sm animate-pulse flex-shrink-0 ${overallDot}`}>
+                  <span className="text-white font-black text-xs">CABA</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-black uppercase tracking-tighter">Estado General del Territorio</h2>
+                  <p className="text-[#6B5FA0] text-sm mt-0.5">Basado en <span className="font-black text-[#1E1040]">{stats.total}</span> diagnósticos — {barrios.length} barrios</p>
+                </div>
+                <div className="flex gap-5 text-center flex-shrink-0">
+                  <div><div className="text-xl font-black text-red-400">{Math.round(stats.dist.rojo * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Crítico</div></div>
+                  <div><div className="text-xl font-black text-yellow-400">{Math.round(stats.dist.amarillo * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Alerta</div></div>
+                  <div><div className="text-xl font-black text-green-400">{Math.round(stats.dist.verde * 100)}%</div><div className="text-[10px] text-[#6B5FA0] uppercase">Estable</div></div>
+                </div>
+              </div>
+              <div className="mt-4 flex h-2.5 w-full rounded-full overflow-hidden bg-[#ede9fe]">
+                <div style={{ width: `${stats.dist.verde * 100}%` }} className="bg-[#22c55e]" />
+                <div style={{ width: `${stats.dist.amarillo * 100}%` }} className="bg-[#f59e0b]" />
+                <div style={{ width: `${stats.dist.rojo * 100}%` }} className="bg-[#ef4444]" />
+              </div>
             </div>
-          </div>
-          <div className="mt-6 flex h-3 w-full rounded-full overflow-hidden bg-[#ede9fe]">
-            <div style={{ width: `${stats.dist.verde * 100}%` }} className="bg-[#22c55e]" />
-            <div style={{ width: `${stats.dist.amarillo * 100}%` }} className="bg-[#f59e0b]" />
-            <div style={{ width: `${stats.dist.rojo * 100}%` }} className="bg-[#ef4444]" />
-          </div>
-        </div>
 
-        <div className="grid lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8 space-y-6">
-            <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-3xl overflow-hidden shadow-sm">
-              <div className="p-6 border-b border-[#B8A9E8]"><h3 className="text-xl font-black">Diagnostico por Dimension</h3></div>
-              <div className="p-6 grid sm:grid-cols-2 gap-4">
+            {/* Dimensiones */}
+            <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#B8A9E8]">
+                <h3 className="text-base font-black">Diagnóstico por Dimensión</h3>
+              </div>
+              <div className="p-5 grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {INSTRUMENT.dimensions.map(d => {
                   const s = stats.byDim[d.id] || { rojo: 0, amarillo: 0, verde: 0, n: 0, color: "verde", severity: 0, explanation: "" };
                   const isSelected = selectedDimension === d.id;
                   const isCritical = stats.mostCritical === d.id && s.severity > 0;
                   return (
-                    <div key={d.id} onClick={() => setSelectedDimension(isSelected ? null : d.id)} className={`p-5 rounded-3xl border transition-all cursor-pointer space-y-3 relative ${isSelected ? "border-primary/50 bg-primary/5" : isCritical ? "border-red-500/50 bg-red-500/5" : "border-[#B8A9E8] bg-white hover:bg-[#ede9fe]"}`}>
-                      {isCritical && <div className="absolute -top-2 -right-2 bg-red-500 text-[#1E1040] text-[9px] font-black px-2 py-0.5 rounded-full">CRITICO</div>}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3"><span className="text-2xl">{d.emoji}</span><div><div className="font-bold">{d.name}</div><div className="text-[10px] text-[#9B8EC4]">Severidad: {s.severity}%</div></div></div>
-                        <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${colorBadge(s.color)}`}>{s.color}</div>
+                    <div key={d.id} onClick={() => setSelectedDimension(isSelected ? null : d.id)} className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 relative ${isSelected ? "border-[#5c40c0]/50 bg-[#5c40c0]/5" : isCritical ? "border-red-500/50 bg-red-500/5" : "border-[#B8A9E8] bg-white hover:bg-[#f8f6ff]"}`}>
+                      {isCritical && <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">CRÍTICO</div>}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xl flex-shrink-0">{d.emoji}</span>
+                          <div className="min-w-0">
+                            <div className="font-bold text-sm truncate">{d.name}</div>
+                            <div className="text-[10px] text-[#9B8EC4]">Severidad: {s.severity}%</div>
+                          </div>
+                        </div>
+                        <div className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border flex-shrink-0 ${colorBadge(s.color)}`}>{s.color}</div>
                       </div>
-                      <div className="h-1.5 w-full bg-white rounded-full overflow-hidden"><div style={{ width: `${s.severity}%` }} className={`h-full rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} /></div>
-                      <p className="text-[11px] text-[#6B5FA0] italic">{s.explanation}</p>
+                      <div className="h-1.5 w-full bg-[#f0eef8] rounded-full overflow-hidden">
+                        <div style={{ width: `${s.severity}%` }} className={`h-full rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`} />
+                      </div>
+                      <p className="text-[10px] text-[#6B5FA0] italic">{s.explanation}</p>
                       {isSelected && PROGRAMAS_CABA[d.id] && (
-                        <div className="mt-3 pt-3 border-t border-[#B8A9E8] space-y-2">
+                        <div className="mt-2 pt-2 border-t border-[#B8A9E8] space-y-2">
                           {PROGRAMAS_CABA[d.id].map((p, i) => (
-                            <div key={i} className="p-3 rounded-xl bg-white space-y-1">
+                            <div key={i} className="p-3 rounded-xl bg-[#f8f6ff] space-y-1">
                               <div className="font-bold text-xs">{p.nombre}</div>
                               <div className="text-[10px] text-[#6B5FA0]">{p.descripcion}</div>
-                              {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary flex items-center gap-1 hover:underline"><ExternalLink className="w-3 h-3" /> Ver programa</a>}
+                              {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#5c40c0] flex items-center gap-1 hover:underline"><ExternalLink className="w-3 h-3" /> Ver programa</a>}
                               {p.contacto && <span className="text-[10px] text-[#9B8EC4]">{p.contacto}</span>}
                             </div>
                           ))}
@@ -590,67 +651,69 @@ export default function Superadmin() {
                 })}
               </div>
             </div>
-          </div>
 
-          <div className="lg:col-span-4 space-y-6">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Diagnosticos</div><div className="text-3xl font-black">{stats.total}</div><div className="text-[10px] text-green-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> En tiempo real</div></div>
-              <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-2xl p-4 shadow-sm"><div className="text-[#6B5FA0] text-[10px] font-bold uppercase mb-1">Barrios</div><div className="text-3xl font-black">{barrios.length}</div><div className="text-[10px] text-[#9B8EC4] mt-1">con datos</div></div>
-            </div>
+            {/* Voces del territorio */}
             <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5">
-              <h3 className="text-base font-black mb-4 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-primary" /> Voces del territorio</h3>
-              <div className="space-y-3 max-h-[300px] overflow-y-auto">
+              <h3 className="text-base font-black mb-4 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-[#5c40c0]" /> Voces del territorio</h3>
+              <div className="grid sm:grid-cols-2 gap-3">
                 {stats.comentarios.length > 0 ? stats.comentarios.map((c, i) => (
-                  <div key={i} className="p-3 rounded-2xl bg-white">
-                    <div className="flex items-center gap-2 mb-1"><MapPin className="w-3 h-3 text-primary" /><span className="text-[10px] text-[#6B5FA0]">{c.barrio}</span><span className="text-[9px] text-[#9B8EC4] ml-auto">{new Date(c.submitted_at).toLocaleDateString("es-AR")}</span></div>
+                  <div key={i} className="p-3 rounded-2xl bg-[#f8f6ff] border border-[#B8A9E8]">
+                    <div className="flex items-center gap-2 mb-1.5"><MapPin className="w-3 h-3 text-[#5c40c0]" /><span className="text-[10px] text-[#6B5FA0]">{c.barrio}</span><span className="text-[9px] text-[#9B8EC4] ml-auto">{new Date(c.submitted_at).toLocaleDateString("es-AR")}</span></div>
                     <p className="text-xs italic text-[#1E1040]">"{c.text}"</p>
                   </div>
-                )) : <p className="text-xs text-[#9B8EC4] text-center py-4">No hay comentarios aun.</p>}
+                )) : <p className="text-xs text-[#9B8EC4] col-span-2 text-center py-4">No hay comentarios aún.</p>}
               </div>
-            </div>
-            <div className="bg-gradient-to-br from-[#5c40c0]/20 to-transparent border border-[#7c5cff]/30 rounded-3xl p-5">
-              <h3 className="text-base font-black mb-1">Sumar mas territorio</h3>
-              <p className="text-xs text-[#6B5FA0] mt-1">Compartí el enlace público del diagnóstico con vecinos y organizaciones.</p>
-              <Button
-                className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-11 text-sm mt-3"
-                onClick={() => { navigator.clipboard?.writeText(window.location.origin + "/"); }}
-              >
-                Copiar enlace de diagnóstico
-              </Button>
             </div>
           </div>
-        </div>
-      </div>
-
-      {editingUser && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setEditingUser(null)}>
-          <div className="bg-white rounded-3xl p-6 w-full max-w-lg space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h3 className="font-black text-lg">Editar usuario</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-[#6B5FA0]">Nombre</label>
-                <input value={editForm.nombre} onChange={e => setEditForm(f => ({ ...f, nombre: e.target.value }))} className="w-full h-10 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none" />
+        ) : (
+          /* ── PANEL DE USUARIO ── */
+          <div className="flex-1 overflow-y-auto p-5 space-y-4" style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}>
+            {/* Header del usuario */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setEditingUser(null); setRightView("analisis"); }}
+                className="w-8 h-8 rounded-full flex items-center justify-center border border-[#B8A9E8] hover:bg-[#f0eef8] transition-colors flex-shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4 text-[#6B5FA0]" />
+              </button>
+              <div className="w-10 h-10 rounded-full bg-[#5c40c0] flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm font-black">{getNombrePersona(editingUser).charAt(0).toUpperCase()}</span>
               </div>
-              <div>
-                <label className="text-xs font-bold text-[#6B5FA0]">Apellido</label>
-                <input value={editForm.apellido} onChange={e => setEditForm(f => ({ ...f, apellido: e.target.value }))} className="w-full h-10 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#6B5FA0]">Teléfono</label>
-                <input value={editForm.telefono} onChange={e => setEditForm(f => ({ ...f, telefono: e.target.value }))} className="w-full h-10 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none" placeholder="11xxxxxxxx" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-[#6B5FA0]">DNI</label>
-                <input value={editForm.dni} onChange={e => setEditForm(f => ({ ...f, dni: e.target.value }))} className="w-full h-10 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none" />
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-base text-[#1E1040] truncate">{getNombrePersona(editingUser)}</div>
+                <div className="text-[10px] text-[#9B8EC4]">{editingUser.territorio?.barrio || "Sin barrio"} · {new Date(editingUser.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}</div>
               </div>
             </div>
-            <div className="flex gap-2 pt-2">
-              <button onClick={() => setEditingUser(null)} className="flex-1 h-10 rounded-xl border border-[#B8A9E8] text-sm font-bold text-[#6B5FA0]">Cancelar</button>
-              <button onClick={saveEdit} disabled={savingEdit} className="flex-1 h-10 rounded-xl bg-[#5c40c0] text-white text-sm font-bold disabled:opacity-50">{savingEdit ? "Guardando..." : "Guardar"}</button>
+
+            {/* Editar datos */}
+            <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4 space-y-3">
+              <h4 className="font-black text-sm text-[#1E1040]">Datos del usuario</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Nombre</label>
+                  <input value={editForm.nombre} onChange={e => setEditForm(f => ({ ...f, nombre: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Apellido</label>
+                  <input value={editForm.apellido} onChange={e => setEditForm(f => ({ ...f, apellido: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Teléfono</label>
+                  <input value={editForm.telefono} onChange={e => setEditForm(f => ({ ...f, telefono: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" placeholder="11xxxxxxxx" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">DNI</label>
+                  <input value={editForm.dni} onChange={e => setEditForm(f => ({ ...f, dni: e.target.value }))} className="w-full h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm mt-1 focus:outline-none focus:border-[#5c40c0]" />
+                </div>
+              </div>
+              <button onClick={saveEdit} disabled={savingEdit} className="w-full h-9 rounded-xl bg-[#5c40c0] text-white text-sm font-bold disabled:opacity-50 mt-1">
+                {savingEdit ? "Guardando..." : "Guardar cambios"}
+              </button>
             </div>
 
-            <div className="border-t border-[#EDE9FE] pt-4 space-y-3">
-              <h4 className="font-black text-sm">📋 Historial de acompañamiento</h4>
+            {/* Historial de acompañamiento */}
+            <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4 space-y-3">
+              <h4 className="font-black text-sm text-[#1E1040]">Historial de acompañamiento</h4>
               <div className="flex gap-2">
                 <select value={newEstado} onChange={e => setNewEstado(e.target.value)} className="h-9 px-2 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-xs font-bold text-[#1E1040] focus:outline-none">
                   <option value="contactado">Contactado</option>
@@ -662,10 +725,10 @@ export default function Superadmin() {
                 <input value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Anotá lo que hablaron..." className="flex-1 h-9 px-3 rounded-xl bg-[#f0eef8] border border-[#B8A9E8] text-sm focus:outline-none" onKeyDown={e => e.key === "Enter" && handleAddNote()} />
                 <button onClick={handleAddNote} disabled={savingNote || !newNote.trim()} className="h-9 px-3 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40">{savingNote ? "..." : "+"}</button>
               </div>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
+              <div className="space-y-2 max-h-48 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
                 {notesLoading && <p className="text-xs text-[#9B8EC4]">Cargando...</p>}
                 {notes.length === 0 && !notesLoading && <p className="text-xs text-[#9B8EC4]">Sin notas todavía.</p>}
-                {notes.map(n => (
+                {notes.filter(n => !n.tipo || n.tipo === "nota").map(n => (
                   <div key={n.id} className="flex items-start gap-2 p-2 rounded-xl bg-[#f0eef8]">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
@@ -680,11 +743,12 @@ export default function Superadmin() {
               </div>
             </div>
 
-            <div className="border-t border-[#EDE9FE] pt-4 space-y-3">
+            {/* Conversación */}
+            <div className="bg-white border border-[#B8A9E8] rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="font-black text-sm flex items-center gap-2">💬 Conversación</h4>
+                <h4 className="font-black text-sm text-[#1E1040] flex items-center gap-2"><MessageCircle className="w-4 h-4 text-[#5c40c0]" /> Conversación</h4>
                 <button onClick={() => { setShowImport(s => !s); setImportText(""); }} className="text-[10px] bg-[#f0eef8] border border-[#B8A9E8] text-[#5c40c0] px-2 py-1 rounded-lg font-bold">
-                  {showImport ? "✕ Cancelar" : "📥 Importar de WhatsApp"}
+                  {showImport ? "✕ Cancelar" : "📥 Importar WA"}
                 </button>
               </div>
 
@@ -692,24 +756,15 @@ export default function Superadmin() {
                 <div className="bg-[#f8f6ff] border border-[#B8A9E8] rounded-2xl p-3 space-y-2">
                   <p className="text-[10px] text-[#6B5FA0] font-bold uppercase tracking-wide">Pegá el texto exportado de WhatsApp</p>
                   <p className="text-[10px] text-[#9B8EC4]">En WhatsApp: abrí el chat → ⋮ → Más → Exportar chat → Sin archivos → copiá todo el texto acá.</p>
-                  <textarea
-                    value={importText}
-                    onChange={e => setImportText(e.target.value)}
-                    className="w-full h-40 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-xs focus:outline-none resize-none font-mono"
-                    placeholder={"15/07/2024, 10:23 - Korai: Hola María!\n15/07/2024, 10:25 - María García: Hola, soy María..."}
-                  />
-                  <button
-                    onClick={handleImportarConversacion}
-                    disabled={importLoading || !importText.trim()}
-                    className="w-full h-9 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40 flex items-center justify-center gap-2"
-                  >
+                  <textarea value={importText} onChange={e => setImportText(e.target.value)} className="w-full h-32 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-xs focus:outline-none resize-none font-mono" placeholder={"15/07/2024, 10:23 - Korai: Hola María!\n15/07/2024, 10:25 - María García: Hola, soy María..."} />
+                  <button onClick={handleImportarConversacion} disabled={importLoading || !importText.trim()} className="w-full h-9 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40 flex items-center justify-center gap-2">
                     {importLoading ? <><Loader2 className="w-3 h-3 animate-spin" /> Importando...</> : "✅ Importar conversación"}
                   </button>
                 </div>
               )}
 
               {/* Historial tipo chat */}
-              <div className="space-y-2 max-h-52 overflow-y-auto flex flex-col-reverse bg-[#f8f6ff] rounded-2xl p-3">
+              <div className="space-y-2 max-h-60 overflow-y-auto flex flex-col-reverse bg-[#f8f6ff] rounded-2xl p-3" style={{ scrollbarWidth: "thin" }}>
                 {notesLoading && <p className="text-xs text-[#9B8EC4] text-center">Cargando...</p>}
                 {!notesLoading && notes.filter(n => n.tipo === "entrante" || n.tipo === "saliente").length === 0 && (
                   <p className="text-xs text-[#9B8EC4] text-center py-2">Sin conversación todavía. Generá el primer mensaje o cargá uno entrante.</p>
@@ -724,7 +779,7 @@ export default function Superadmin() {
                 ))}
               </div>
 
-              {/* Cargar mensaje entrante */}
+              {/* Mensaje entrante */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide">Mensaje recibido del usuario</label>
                 <div className="flex gap-2">
@@ -736,7 +791,7 @@ export default function Superadmin() {
                 </div>
               </div>
 
-              {/* Acciones rápidas IA */}
+              {/* Acciones IA */}
               <div className="flex gap-2 flex-wrap">
                 <button onClick={() => handleGenerarIA("plan")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">✨ Generar plan inicial</button>
                 <button onClick={() => handleGenerarIA("seguimiento")} disabled={iaLoading} className="text-xs bg-[#5c40c0]/10 text-[#5c40c0] border border-[#5c40c0]/30 px-3 py-1.5 rounded-lg font-bold disabled:opacity-50">🔄 Generar seguimiento</button>
@@ -745,13 +800,13 @@ export default function Superadmin() {
               {iaLoading && <p className="text-xs text-[#9B8EC4] flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> Korai está pensando la respuesta...</p>}
               {iaError && <p className="text-xs text-red-500">{iaError}</p>}
 
-              {/* Respuesta IA lista para enviar */}
+              {/* Respuesta IA */}
               {iaMensaje && (
                 <div className="space-y-2 bg-[#ede9fe] rounded-2xl p-3">
                   <p className="text-[10px] font-bold text-[#5c40c0] uppercase tracking-wide">✨ Respuesta sugerida por IA — podés editarla</p>
                   <textarea value={iaMensaje} onChange={e => setIaMensaje(e.target.value)} className="w-full h-36 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-sm focus:outline-none resize-none" />
                   <div className="flex gap-2">
-                    <button onClick={() => { navigator.clipboard.writeText(iaMensaje); }} className="flex-1 h-9 rounded-lg bg-white border border-[#B8A9E8] text-[#5c40c0] text-xs font-bold">Copiar</button>
+                    <button onClick={() => navigator.clipboard.writeText(iaMensaje)} className="flex-1 h-9 rounded-lg bg-white border border-[#B8A9E8] text-[#5c40c0] text-xs font-bold">Copiar</button>
                     <button onClick={handleEnviarRespuesta} className="flex-1 h-9 rounded-lg bg-[#25D366] text-white text-xs font-bold flex items-center justify-center gap-1">
                       <MessageCircle className="w-3 h-3" /> Enviar por WhatsApp
                     </button>
@@ -760,8 +815,8 @@ export default function Superadmin() {
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
