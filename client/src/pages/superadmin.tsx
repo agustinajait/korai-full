@@ -99,6 +99,16 @@ async function generarMensajeIA(payload) {
   return data.mensaje as string;
 }
 
+async function enviarWhatsAppAdmin(telefono: string, mensaje: string, responseId: string): Promise<void> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/send_whatsapp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+    body: JSON.stringify({ telefono, mensaje, responseId }),
+  });
+  const data = await res.json();
+  if (!res.ok || data.status === "error") throw new Error(data?.error || "Error enviando WhatsApp");
+}
+
 async function updateResponseProfile(r, updates) {
   const raw = r.perfil_contextual;
   const p = (() => { try { return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); } catch { return {}; } })();
@@ -300,22 +310,24 @@ export default function Superadmin() {
     setSavingNote(false);
   };
 
-  const handleEnviarRespuesta = async () => {
-    if (!editingUser || !iaMensaje.trim()) return;
+  const [enviandoWA, setEnviandoWA] = useState(false);
+  const [mensajeOperador, setMensajeOperador] = useState("");
+
+  const handleEnviarRespuesta = async (textoOverride?: string) => {
+    const texto = textoOverride ?? iaMensaje.trim();
+    if (!editingUser || !texto) return;
     const telefono = editForm.telefono;
-    if (telefono) {
-      window.open("https://wa.me/549" + telefono.replace(/\D/g, "") + "?text=" + encodeURIComponent(iaMensaje), "_blank");
-    }
+    if (!telefono) { alert("Este usuario no tiene teléfono cargado."); return; }
+    setEnviandoWA(true);
     try {
-      const nota = await addNote(editingUser.id, iaMensaje.trim(), "contactado");
-      await fetch(`${SUPABASE_URL}/rest/v1/case_notes?id=eq.${nota.id}`, {
-        method: "PATCH",
-        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
-        body: JSON.stringify({ tipo: "saliente" }),
-      });
-      setNotes(prev => [{ ...nota, tipo: "saliente" }, ...prev]);
-      setIaMensaje("");
-    } catch {}
+      await enviarWhatsAppAdmin(telefono, texto, editingUser.id);
+      setNotes(prev => [{ id: Date.now().toString(), response_id: editingUser.id, texto, tipo: "saliente", estado: "contactado", created_at: new Date().toISOString() }, ...prev]);
+      if (textoOverride) setMensajeOperador("");
+      else setIaMensaje("");
+    } catch (e: any) {
+      alert("Error al enviar: " + e.message);
+    }
+    setEnviandoWA(false);
   };
 
   const handleAddNote = async () => {
@@ -1005,6 +1017,44 @@ export default function Superadmin() {
               </div>
 
               {/* Mensaje entrante */}
+              {/* Panel operador — visible cuando bot está pausado */}
+              {editingUser.bot_pausado && (
+                <div className="bg-orange-50 border border-orange-300 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">⚠️</span>
+                    <p className="text-xs font-black text-orange-700 uppercase tracking-wide">Modo operador — el bot está pausado</p>
+                  </div>
+                  <p className="text-xs text-orange-600">Escribí tu respuesta acá y se enviará desde el número de Korai directamente al usuario.</p>
+                  <textarea
+                    value={mensajeOperador}
+                    onChange={e => setMensajeOperador(e.target.value)}
+                    rows={4}
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-orange-300 text-sm focus:outline-none resize-none"
+                    placeholder="Escribí tu respuesta como operador..."
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => navigator.clipboard.writeText(mensajeOperador)}
+                      disabled={!mensajeOperador.trim()}
+                      className="h-9 px-3 rounded-lg bg-white border border-orange-300 text-orange-700 text-xs font-bold disabled:opacity-40"
+                    >
+                      Copiar
+                    </button>
+                    <button
+                      onClick={() => handleEnviarRespuesta(mensajeOperador)}
+                      disabled={enviandoWA || !mensajeOperador.trim()}
+                      className="flex-1 h-9 rounded-lg bg-[#25D366] text-white text-xs font-bold flex items-center justify-center gap-1 disabled:opacity-40"
+                    >
+                      {enviandoWA ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageCircle className="w-3 h-3" />}
+                      Enviar desde Korai
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Sección carga de mensaje entrante + IA (solo si bot activo) */}
+              {!editingUser.bot_pausado && (
+              <>
               <div>
                 <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1.5">Mensaje recibido</label>
                 <div className="flex gap-2">
@@ -1032,11 +1082,13 @@ export default function Superadmin() {
                   <textarea value={iaMensaje} onChange={e => setIaMensaje(e.target.value)} className="w-full h-36 px-3 py-2 rounded-xl bg-white border border-[#B8A9E8] text-sm focus:outline-none resize-none" />
                   <div className="flex gap-2">
                     <button onClick={() => navigator.clipboard.writeText(iaMensaje)} className="flex-1 h-9 rounded-lg bg-white border border-[#B8A9E8] text-[#5c40c0] text-xs font-bold">Copiar</button>
-                    <button onClick={handleEnviarRespuesta} className="flex-1 h-9 rounded-lg bg-[#25D366] text-white text-xs font-bold flex items-center justify-center gap-1">
-                      <MessageCircle className="w-3 h-3" /> Enviar por WhatsApp
+                    <button onClick={() => handleEnviarRespuesta()} disabled={enviandoWA} className="flex-1 h-9 rounded-lg bg-[#25D366] text-white text-xs font-bold flex items-center justify-center gap-1 disabled:opacity-40">
+                      {enviandoWA ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageCircle className="w-3 h-3" />} Enviar desde Korai
                     </button>
                   </div>
                 </div>
+              )}
+              </>
               )}
             </div>
 
