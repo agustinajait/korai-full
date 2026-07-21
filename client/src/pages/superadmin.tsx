@@ -748,10 +748,10 @@ export default function Superadmin() {
         {/* TAB: Lista de usuarios */}
         {activeTab === "usuarios" && (
         <div className="py-6 mx-auto px-10" style={{ maxWidth: 1400 }}>
-          <div className="bg-white border border-[#B8A9E8] rounded-2xl overflow-hidden" style={{ height: "calc(100vh - 280px)" }}>
-          <div className="h-full flex flex-col">
-          {/* Buscador y filtros */}
-          <div className="px-5 pt-4 pb-3 border-b border-[#EDE9FE] space-y-3 flex-shrink-0">
+          <div className="bg-white border border-[#B8A9E8] rounded-2xl overflow-hidden">
+
+          {/* Buscador sticky justo debajo de los tabs */}
+          <div className="px-5 pt-4 pb-3 border-b border-[#EDE9FE] space-y-3 bg-white" style={{ position: "sticky", top: 196, zIndex: 5 }}>
             <div className="flex items-center justify-between">
               <h2 className="font-black text-base text-[#1E1040]">Usuarios</h2>
               <span className="text-xs text-[#9B8EC4] font-bold bg-[#f0eef8] px-2 py-1 rounded-lg">{filtered.length} de {responses.length}</span>
@@ -779,8 +779,8 @@ export default function Superadmin() {
             </div>
           </div>
 
-          {/* Lista con scroll interno */}
-          <div className="flex-1 overflow-y-auto divide-y divide-[#EDE9FE]" style={{ scrollbarWidth: "thin", scrollbarColor: "#5c40c0 #ede9fe" }}>
+          {/* Lista — crece con el contenido, la página scrollea */}
+          <div className="divide-y divide-[#EDE9FE]">
             {filtered.map((r, i) => {
               const nombre = getNombrePersona(r);
               const telefono = getTelefono(r);
@@ -853,7 +853,6 @@ export default function Superadmin() {
             {filtered.length === 0 && (
               <div className="text-center py-12 text-[#9B8EC4] text-sm">No se encontraron usuarios</div>
             )}
-          </div>
           </div>
           </div>
         </div>
