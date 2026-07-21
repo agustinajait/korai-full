@@ -350,7 +350,7 @@ export default function Superadmin() {
     let list = barrioFilter === "all" ? responses : responses.filter(r => r.territorio?.barrio === barrioFilter);
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(r => getNombrePersona(r).toLowerCase().includes(q) || getDni(r).toLowerCase().includes(q) || (r.territorio?.barrio || "").toLowerCase().includes(q));
+      list = list.filter(r => getNombrePersona(r).toLowerCase().includes(q) || getDni(r).toLowerCase().includes(q) || (r.territorio?.barrio || "").toLowerCase().includes(q) || getTelefono(r).replace(/\D/g, "").includes(q.replace(/\D/g, "")));
     }
     return list;
   }, [responses, barrioFilter, search]);
@@ -464,7 +464,7 @@ export default function Superadmin() {
           <div className="bg-gradient-to-br from-white to-[#f0eef8] border border-[#B8A9E8] rounded-3xl overflow-hidden shadow-sm">
             <div className="p-5 border-b border-[#B8A9E8]">
               <h3 className="font-black text-lg mb-3">Usuarios registrados</h3>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, DNI o barrio..." className="w-full h-11 px-4 rounded-xl bg-white border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, DNI, barrio o teléfono..." className="w-full h-11 px-4 rounded-xl bg-white border border-[#B8A9E8] text-sm text-[#1E1040] placeholder:text-[#9B8EC4] focus:outline-none" />
             </div>
             <div className="divide-y divide-[#EDE9FE] overflow-y-auto user-list-scroll" style={{ maxHeight: "60vh", scrollbarColor: "#5c40c0 #ede9fe", scrollbarWidth: "thin" }}>
               {filtered.map((r, i) => {
