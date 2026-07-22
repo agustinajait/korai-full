@@ -172,6 +172,7 @@ export default function Superadmin() {
   const [importText, setImportText] = useState("");
   const [importLoading, setImportLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"analisis" | "usuarios" | "usuario">("usuarios");
+  const [profileTab, setProfileTab] = useState<"perfil" | "diagnostico">("perfil");
 
   useEffect(() => {
     const role = localStorage.getItem("korai_admin_role");
@@ -925,7 +926,113 @@ export default function Superadmin() {
             )}
           </div>
 
-          {/* Grid 2 columnas: izquierda datos + notas | derecha conversación */}
+          {/* Sub-pestañas del perfil */}
+          <div className="flex gap-1 border-b border-[#B8A9E8] mb-5">
+            {([["perfil", "👤 Perfil & Conversación"], ["diagnostico", "📋 Diagnóstico & Plan"]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setProfileTab(key)}
+                className="px-5 py-2.5 text-sm font-bold transition-colors"
+                style={profileTab === key
+                  ? { color: "#5c40c0", borderBottom: "2px solid #5c40c0" }
+                  : { color: "#9B8EC4", borderBottom: "2px solid transparent" }}
+              >{label}</button>
+            ))}
+          </div>
+
+          {/* PESTAÑA: Diagnóstico & Plan */}
+          {profileTab === "diagnostico" && (() => {
+            const scores = calcularScores(editingUser.answers || {});
+            const plan = generatePlanDesdeScores(editingUser.answers || {});
+            return (
+              <div className="space-y-5">
+                {/* Diagnóstico por dimensión */}
+                <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+                  <div className="p-5 border-b border-[#B8A9E8]">
+                    <h3 className="font-black text-base text-[#1E1040]">Diagnóstico por dimensión</h3>
+                    <p className="text-xs text-[#9B8EC4] mt-1">Resultado del autodiagnóstico en las 6 áreas de bienestar</p>
+                  </div>
+                  <div className="p-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {scores.map(s => (
+                      <div key={s.dimensionId} className={`p-4 rounded-2xl border space-y-2 ${
+                        s.color === "rojo" ? "border-red-500/30 bg-red-500/5" :
+                        s.color === "amarillo" ? "border-yellow-500/30 bg-yellow-500/5" :
+                        "border-green-500/20 bg-green-500/5"
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">{s.emoji}</span>
+                            <span className="font-bold text-sm text-[#1E1040]">{s.dimensionName}</span>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border uppercase ${colorBadge(s.color)}`}>{s.color}</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-[#ede9fe] rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${s.color === "rojo" ? "bg-red-500" : s.color === "amarillo" ? "bg-yellow-500" : "bg-green-500"}`}
+                            style={{ width: `${(s.verde / s.total) * 100}%` }} />
+                        </div>
+                        <div className="text-[10px] text-[#9B8EC4]">{s.verde} de {s.total} indicadores positivos</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Plan de acción */}
+                <div className="bg-white border border-[#B8A9E8] rounded-3xl overflow-hidden">
+                  <div className="p-5 border-b border-[#B8A9E8]">
+                    <h3 className="font-black text-base text-[#1E1040]">Plan de acción</h3>
+                    <p className="text-xs text-[#9B8EC4] mt-1">Áreas prioritarias y acciones recomendadas</p>
+                  </div>
+                  <div className="p-5 space-y-4">
+                    {plan.map((item, i) => (
+                      <div key={i} className={`p-4 rounded-2xl border space-y-3 ${item.esPrioritaria ? "border-red-500/30 bg-red-500/5" : "border-[#B8A9E8] bg-[#f8f6ff]"}`}>
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{item.emoji}</span>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-[#1E1040]">{item.dimensionName}</span>
+                              {item.esPrioritaria && <span className="text-[9px] bg-red-500 text-white px-2 py-0.5 rounded-full font-black">BLOQUEANTE</span>}
+                            </div>
+                            <div className="text-[10px] text-[#9B8EC4] mt-0.5">{item.motivo}</div>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border uppercase flex-shrink-0 ${colorBadge(item.nivelColor)}`}>{item.cuando}</span>
+                        </div>
+                        <div className="space-y-1">
+                          {item.accionesCorto.map((a, j) => (
+                            <div key={j} className="flex items-start gap-2 text-xs text-[#6B5FA0]">
+                              <ChevronRight className="w-3 h-3 text-[#5c40c0] mt-0.5 flex-shrink-0" />{a}
+                            </div>
+                          ))}
+                        </div>
+                        {item.recursos.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {item.recursos.map((r, j) => (
+                              <a key={j} href={r.url || "#"} target="_blank" rel="noopener noreferrer"
+                                className="text-[10px] bg-white border border-[#B8A9E8] px-2 py-1 rounded-lg text-[#5c40c0] hover:bg-[#ede9fe] flex items-center gap-1 transition-colors">
+                                <ExternalLink className="w-2.5 h-2.5" /> {r.nombre}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Texto abierto */}
+                {editingUser.texto_abierto && (
+                  <div className="bg-white border border-[#B8A9E8] rounded-3xl p-5">
+                    <h3 className="font-black text-base mb-3 flex items-center gap-2 text-[#1E1040]">
+                      <MessageCircle className="w-4 h-4 text-[#5c40c0]" /> Lo que nos contó
+                    </h3>
+                    <p className="text-sm italic text-[#1E1040] leading-relaxed">"{editingUser.texto_abierto}"</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* PESTAÑA: Perfil & Conversación */}
+          {profileTab === "perfil" && (
           <div className="grid gap-5" style={{ gridTemplateColumns: "380px 1fr" }}>
 
             {/* COLUMNA IZQUIERDA */}
@@ -1133,6 +1240,8 @@ export default function Superadmin() {
             </div>
 
           </div>
+          )}
+
         </div>
         )}
       </div>
