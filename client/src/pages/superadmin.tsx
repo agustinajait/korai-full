@@ -892,7 +892,7 @@ export default function Superadmin() {
               </div>
               <div className="text-xs text-[#9B8EC4]">{editingUser.territorio?.barrio || "Sin barrio"} · {new Date(editingUser.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })}</div>
             </div>
-            {editingUser.bot_pausado && (
+            {editingUser.bot_pausado ? (
               <button
                 onClick={async () => {
                   await fetch(`https://jgqqkgfppovkbwklctol.supabase.co/rest/v1/responses?id=eq.${editingUser.id}`, {
@@ -906,6 +906,21 @@ export default function Superadmin() {
                 className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-xs font-bold text-green-700 bg-green-100 border border-green-300 hover:bg-green-200 transition-colors flex-shrink-0"
               >
                 ✅ Reactivar bot
+              </button>
+            ) : (
+              <button
+                onClick={async () => {
+                  await fetch(`https://jgqqkgfppovkbwklctol.supabase.co/rest/v1/responses?id=eq.${editingUser.id}`, {
+                    method: "PATCH",
+                    headers: { "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4", "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncXFrZ2ZwcG92a2J3a2xjdG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3NjQ2MDAsImV4cCI6MjA4NTM0MDYwMH0.q95WEPClPWxpjKE53dLcewiaGC_FF2A17zvphJgYvq4`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+                    body: JSON.stringify({ bot_pausado: true }),
+                  });
+                  setResponses(prev => prev.map(r => r.id === editingUser.id ? { ...r, bot_pausado: true } : r));
+                  setEditingUser(prev => prev ? { ...prev, bot_pausado: true } : null);
+                }}
+                className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-xs font-bold text-orange-700 bg-orange-50 border border-orange-300 hover:bg-orange-100 transition-colors flex-shrink-0"
+              >
+                ⏸ Tomar control
               </button>
             )}
           </div>
