@@ -961,6 +961,31 @@ export default function Superadmin() {
                 </button>
               </div>
 
+              {/* Diagnóstico de bienestar */}
+              {(() => {
+                const plan = generatePlanDesdeScores(editingUser.answers || {});
+                if (!plan.length) return null;
+                return (
+                  <div className="bg-white border border-[#B8A9E8] rounded-2xl p-5 space-y-3">
+                    <h4 className="font-black text-sm text-[#1E1040]">Diagnóstico de bienestar</h4>
+                    <div className="space-y-2">
+                      {plan.map(p => {
+                        const color = p.nivelColor === "rojo" ? { bg: "bg-red-50", border: "border-red-200", dot: "bg-red-500", text: "text-red-700", label: "Crítico" }
+                          : p.nivelColor === "amarillo" ? { bg: "bg-yellow-50", border: "border-yellow-200", dot: "bg-yellow-400", text: "text-yellow-700", label: "Alerta" }
+                          : { bg: "bg-green-50", border: "border-green-200", dot: "bg-green-500", text: "text-green-700", label: "Estable" };
+                        return (
+                          <div key={p.dimensionId} className={`flex items-center gap-3 px-3 py-2 rounded-xl border ${color.bg} ${color.border}`}>
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${color.dot}`} />
+                            <span className="text-xs font-bold text-[#1E1040] flex-1">{p.dimensionName}</span>
+                            <span className={`text-[10px] font-black ${color.text}`}>{color.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Historial de acompañamiento */}
               <div className="bg-white border border-[#B8A9E8] rounded-2xl p-5 space-y-3">
                 <h4 className="font-black text-sm text-[#1E1040]">Historial de acompañamiento</h4>
