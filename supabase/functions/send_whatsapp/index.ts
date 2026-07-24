@@ -29,9 +29,19 @@ serve(async (req) => {
       return new Response(JSON.stringify({ status: "error", error: "telefono y mensaje requeridos" }), { status: 400, headers });
     }
 
-    // Normalizar número: quitar todo excepto dígitos, agregar 54 si no lo tiene
+    // Normalizar número para WhatsApp Argentina
+    // Formato esperado por Meta: 549XXXXXXXXXX (código país 54 + 9 + número sin 0 ni 15)
     const digits = telefono.replace(/\D/g, "");
-    const numero = digits.startsWith("54") ? digits : `54${digits}`;
+    let numero: string;
+    if (digits.startsWith("549")) {
+      numero = digits; // ya tiene 549
+    } else if (digits.startsWith("54")) {
+      numero = "549" + digits.slice(2); // tenía 54, agregamos el 9
+    } else if (digits.startsWith("9")) {
+      numero = "54" + digits; // tenía 9 pero sin código país
+    } else {
+      numero = "549" + digits; // solo número local, agregamos 549
+    }
 
     // Enviar via Meta WhatsApp Business API
     const waRes = await fetch(`https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`, {
