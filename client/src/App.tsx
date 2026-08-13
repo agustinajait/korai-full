@@ -14,6 +14,7 @@ import Metas from "@/pages/metas";
 import Confirmar from "@/pages/confirmar";
 import Privacidad from "@/pages/privacidad";
 import Superadmin from "@/pages/superadmin";
+import Join from "@/pages/join";
 import { Loader2 } from "lucide-react";
 
 function ProtectedDashboard() {
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/confirmar" component={Confirmar} />
       <Route path="/privacidad" component={Privacidad} />
       <Route path="/superadmin" component={Superadmin} />
+      <Route path="/join/:token" component={Join} />
       <Route component={NotFound} />
     </Switch>
   );

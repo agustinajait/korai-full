@@ -3,11 +3,41 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { verifyJoinToken, JoinTokenError } from "./joinToken";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  // Magic link OportunAI → Korai. El front (client/src/pages/join.tsx,
+  // ruta /join/:token) llama acá con el token de la URL para validarlo
+  // antes de armar el contexto local del usuario. Korai no usa sesión de
+  // servidor ni Supabase Auth: si el token es válido devolvemos el payload
+  // y el cliente lo guarda en localStorage como hace con el resto del flujo.
+  app.post("/api/join/verify", (req, res) => {
+    const { token } = req.body ?? {};
+
+    if (!token || typeof token !== "string") {
+      return res.status(400).json({ ok: false, error: "token_requerido" });
+    }
+
+    try {
+      const payload = verifyJoinToken(token);
+      return res.json({ ok: true, data: payload });
+    } catch (err) {
+      if (err instanceof JoinTokenError) {
+        if (err.code === "config") {
+          console.error("[join/verify] falta configurar KORAI_JOIN_SECRET");
+          return res.status(500).json({ ok: false, error: "config" });
+        }
+        const status = err.code === "expired" ? 410 : 401;
+        return res.status(status).json({ ok: false, error: err.code });
+      }
+      console.error("[join/verify] error inesperado:", err);
+      return res.status(500).json({ ok: false, error: "error_interno" });
+    }
+  });
 
   app.post(api.reports.create.path, async (req, res) => {
     try {
