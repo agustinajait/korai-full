@@ -552,10 +552,11 @@ export default function Survey() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ oportunai_user_id: koraiOportunaiUser.oportunai_user_id, semaforo }),
-        }).then(r => r.json()).then(data => {
-          console.log("[OportunAI] semáforo enviado", data);
-          localStorage.setItem("korai_oportunai_enviado", "true");
-        }).catch(err => console.error("[OportunAI] error enviando semáforo", err));
+        }).then(async r => {
+          const body = await r.text();
+          console.log("[OportunAI] status:", r.status, "body:", body);
+          if (r.ok) localStorage.setItem("korai_oportunai_enviado", "true");
+        }).catch(err => console.error("[OportunAI] error (probablemente CORS):", err));
       }
       // ─────────────────────────────────────────────────────────────────────────
 
