@@ -62,7 +62,7 @@ export default function Join() {
 
     (async () => {
       try {
-        const res = await fetch("/api/join/verify", {
+        const res = await fetch("https://oportunai.korai.lat/api/join/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
