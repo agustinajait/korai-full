@@ -548,10 +548,20 @@ export default function Survey() {
         const scores = calcularScores(answers, situacionLaboral);
         const semaforo: Record<string, string> = {};
         scores.forEach(s => { semaforo[s.dimensionId] = s.color; });
+        const demo = context.demographics || {};
+        const payload: Record<string, any> = {
+          oportunai_user_id: koraiOportunaiUser.oportunai_user_id,
+          semaforo,
+          ...(demo.situacion_laboral  && { situacion_laboral: demo.situacion_laboral }),
+          ...(demo.ingreso_hogar      && { ingreso_hogar: demo.ingreso_hogar }),
+          ...(demo.tipo_vivienda      && { tipo_vivienda: demo.tipo_vivienda }),
+          ...(context.territorio?.barrio && { barrio: context.territorio.barrio }),
+          ...(comment?.trim()         && { motivo: comment.trim() }),
+        };
         fetch("https://oportunai.korai.lat/api/korai/semaforo-resultado", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ oportunai_user_id: koraiOportunaiUser.oportunai_user_id, semaforo }),
+          body: JSON.stringify(payload),
         }).then(async r => {
           const body = await r.text();
           console.log("[OportunAI] status:", r.status, "body:", body);
