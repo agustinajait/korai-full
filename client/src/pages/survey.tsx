@@ -542,6 +542,23 @@ export default function Survey() {
 
       queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
 
+      // ── OportunAI: enviar semáforo si el usuario viene de OportunAI ──────────
+      const koraiOportunaiUser = (() => { try { return JSON.parse(localStorage.getItem("korai_oportunai_user") || "null"); } catch { return null; } })();
+      if (koraiOportunaiUser?.oportunai_user_id) {
+        const scores = calcularScores(answers, situacionLaboral);
+        const semaforo: Record<string, string> = {};
+        scores.forEach(s => { semaforo[s.dimensionId] = s.color; });
+        fetch("https://oportunai.korai.lat/api/korai/semaforo-resultado", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ oportunai_user_id: koraiOportunaiUser.oportunai_user_id, semaforo }),
+        }).then(r => r.json()).then(data => {
+          console.log("[OportunAI] semáforo enviado", data);
+          localStorage.setItem("korai_oportunai_enviado", "true");
+        }).catch(err => console.error("[OportunAI] error enviando semáforo", err));
+      }
+      // ─────────────────────────────────────────────────────────────────────────
+
       setShowResultsScreen(true);
     } catch (err: any) {
       console.error("Error al guardar en Supabase:", err);
@@ -690,23 +707,36 @@ export default function Survey() {
             <span style={{ color: "white", fontSize: "22px", fontWeight: 300 }}>›</span>
           </div>
 
-          <button
-            onClick={() => {
-              const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-              const nombre = context.nombre || "";
-              const dni = context.dni || "";
-              const msg = "Hola Korai, terminé mi diagnóstico.\nMi nombre es " + nombre + "\nDNI: " + dni + "\nQuiero recibir mi plan de acción y comenzar este proceso de acompañamiento con vos.";
-              const encoded = encodeURIComponent(msg);
-              const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-              const url = isMobile
-                ? `https://wa.me/5491161210313?text=${encoded}`
-                : `https://web.whatsapp.com/send?phone=5491161210313&text=${encoded}`;
-              window.open(url, "_blank");
-            }}
-            style={{ width: "100%", height: "52px", borderRadius: "14px", border: "none", background: "#25D366", color: "white", fontWeight: 800, fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "10px" }}
-          >
-            <span style={{ fontSize: "20px" }}>💬</span> Recibir mi plan por WhatsApp
-          </button>
+          {(() => {
+            const esOportunai = (() => { try { return !!JSON.parse(localStorage.getItem("korai_oportunai_user") || "null")?.oportunai_user_id; } catch { return false; } })();
+            if (esOportunai) {
+              return (
+                <div style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", background: "#f0fdf4", border: "2px solid #86efac", display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                  <span style={{ fontSize: "22px" }}>✅</span>
+                  <p style={{ margin: 0, color: "#16a34a", fontWeight: 800, fontSize: "14px" }}>Tu diagnóstico fue enviado a OportunAI</p>
+                </div>
+              );
+            }
+            return (
+              <button
+                onClick={() => {
+                  const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
+                  const nombre = context.nombre || "";
+                  const dni = context.dni || "";
+                  const msg = "Hola Korai, terminé mi diagnóstico.\nMi nombre es " + nombre + "\nDNI: " + dni + "\nQuiero recibir mi plan de acción y comenzar este proceso de acompañamiento con vos.";
+                  const encoded = encodeURIComponent(msg);
+                  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                  const url = isMobile
+                    ? `https://wa.me/5491161210313?text=${encoded}`
+                    : `https://web.whatsapp.com/send?phone=5491161210313&text=${encoded}`;
+                  window.open(url, "_blank");
+                }}
+                style={{ width: "100%", height: "52px", borderRadius: "14px", border: "none", background: "#25D366", color: "white", fontWeight: 800, fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "10px" }}
+              >
+                <span style={{ fontSize: "20px" }}>💬</span> Recibir mi plan por WhatsApp
+              </button>
+            );
+          })()}
           <button
             onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
             style={{ background: "none", border: "none", color: "#9b8ec4", fontSize: "12px", cursor: "pointer", padding: "4px" }}
