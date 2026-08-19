@@ -543,7 +543,7 @@ export default function Survey() {
       queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
 
       // ── OportunAI: enviar semáforo si el usuario viene de OportunAI ──────────
-      const koraiOportunaiUser = (() => { try { return JSON.parse(localStorage.getItem("korai_oportunai_user") || "null"); } catch { return null; } })();
+      const koraiOportunaiUser = (() => { try { return JSON.parse(localStorage.getItem("korai_oportunai_join_v1") || "null"); } catch { return null; } })();
       if (koraiOportunaiUser?.oportunai_user_id) {
         const scores = calcularScores(answers, situacionLaboral);
         const semaforo: Record<string, string> = {};
@@ -719,7 +719,7 @@ export default function Survey() {
           </div>
 
           {(() => {
-            const esOportunai = (() => { try { return !!JSON.parse(localStorage.getItem("korai_oportunai_user") || "null")?.oportunai_user_id; } catch { return false; } })();
+            const esOportunai = (() => { try { return !!JSON.parse(localStorage.getItem("korai_oportunai_join_v1") || "null")?.oportunai_user_id; } catch { return false; } })();
             if (esOportunai) {
               return (
                 <div style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", background: "#f0fdf4", border: "2px solid #86efac", display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
