@@ -626,7 +626,7 @@ export default function Survey() {
   if (showResultsScreen && results) {
     const ctx = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
     const nombre = ctx.nombre || "";
-    const esOportunai = (() => { try { return !!JSON.parse(localStorage.getItem("korai_oportunai_user") || "null")?.oportunai_user_id; } catch { return false; } })();
+    const esOportunai = (() => { try { return !!JSON.parse(localStorage.getItem("korai_oportunai_join_v1") || "null")?.oportunai_user_id; } catch { return false; } })();
 
     // Ordenar dimensiones: rojas → amarillas → verdes
     const dimsOrdenadas = [...INSTRUMENT.dimensions].sort((a, b) => {
