@@ -544,7 +544,7 @@ export default function Survey() {
       queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
 
       // ── OportunAI: enviar semáforo si el usuario viene de OportunAI ──────────
-      const koraiOportunaiUser = (() => { try { return JSON.parse(localStorage.getItem("korai_oportunai_user") || "null"); } catch { return null; } })();
+      const koraiOportunaiUser = (() => { try { return JSON.parse(localStorage.getItem("korai_oportunai_join_v1") || "null"); } catch { return null; } })();
       if (koraiOportunaiUser?.oportunai_user_id) {
         const scores = calcularScores(answers, situacionLaboral);
         const semaforo: Record<string, string> = {};
