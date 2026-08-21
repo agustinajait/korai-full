@@ -372,6 +372,7 @@ export default function Survey() {
   const [isPending, setIsPending] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [diagnosticType, setDiagnosticType] = useState<string | null>(null);
+  const [postStep, setPostStep] = useState<1 | 2 | 3>(1);
 
   // ─── Estado profundización ────────────────────────────────────────────────────
   const [showProfundizacion, setShowProfundizacion] = useState(false);
@@ -623,138 +624,171 @@ export default function Survey() {
   }
 
   if (showResultsScreen && results) {
-    const urgentes = INSTRUMENT.dimensions.filter(d => results.perDim[d.id]?.color === "rojo").length;
-    const atencion = INSTRUMENT.dimensions.filter(d => results.perDim[d.id]?.color === "amarillo").length;
-    const bien = INSTRUMENT.dimensions.filter(d => results.perDim[d.id]?.color === "verde").length;
-    const total = INSTRUMENT.dimensions.length;
-    const puntaje = Math.round(((bien * 2 + atencion) / (total * 2)) * 100);
-    const needleAngle = -90 + (puntaje / 100) * 180;
-    const rad = (needleAngle * Math.PI) / 180;
-    const nx = 60 + 42 * Math.cos(rad);
-    const ny = 60 + 42 * Math.sin(rad);
+    const ctx = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
+    const nombre = ctx.nombre || "";
+    const esOportunai = (() => { try { return !!JSON.parse(localStorage.getItem("korai_oportunai_user") || "null")?.oportunai_user_id; } catch { return false; } })();
 
-    return (
-      <div style={{ minHeight: "100vh", maxHeight: "100vh", overflow: "hidden", background: "#f0eef8", display: "flex", flexDirection: "column", fontFamily: "Montserrat, system-ui, sans-serif" }}>
-        {/* Header */}
-        <div style={{ background: "#5c40c0", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <h1 style={{ color: "white", fontWeight: 900, fontSize: "18px", margin: 0 }}>Mi diagnóstico</h1>
+    // Ordenar dimensiones: rojas → amarillas → verdes
+    const dimsOrdenadas = [...INSTRUMENT.dimensions].sort((a, b) => {
+      const orden = { rojo: 0, amarillo: 1, verde: 2 };
+      return (orden[results.perDim[a.id]?.color] ?? 2) - (orden[results.perDim[b.id]?.color] ?? 2);
+    });
+
+    // Primera acción concreta (primera dimensión urgente o de atención)
+    const plan = JSON.parse(localStorage.getItem("korai_user_plan_v1") || "[]");
+    const primeraAccion = plan.find(p => p.nivelColor === "rojo") || plan.find(p => p.nivelColor === "amarillo") || plan[0];
+
+    const S = {
+      screen: { minHeight: "100vh", background: "#0F0A2E", display: "flex", flexDirection: "column" as const, fontFamily: "'DM Sans', system-ui, sans-serif" },
+      progressBar: { height: "3px", background: "rgba(255,255,255,0.08)", margin: "12px 24px 0" },
+      progressFill: (pct: number) => ({ height: "100%", background: "#C4B5FD", borderRadius: "2px", width: `${pct}%` }),
+      header: { padding: "24px 24px 0" },
+      greeting: { fontFamily: "'Outfit', system-ui, sans-serif", fontSize: "22px", fontWeight: 800, color: "#F0EEFF", lineHeight: 1.2, marginBottom: "6px" },
+      subtext: { fontSize: "13px", color: "#9B8EC4", lineHeight: 1.5, margin: 0 },
+      dimCard: (color: string) => ({
+        background: color === "rojo" ? "rgba(239,68,68,0.08)" : color === "amarillo" ? "rgba(245,158,11,0.08)" : "rgba(16,185,129,0.06)",
+        border: `1px solid ${color === "rojo" ? "rgba(239,68,68,0.2)" : color === "amarillo" ? "rgba(245,158,11,0.2)" : "rgba(16,185,129,0.15)"}`,
+        borderRadius: "16px", padding: "14px 16px", display: "flex", alignItems: "center", gap: "12px",
+      }),
+      badge: (color: string) => ({
+        fontSize: "10px", fontWeight: 800, letterSpacing: "0.05em", padding: "3px 10px", borderRadius: "20px", flexShrink: 0,
+        background: color === "rojo" ? "rgba(239,68,68,0.15)" : color === "amarillo" ? "rgba(245,158,11,0.15)" : "rgba(16,185,129,0.15)",
+        color: color === "rojo" ? "#FCA5A5" : color === "amarillo" ? "#FCD34D" : "#6EE7B7",
+      }),
+      btnPrimary: { width: "100%", padding: "16px", background: "#7C5CFF", color: "white", border: "none", borderRadius: "16px", fontFamily: "'Outfit', system-ui", fontSize: "15px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" },
+      btnWa: { width: "100%", padding: "16px", background: "#25D366", color: "white", border: "none", borderRadius: "16px", fontFamily: "'Outfit', system-ui", fontSize: "15px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" },
+    };
+
+    // ── PASO 1: Tu resultado ──────────────────────────────────────────────────
+    if (postStep === 1) return (
+      <div style={S.screen}>
+        <div style={S.progressBar}><div style={S.progressFill(33)} /></div>
+        <div style={S.header}>
+          <div style={S.greeting}>
+            {nombre ? <>{nombre}, <span style={{ color: "#C4B5FD" }}>encontramos cosas importantes</span> en tu diagnóstico</> : <>Encontramos <span style={{ color: "#C4B5FD" }}>cosas importantes</span> en tu diagnóstico</>}
+          </div>
+          <p style={{ ...S.subtext, marginTop: "8px" }}>Revisamos 6 áreas de tu vida. Esto es lo que vemos hoy.</p>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "14px", maxWidth: "420px", margin: "0 auto", width: "100%" }}>
-
-          {diagnosticType === "follow_up_early" && (
-            <div style={{ background: "#fffbeb", border: "1px solid #fcd34d", borderRadius: "14px", padding: "10px 14px", display: "flex", gap: "8px", alignItems: "flex-start" }}>
-              <span style={{ fontSize: "16px" }}>🔄</span>
-              <p style={{ margin: 0, fontSize: "12px", color: "#92400e", fontWeight: 700 }}>Ya hiciste un diagnóstico recientemente. Este se suma a tu historial.</p>
-            </div>
-          )}
-
-          {/* Gauge card */}
-          <div style={{ background: "white", borderRadius: "20px", padding: "18px", boxShadow: "0 2px 12px rgba(92,64,192,0.08)", border: "1px solid #e8e4f5" }}>
-            <p style={{ textAlign: "center", fontWeight: 800, fontSize: "15px", color: "#1e1040", margin: "0 0 12px" }}>Resumen de tu bienestar</p>
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <svg viewBox="0 0 120 70" style={{ width: "130px", height: "80px" }}>
-                  <path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#ff6b6b" strokeWidth="12" strokeLinecap="round" />
-                  <path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#ffd166" strokeWidth="12" strokeLinecap="round" strokeDasharray="52 105" />
-                  <path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#34d399" strokeWidth="12" strokeLinecap="round" strokeDasharray="35 105" />
-                  <line x1="60" y1="60" x2={nx} y2={ny} stroke="#5c40c0" strokeWidth="3" strokeLinecap="round" />
-                  <circle cx="60" cy="60" r="5" fill="#5c40c0" />
-                </svg>
-                <p style={{ margin: 0, fontSize: "11px", color: "#7c5cbb", fontWeight: 700, marginTop: "-4px" }}>Estás en camino</p>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#ff6b6b", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 900, fontSize: "14px", flexShrink: 0 }}>{urgentes}</div>
-                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#ef4444" }}>Áreas urgentes</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#ffd166", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 900, fontSize: "14px", flexShrink: 0 }}>{atencion}</div>
-                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#d97706" }}>Requieren atención</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "#34d399", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: 900, fontSize: "14px", flexShrink: 0 }}>{bien}</div>
-                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#059669" }}>Vas bien</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Areas grid */}
-          <div>
-            <p style={{ fontWeight: 800, fontSize: "15px", color: "#1e1040", margin: "0 0 10px" }}>Tus áreas</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
-              {INSTRUMENT.dimensions.map(d => {
-                const s = results.perDim[d.id];
-                const color = s?.color || "verde";
-                const circleColor = color === "rojo" ? "#ff6b6b" : color === "amarillo" ? "#ffd166" : "#34d399";
-                const borderColor = color === "rojo" ? "#ff6b6b" : color === "amarillo" ? "#ffd166" : "#34d399";
-                const badgeBg = color === "rojo" ? "#ff6b6b" : color === "amarillo" ? "#ffd166" : "#34d399";
-                const label = color === "rojo" ? "urgente" : color === "amarillo" ? "atención" : "bien";
-                return (
-                  <div key={d.id} onClick={() => { const plan = JSON.parse(localStorage.getItem("korai_user_plan_v1") || "[]"); const idx = plan.findIndex(p => p.dimensionId === d.id); if (idx >= 0) { localStorage.setItem("korai_plan_start_idx", idx.toString()); setLocation("/prioridades"); } }} style={{ background: "white", borderRadius: "16px", border: `2px solid ${borderColor}`, padding: "12px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", cursor: "pointer", transition: "transform 0.1s", activeOpacity: 0.8 }}>
-                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: circleColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{d.emoji}</div>
-                    <p style={{ margin: 0, fontSize: "11px", fontWeight: 700, color: "#1e1040", textAlign: "center", lineHeight: "1.2" }}>{d.name}</p>
-                    <span style={{ background: badgeBg, color: "white", fontSize: "10px", fontWeight: 800, padding: "2px 8px", borderRadius: "20px" }}>{label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div
-            onClick={() => setLocation("/prioridades")}
-            data-testid="button-go-prioridades"
-            style={{ background: "#5c40c0", borderRadius: "16px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "14px", cursor: "pointer" }}
-          >
-            <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Target className="w-5 h-5 text-white" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ margin: 0, color: "white", fontWeight: 900, fontSize: "15px" }}>Ver mi plan de acción</p>
-              <p style={{ margin: 0, color: "rgba(255,255,255,0.7)", fontSize: "11px" }}>No estás solo/a — hay recursos para vos</p>
-            </div>
-            <span style={{ color: "white", fontSize: "22px", fontWeight: 300 }}>›</span>
-          </div>
-
-          {(() => {
-            const esOportunai = (() => { try { return !!JSON.parse(localStorage.getItem("korai_oportunai_user") || "null")?.oportunai_user_id; } catch { return false; } })();
-            if (esOportunai) {
-              return (
-                <div style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", background: "#f0fdf4", border: "2px solid #86efac", display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                  <span style={{ fontSize: "22px" }}>✅</span>
-                  <p style={{ margin: 0, color: "#16a34a", fontWeight: 800, fontSize: "14px" }}>Tu diagnóstico fue enviado a OportunAI</p>
-                </div>
-              );
-            }
+        <div style={{ padding: "20px 24px 0", display: "flex", flexDirection: "column", gap: "10px" }}>
+          {dimsOrdenadas.map(d => {
+            const color = results.perDim[d.id]?.color || "verde";
+            const labelMap = { rojo: "Urgente", amarillo: "Atención", verde: "Bien" };
+            const descMap = { rojo: "Necesitás apoyo urgente acá", amarillo: "Hay margen para mejorar", verde: "Vas bien en esta área" };
             return (
-              <button
-                onClick={() => {
-                  const context = (() => { try { return JSON.parse(localStorage.getItem("korai_context") || "{}"); } catch { return {}; } })();
-                  const nombre = context.nombre || "";
-                  const dni = context.dni || "";
-                  const msg = "Hola Korai, terminé mi diagnóstico.\nMi nombre es " + nombre + "\nDNI: " + dni + "\nQuiero recibir mi plan de acción y comenzar este proceso de acompañamiento con vos.";
-                  const encoded = encodeURIComponent(msg);
-                  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                  const url = isMobile
-                    ? `https://wa.me/5491161210313?text=${encoded}`
-                    : `https://web.whatsapp.com/send?phone=5491161210313&text=${encoded}`;
-                  window.open(url, "_blank");
-                }}
-                style={{ width: "100%", height: "52px", borderRadius: "14px", border: "none", background: "#25D366", color: "white", fontWeight: 800, fontSize: "15px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", marginBottom: "10px" }}
-              >
-                <span style={{ fontSize: "20px" }}>💬</span> Recibir mi plan por WhatsApp
-              </button>
+              <div key={d.id} style={S.dimCard(color)}>
+                <span style={{ fontSize: "22px", flexShrink: 0 }}>{d.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: "'Outfit', system-ui", fontSize: "14px", fontWeight: 700, color: "#F0EEFF" }}>{d.name}</div>
+                  <div style={{ fontSize: "11px", color: "#9B8EC4", marginTop: "2px" }}>{descMap[color]}</div>
+                </div>
+                <div style={S.badge(color)}>{labelMap[color]}</div>
+              </div>
             );
-          })()}
-          <button
-            onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
-            style={{ background: "none", border: "none", color: "#9b8ec4", fontSize: "12px", cursor: "pointer", padding: "4px" }}
-          >
+          })}
+        </div>
+
+        <div style={{ padding: "24px", marginTop: "auto" }}>
+          <button style={S.btnPrimary} onClick={() => setPostStep(2)}>Ver qué hacer primero →</button>
+        </div>
+      </div>
+    );
+
+    // ── PASO 2: Tu próximo paso ───────────────────────────────────────────────
+    if (postStep === 2) return (
+      <div style={S.screen}>
+        <div style={S.progressBar}><div style={S.progressFill(66)} /></div>
+        <div style={S.header}>
+          <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "#F59E0B", marginBottom: "8px" }}>Esta semana</div>
+          <div style={S.greeting}>Lo más importante que podés hacer ahora</div>
+          <p style={{ ...S.subtext, marginTop: "6px" }}>Empezar por acá puede cambiar bastante tu situación.</p>
+        </div>
+
+        {primeraAccion && (
+          <div style={{ margin: "20px 24px 0", background: "#FDF8F0", borderRadius: "20px", overflow: "hidden" }}>
+            <div style={{ background: "#F59E0B", padding: "16px 18px", display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "24px" }}>{primeraAccion.emoji}</span>
+              <span style={{ fontFamily: "'Outfit', system-ui", fontSize: "13px", fontWeight: 800, color: "#1E1040", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>{primeraAccion.dimensionName} · Paso 1</span>
+            </div>
+            <div style={{ padding: "18px" }}>
+              <div style={{ fontFamily: "'Outfit', system-ui", fontSize: "16px", fontWeight: 800, color: "#1E1040", marginBottom: "6px" }}>{primeraAccion.accionesCorto?.[0]}</div>
+              <div style={{ fontSize: "13px", color: "#4B4068", lineHeight: 1.55, marginBottom: "14px" }}>{primeraAccion.motivo || "Este es el primer paso recomendado para tu situación."}</div>
+              {primeraAccion.recursos?.[0]?.url ? (
+                <a href={primeraAccion.recursos[0].url} target="_blank" rel="noopener noreferrer"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "12px", background: "#5C40C0", color: "white", borderRadius: "12px", fontFamily: "'Outfit', system-ui", fontSize: "14px", fontWeight: 700, textDecoration: "none" }}>
+                  🔗 {primeraAccion.recursos[0].nombre || "Ir al recurso"}
+                </a>
+              ) : (
+                <button onClick={() => setLocation("/prioridades")} style={{ width: "100%", padding: "12px", background: "#5C40C0", color: "white", border: "none", borderRadius: "12px", fontFamily: "'Outfit', system-ui", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>
+                  Ver todos los pasos →
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div style={{ textAlign: "center", fontSize: "12px", color: "#9B8EC4", padding: "14px 24px 0" }}>
+          <span onClick={() => setPostStep(3)} style={{ color: "#C4B5FD", fontWeight: 600, cursor: "pointer" }}>Saltear este paso →</span>
+        </div>
+
+        <div style={{ padding: "24px", marginTop: "auto" }}>
+          <button style={S.btnPrimary} onClick={() => setPostStep(3)}>Seguir →</button>
+        </div>
+      </div>
+    );
+
+    // ── PASO 3: Korai te acompaña ─────────────────────────────────────────────
+    return (
+      <div style={S.screen}>
+        <div style={S.progressBar}><div style={S.progressFill(100)} /></div>
+
+        <div style={{ margin: "24px 24px 0", background: "linear-gradient(135deg, #3B1FA8 0%, #5C40C0 50%, #7C5CFF 100%)", borderRadius: "24px", padding: "28px 22px", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "140px", height: "140px", background: "rgba(255,255,255,0.05)", borderRadius: "50%" }} />
+          <div style={{ width: "52px", height: "52px", background: "rgba(255,255,255,0.15)", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", marginBottom: "14px" }}>🌱</div>
+          <div style={{ fontFamily: "'Outfit', system-ui", fontSize: "20px", fontWeight: 800, color: "white", lineHeight: 1.2, marginBottom: "8px" }}>
+            {nombre ? `No estás sola en esto, ${nombre}` : "No estás solo/a en esto"}
+          </div>
+          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>Un equipo de Korai te va a acompañar en los próximos pasos. Te contactamos por WhatsApp.</div>
+        </div>
+
+        <div style={{ padding: "20px 24px 0" }}>
+          <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "#9B8EC4", marginBottom: "14px" }}>Qué pasa ahora</div>
+          {[
+            { when: "Hoy", icon: "💬", text: "Te llega tu plan personalizado por WhatsApp" },
+            { when: "Esta semana", icon: "🤝", text: "Korai te escribe para ver cómo avanzás" },
+            { when: "En 7 días", icon: "🎯", text: "Seguimiento de tus avances y nuevas oportunidades" },
+          ].map((item, i) => (
+            <div key={i} style={{ display: "flex", gap: "14px", marginBottom: i < 2 ? "18px" : 0, position: "relative" }}>
+              {i < 2 && <div style={{ position: "absolute", left: "15px", top: "30px", bottom: "-18px", width: "1px", background: "rgba(255,255,255,0.1)" }} />}
+              <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: "rgba(124,92,255,0.15)", border: "1px solid rgba(124,92,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", flexShrink: 0, position: "relative", zIndex: 1 }}>{item.icon}</div>
+              <div>
+                <div style={{ fontSize: "10px", fontWeight: 700, color: "#C4B5FD", textTransform: "uppercase" as const, letterSpacing: "0.08em", marginBottom: "3px" }}>{item.when}</div>
+                <div style={{ fontSize: "13px", color: "#F0EEFF", lineHeight: 1.4 }}>{item.text}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ padding: "24px", marginTop: "auto", display: "flex", flexDirection: "column", gap: "10px" }}>
+          {esOportunai ? (
+            <div style={{ padding: "14px 16px", borderRadius: "14px", background: "#f0fdf4", border: "2px solid #86efac", display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "22px" }}>✅</span>
+              <p style={{ margin: 0, color: "#16a34a", fontWeight: 800, fontSize: "14px" }}>Tu diagnóstico fue enviado a OportunAI</p>
+            </div>
+          ) : (
+            <button style={S.btnWa} onClick={() => {
+              const msg = `Hola Korai, terminé mi diagnóstico.\nMi nombre es ${nombre}\nDNI: ${ctx.dni || ""}\nQuiero recibir mi plan de acción y comenzar este proceso de acompañamiento con vos.`;
+              const encoded = encodeURIComponent(msg);
+              const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+              window.open(isMobile ? `https://wa.me/5491161210313?text=${encoded}` : `https://web.whatsapp.com/send?phone=5491161210313&text=${encoded}`, "_blank");
+            }}>
+              <span style={{ fontSize: "20px" }}>💬</span> Recibir mi plan por WhatsApp
+            </button>
+          )}
+          <button onClick={() => { localStorage.removeItem("korai_user_answers"); localStorage.removeItem("korai_user_plan_v1"); localStorage.removeItem("korai_user_sello_v1"); localStorage.removeItem("korai_context"); setLocation("/"); }}
+            style={{ background: "none", border: "none", color: "#9B8EC4", fontSize: "12px", cursor: "pointer", padding: "4px" }}>
             Salir
           </button>
-
         </div>
       </div>
     );
