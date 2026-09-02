@@ -171,7 +171,12 @@ export default function Superadmin() {
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
   const [importLoading, setImportLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"analisis" | "usuarios" | "usuario">("usuarios");
+  const [activeTab, setActiveTab] = useState<"analisis" | "usuarios" | "usuario" | "areas">("usuarios");
+  // Estado gestión áreas
+  const [editingArea, setEditingArea] = useState<any>(null);
+  const [areaForm, setAreaForm] = useState({ nombre: "", descripcion: "", color: "#6366f1", icono: "📋", email_contacto: "" });
+  const [savingArea, setSavingArea] = useState(false);
+  const [deletingAreaId, setDeletingAreaId] = useState<string | null>(null);
   const [profileTab, setProfileTab] = useState<"perfil" | "diagnostico">("perfil");
   const [derivationAreas, setDerivationAreas] = useState<any[]>([]);
   const [showDerivarModal, setShowDerivarModal] = useState(false);
@@ -517,7 +522,7 @@ export default function Superadmin() {
       {/* ── TABS ── */}
       <div className="sticky z-10 bg-white border-b border-[#B8A9E8]" style={{ top: "152px" }}>
         <div className="mx-auto px-10 flex gap-1" style={{ maxWidth: 1100 }}>
-          {(["usuarios", "analisis"] as const).map(tab => (
+          {(["usuarios", "analisis", "areas"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -527,7 +532,7 @@ export default function Superadmin() {
                 : { color: "#9B8EC4", borderBottom: "2px solid transparent" }
               }
             >
-              {tab === "usuarios" ? "Usuarios" : "Análisis"}
+              {tab === "usuarios" ? "Usuarios" : tab === "analisis" ? "Análisis" : "🏷 Áreas"}
             </button>
           ))}
           <button
@@ -1284,6 +1289,147 @@ export default function Superadmin() {
         </div>
         )}
       </div>
+
+      {/* TAB: Áreas de derivación */}
+      {activeTab === "areas" && (
+        <div className="py-8 mx-auto px-10 space-y-6" style={{ maxWidth: 900 }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-black text-xl text-[#1E1040]">🏷 Áreas de derivación</h2>
+              <p className="text-xs text-[#9B8EC4] mt-0.5">Configurá las áreas a las que podés derivar casos. Cada área tiene su panel en <code className="bg-[#f0ecff] px-1 rounded">app.korai.lat/area/[id]</code></p>
+            </div>
+            <button
+              onClick={() => { setEditingArea("new"); setAreaForm({ nombre: "", descripcion: "", color: "#6366f1", icono: "📋", email_contacto: "" }); }}
+              className="flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-bold text-white bg-[#5c40c0] hover:bg-[#4a30a0] transition-colors"
+            >
+              + Nueva área
+            </button>
+          </div>
+
+          <div className="grid gap-3">
+            {derivationAreas.map(area => (
+              <div key={area.id} className="bg-white rounded-2xl border border-[#B8A9E8] p-4 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style={{ background: area.color + "22" }}>
+                  {area.icono}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-[#1E1040]">{area.nombre}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: area.color + "22", color: area.color }}>{area.color}</span>
+                  </div>
+                  {area.descripcion && <p className="text-xs text-[#9B8EC4] truncate mt-0.5">{area.descripcion}</p>}
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="text-[10px] bg-[#f0ecff] text-[#5c40c0] px-2 py-0.5 rounded">/area/{area.id}</code>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(`https://app.korai.lat/area/${area.id}`)}
+                      className="text-[10px] text-[#9B8EC4] hover:text-[#5c40c0] underline"
+                    >Copiar link</button>
+                  </div>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => { setEditingArea(area); setAreaForm({ nombre: area.nombre, descripcion: area.descripcion || "", color: area.color, icono: area.icono, email_contacto: area.email_contacto || "" }); }}
+                    className="px-3 h-8 rounded-lg text-xs font-bold text-[#5c40c0] bg-[#ede9fe] hover:bg-[#ddd6fe] border border-[#B8A9E8] transition-colors"
+                  >Editar</button>
+                  {deletingAreaId === area.id ? (
+                    <div className="flex gap-1">
+                      <button onClick={async () => {
+                        await fetch(`${SUPABASE_URL}/rest/v1/derivation_areas?id=eq.${area.id}`, { method: "DELETE", headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Prefer": "return=minimal" } });
+                        setDerivationAreas(prev => prev.filter(a => a.id !== area.id));
+                        setDeletingAreaId(null);
+                      }} className="px-3 h-8 rounded-lg text-xs font-bold text-white bg-red-500">Confirmar</button>
+                      <button onClick={() => setDeletingAreaId(null)} className="px-3 h-8 rounded-lg text-xs font-bold text-[#9B8EC4] border border-[#B8A9E8]">No</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setDeletingAreaId(area.id)} className="px-3 h-8 rounded-lg text-xs font-bold text-red-500 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors">Eliminar</button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {derivationAreas.length === 0 && (
+              <div className="text-center py-12 text-[#9B8EC4] text-sm">Sin áreas configuradas. Creá la primera.</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal crear/editar área */}
+      {editingArea && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-black text-[#1E1040]">{editingArea === "new" ? "Nueva área" : "Editar área"}</h3>
+              <button onClick={() => setEditingArea(null)} className="text-[#9B8EC4] hover:text-[#5c40c0] text-xl leading-none">×</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Nombre *</label>
+                <input value={areaForm.nombre} onChange={e => setAreaForm(f => ({ ...f, nombre: e.target.value }))} className="w-full px-3 py-2 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none" placeholder="Ej: Empleo" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Descripción</label>
+                <input value={areaForm.descripcion} onChange={e => setAreaForm(f => ({ ...f, descripcion: e.target.value }))} className="w-full px-3 py-2 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none" placeholder="Breve descripción del área" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Ícono (emoji)</label>
+                <input value={areaForm.icono} onChange={e => setAreaForm(f => ({ ...f, icono: e.target.value }))} className="w-full px-3 py-2 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none text-center text-xl" maxLength={4} />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Color</label>
+                <div className="flex gap-2 items-center">
+                  <input type="color" value={areaForm.color} onChange={e => setAreaForm(f => ({ ...f, color: e.target.value }))} className="w-10 h-10 rounded-lg border border-[#B8A9E8] cursor-pointer p-0.5" />
+                  <input value={areaForm.color} onChange={e => setAreaForm(f => ({ ...f, color: e.target.value }))} className="flex-1 px-3 py-2 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none font-mono" />
+                </div>
+              </div>
+              <div className="col-span-2">
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Email de contacto del área</label>
+                <input value={areaForm.email_contacto} onChange={e => setAreaForm(f => ({ ...f, email_contacto: e.target.value }))} className="w-full px-3 py-2 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none" placeholder="area@municipio.gob.ar" />
+              </div>
+            </div>
+            {/* Preview */}
+            <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: areaForm.color + "11", border: `1px solid ${areaForm.color}33` }}>
+              <span className="text-2xl">{areaForm.icono || "📋"}</span>
+              <div>
+                <div className="font-black text-sm" style={{ color: areaForm.color }}>{areaForm.nombre || "Nombre del área"}</div>
+                <div className="text-xs text-[#9B8EC4]">{areaForm.descripcion || "Descripción"}</div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setEditingArea(null)} className="flex-1 h-9 rounded-xl border border-[#B8A9E8] text-xs font-bold text-[#9B8EC4]">Cancelar</button>
+              <button
+                disabled={savingArea || !areaForm.nombre.trim()}
+                onClick={async () => {
+                  setSavingArea(true);
+                  try {
+                    const payload = { nombre: areaForm.nombre.trim(), descripcion: areaForm.descripcion.trim(), color: areaForm.color, icono: areaForm.icono || "📋", email_contacto: areaForm.email_contacto.trim() };
+                    if (editingArea === "new") {
+                      const res = await fetch(`${SUPABASE_URL}/rest/v1/derivation_areas`, {
+                        method: "POST",
+                        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=representation" },
+                        body: JSON.stringify({ ...payload, orden: derivationAreas.length + 1 }),
+                      });
+                      const data = await res.json();
+                      if (Array.isArray(data) && data[0]) setDerivationAreas(prev => [...prev, data[0]]);
+                    } else {
+                      await fetch(`${SUPABASE_URL}/rest/v1/derivation_areas?id=eq.${editingArea.id}`, {
+                        method: "PATCH",
+                        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+                        body: JSON.stringify(payload),
+                      });
+                      setDerivationAreas(prev => prev.map(a => a.id === editingArea.id ? { ...a, ...payload } : a));
+                    }
+                    setEditingArea(null);
+                  } catch { alert("Error al guardar el área."); }
+                  setSavingArea(false);
+                }}
+                className="flex-1 h-9 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40"
+              >
+                {savingArea ? "Guardando..." : editingArea === "new" ? "Crear área" : "Guardar cambios"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal derivar caso */}
       {showDerivarModal && editingUser && (
