@@ -173,6 +173,11 @@ export default function Superadmin() {
   const [importLoading, setImportLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"analisis" | "usuarios" | "usuario">("usuarios");
   const [profileTab, setProfileTab] = useState<"perfil" | "diagnostico">("perfil");
+  const [derivationAreas, setDerivationAreas] = useState<any[]>([]);
+  const [showDerivarModal, setShowDerivarModal] = useState(false);
+  const [derivandoAreaId, setDerivandoAreaId] = useState("");
+  const [derivandoNota, setDerivandoNota] = useState("");
+  const [derivando, setDerivando] = useState(false);
 
   useEffect(() => {
     const role = localStorage.getItem("korai_admin_role");
@@ -180,6 +185,10 @@ export default function Superadmin() {
     fetchResponses()
       .then(data => { setResponses(data); setIsLoading(false); })
       .catch(e => { setError(e.message); setIsLoading(false); });
+    // Cargar áreas de derivación
+    fetch(`${SUPABASE_URL}/rest/v1/derivation_areas?activa=eq.true&order=orden.asc`, {
+      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+    }).then(r => r.json()).then(data => { if (Array.isArray(data)) setDerivationAreas(data); }).catch(() => {});
   }, []);
 
   const handleDelete = async (id) => {
@@ -259,6 +268,25 @@ export default function Superadmin() {
       setEditingUser(prev => prev ? { ...prev, perfil_contextual: JSON.stringify(merged) } : null);
     } catch { alert("Error al guardar los cambios."); }
     setSavingEdit(false);
+  };
+
+  const handleDerivar = async () => {
+    if (!editingUser || !derivandoAreaId) return;
+    setDerivando(true);
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/responses?id=eq.${editingUser.id}`, {
+        method: "PATCH",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({ derivado_a: derivandoAreaId, derivado_at: new Date().toISOString(), derivado_nota: derivandoNota, alerta_activa: false }),
+      });
+      const area = derivationAreas.find(a => a.id === derivandoAreaId);
+      await addNote(editingUser.id, `📌 Caso derivado a: ${area?.icono || ""} ${area?.nombre || "Área"}${derivandoNota ? "\nNota: " + derivandoNota : ""}`, "en_proceso");
+      setResponses(prev => prev.map(r => r.id === editingUser.id ? { ...r, derivado_a: derivandoAreaId, alerta_activa: false } : r));
+      setEditingUser(prev => prev ? { ...prev, derivado_a: derivandoAreaId, alerta_activa: false } : null);
+      setShowDerivarModal(false);
+      setDerivandoAreaId(""); setDerivandoNota("");
+    } catch { alert("Error al derivar el caso."); }
+    setDerivando(false);
   };
 
   const planDeUsuario = (r) => {
@@ -824,9 +852,10 @@ export default function Superadmin() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="font-bold text-sm text-[#1E1040] truncate">{nombre}</span>
-                        {r.bot_pausado && (
-                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 border border-orange-300 flex-shrink-0">⚠️ ALERTA</span>
+                        {r.alerta_activa && (
+                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-300 flex-shrink-0">🚨 ALERTA</span>
                         )}
+                        {r.derivado_a && (() => { const a = derivationAreas.find(x => x.id === r.derivado_a); return a ? <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: a.color + "22", color: a.color, border: `1px solid ${a.color}55` }}>{a.icono} {a.nombre}</span> : null; })()}
                         {r.ultimo_estado && (
                           <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border flex-shrink-0 ${
                             r.ultimo_estado === "cerrado" ? "bg-green-500/20 text-green-600 border-green-500/30" :
@@ -888,8 +917,12 @@ export default function Superadmin() {
               <div className="flex items-center gap-2">
                 <div className="font-black text-xl text-[#1E1040]">{getNombrePersona(editingUser)}</div>
                 {editingUser.bot_pausado && (
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 border border-orange-300">⚠️ BOT PAUSADO</span>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 border border-orange-300">⏸ BOT PAUSADO</span>
                 )}
+                {editingUser.alerta_activa && (
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-300">🚨 ALERTA ACTIVA</span>
+                )}
+                {editingUser.derivado_a && (() => { const a = derivationAreas.find(x => x.id === editingUser.derivado_a); return a ? <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: a.color + "22", color: a.color, border: `1px solid ${a.color}55` }}>📌 Derivado: {a.icono} {a.nombre}</span> : null; })()}
               </div>
               <div className="text-xs text-[#9B8EC4]">{editingUser.territorio?.barrio || "Sin barrio"} · {new Date(editingUser.submitted_at).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })}</div>
             </div>
@@ -924,6 +957,12 @@ export default function Superadmin() {
                 ⏸ Tomar control
               </button>
             )}
+            <button
+              onClick={() => setShowDerivarModal(true)}
+              className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-300 hover:bg-indigo-100 transition-colors flex-shrink-0"
+            >
+              📌 Derivar caso
+            </button>
           </div>
 
           {/* Sub-pestañas del perfil */}
@@ -1245,6 +1284,57 @@ export default function Superadmin() {
         </div>
         )}
       </div>
+
+      {/* Modal derivar caso */}
+      {showDerivarModal && editingUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-black text-[#1E1040]">📌 Derivar caso</h3>
+              <button onClick={() => setShowDerivarModal(false)} className="text-[#9B8EC4] hover:text-[#5c40c0] text-xl leading-none">×</button>
+            </div>
+            <p className="text-xs text-[#6B5FA0]">Seleccioná el área que va a tomar el caso de <strong>{getNombrePersona(editingUser)}</strong>.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {derivationAreas.map(a => (
+                <button
+                  key={a.id}
+                  onClick={() => setDerivandoAreaId(a.id)}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-left transition-all text-sm font-bold"
+                  style={derivandoAreaId === a.id
+                    ? { background: a.color + "22", borderColor: a.color, color: a.color }
+                    : { background: "#f8f6ff", borderColor: "#B8A9E8", color: "#6B5FA0" }}
+                >
+                  <span className="text-lg">{a.icono}</span>
+                  <div>
+                    <div className="text-xs font-black">{a.nombre}</div>
+                    {a.descripcion && <div className="text-[10px] font-normal opacity-70 leading-tight">{a.descripcion}</div>}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Nota para el área (opcional)</label>
+              <textarea
+                value={derivandoNota}
+                onChange={e => setDerivandoNota(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none resize-none"
+                placeholder="Contexto adicional para el equipo del área..."
+              />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowDerivarModal(false)} className="flex-1 h-9 rounded-xl border border-[#B8A9E8] text-xs font-bold text-[#9B8EC4]">Cancelar</button>
+              <button
+                onClick={handleDerivar}
+                disabled={derivando || !derivandoAreaId}
+                className="flex-1 h-9 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40"
+              >
+                {derivando ? "Derivando..." : "Confirmar derivación"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

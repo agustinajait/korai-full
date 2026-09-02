@@ -15,6 +15,7 @@ import Confirmar from "@/pages/confirmar";
 import Privacidad from "@/pages/privacidad";
 import Superadmin from "@/pages/superadmin";
 import Join from "@/pages/join";
+import AreaPanel from "@/pages/area-panel";
 import { Loader2 } from "lucide-react";
 
 function ProtectedDashboard() {
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/privacidad" component={Privacidad} />
       <Route path="/superadmin" component={Superadmin} />
       <Route path="/join/:token" component={Join} />
+      <Route path="/area/:areaId" component={AreaPanel} />
       <Route component={NotFound} />
     </Switch>
   );
