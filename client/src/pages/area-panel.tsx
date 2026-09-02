@@ -232,6 +232,15 @@ export default function AreaPanel() {
                 </div>
               </div>
 
+              {/* Informe de derivación */}
+              {notes.filter(n => n.tipo === "informe_derivacion").map(n => (
+                <div key={n.id} className="bg-[#ede9fe] border border-[#5c40c0]/30 rounded-2xl p-4">
+                  <p className="text-[10px] font-bold text-[#5c40c0] uppercase tracking-wide mb-2">📋 Informe generado por Korai</p>
+                  <p className="text-sm text-[#1E1040] whitespace-pre-wrap leading-relaxed">{n.texto.replace(/^📋 INFORME DE DERIVACIÓN[^\n]*\n\n/, "")}</p>
+                  <p className="text-[10px] text-[#9B8EC4] mt-2">{new Date(n.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })}</p>
+                </div>
+              ))}
+
               {/* Notas del área */}
               <div>
                 <p className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide mb-2">Notas del área</p>

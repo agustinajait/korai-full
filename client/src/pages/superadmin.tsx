@@ -279,13 +279,19 @@ export default function Superadmin() {
     if (!editingUser || !derivandoAreaId) return;
     setDerivando(true);
     try {
+      const area = derivationAreas.find(a => a.id === derivandoAreaId);
       await fetch(`${SUPABASE_URL}/rest/v1/responses?id=eq.${editingUser.id}`, {
         method: "PATCH",
         headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
         body: JSON.stringify({ derivado_a: derivandoAreaId, derivado_at: new Date().toISOString(), derivado_nota: derivandoNota, alerta_activa: false }),
       });
-      const area = derivationAreas.find(a => a.id === derivandoAreaId);
       await addNote(editingUser.id, `📌 Caso derivado a: ${area?.icono || ""} ${area?.nombre || "Área"}${derivandoNota ? "\nNota: " + derivandoNota : ""}`, "en_proceso");
+      // Generar informe automático con IA
+      fetch(`${SUPABASE_URL}/functions/v1/summarize_case`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ response_id: editingUser.id, area_nombre: area?.nombre }),
+      }).catch(() => {});
       setResponses(prev => prev.map(r => r.id === editingUser.id ? { ...r, derivado_a: derivandoAreaId, alerta_activa: false } : r));
       setEditingUser(prev => prev ? { ...prev, derivado_a: derivandoAreaId, alerta_activa: false } : null);
       setShowDerivarModal(false);
