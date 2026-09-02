@@ -171,7 +171,7 @@ export default function Superadmin() {
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
   const [importLoading, setImportLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"analisis" | "usuarios" | "usuario" | "areas">("usuarios");
+  const [activeTab, setActiveTab] = useState<"analisis" | "usuarios" | "usuario" | "areas" | "inteligencia">("usuarios");
   // Estado gestión áreas
   const [editingArea, setEditingArea] = useState<any>(null);
   const [areaForm, setAreaForm] = useState({ nombre: "", descripcion: "", color: "#6366f1", icono: "📋", email_contacto: "" });
@@ -179,6 +179,10 @@ export default function Superadmin() {
   const [deletingAreaId, setDeletingAreaId] = useState<string | null>(null);
   const [profileTab, setProfileTab] = useState<"perfil" | "diagnostico">("perfil");
   const [derivationAreas, setDerivationAreas] = useState<any[]>([]);
+  const [insight, setInsight] = useState<any>(null);
+  const [insightLoading, setInsightLoading] = useState(false);
+  const [insightDias, setInsightDias] = useState(30);
+  const [lastInsights, setLastInsights] = useState<any[]>([]);
   const [showDerivarModal, setShowDerivarModal] = useState(false);
   const [derivandoAreaId, setDerivandoAreaId] = useState("");
   const [derivandoNota, setDerivandoNota] = useState("");
@@ -194,6 +198,10 @@ export default function Superadmin() {
     fetch(`${SUPABASE_URL}/rest/v1/derivation_areas?activa=eq.true&order=orden.asc`, {
       headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
     }).then(r => r.json()).then(data => { if (Array.isArray(data)) setDerivationAreas(data); }).catch(() => {});
+    // Cargar últimos análisis
+    fetch(`${SUPABASE_URL}/rest/v1/conversation_insights?order=created_at.desc&limit=5`, {
+      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+    }).then(r => r.json()).then(data => { if (Array.isArray(data)) { setLastInsights(data); if (data[0]) setInsight(data[0]); } }).catch(() => {});
   }, []);
 
   const handleDelete = async (id) => {
@@ -528,7 +536,7 @@ export default function Superadmin() {
       {/* ── TABS ── */}
       <div className="sticky z-10 bg-white border-b border-[#B8A9E8]" style={{ top: "152px" }}>
         <div className="mx-auto px-10 flex gap-1" style={{ maxWidth: 1100 }}>
-          {(["usuarios", "analisis", "areas"] as const).map(tab => (
+          {(["usuarios", "analisis", "inteligencia", "areas"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -538,7 +546,7 @@ export default function Superadmin() {
                 : { color: "#9B8EC4", borderBottom: "2px solid transparent" }
               }
             >
-              {tab === "usuarios" ? "Usuarios" : tab === "analisis" ? "Análisis" : "🏷 Áreas"}
+              {tab === "usuarios" ? "Usuarios" : tab === "analisis" ? "Análisis" : tab === "inteligencia" ? "🧠 Inteligencia" : "🏷 Áreas"}
             </button>
           ))}
           <button
@@ -1295,6 +1303,202 @@ export default function Superadmin() {
         </div>
         )}
       </div>
+
+      {/* TAB: Inteligencia Social */}
+      {activeTab === "inteligencia" && (
+        <div className="py-8 mx-auto px-10 space-y-6" style={{ maxWidth: 1100 }}>
+          {/* Header */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="font-black text-xl text-[#1E1040]">🧠 Inteligencia Social</h2>
+              <p className="text-xs text-[#9B8EC4] mt-0.5">Análisis de patrones y temas emergentes en las conversaciones para informar política pública</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={insightDias}
+                onChange={e => setInsightDias(Number(e.target.value))}
+                className="h-9 px-3 rounded-xl border border-[#B8A9E8] text-xs font-bold text-[#5c40c0] bg-white focus:outline-none"
+              >
+                <option value={7}>Últimos 7 días</option>
+                <option value={30}>Últimos 30 días</option>
+                <option value={60}>Últimos 60 días</option>
+                <option value={90}>Últimos 90 días</option>
+              </select>
+              <button
+                onClick={async () => {
+                  setInsightLoading(true);
+                  try {
+                    const res = await fetch(`${SUPABASE_URL}/functions/v1/analyze_conversations`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+                      body: JSON.stringify({ dias: insightDias }),
+                    });
+                    const data = await res.json();
+                    if (data.status === "ok") {
+                      setInsight(data);
+                      setLastInsights(prev => [data, ...prev.slice(0, 4)]);
+                    } else { alert("Error: " + (data.error || "No se pudo analizar")); }
+                  } catch { alert("Error al conectar con el servidor"); }
+                  setInsightLoading(false);
+                }}
+                disabled={insightLoading}
+                className="flex items-center gap-2 px-4 h-9 rounded-xl text-xs font-bold text-white bg-[#5c40c0] hover:bg-[#4a30a0] disabled:opacity-50 transition-colors"
+              >
+                {insightLoading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Analizando...</> : "✨ Analizar ahora"}
+              </button>
+            </div>
+          </div>
+
+          {insightLoading && (
+            <div className="bg-[#ede9fe] rounded-2xl p-8 text-center space-y-2">
+              <Loader2 className="w-8 h-8 animate-spin text-[#5c40c0] mx-auto" />
+              <p className="text-sm font-bold text-[#5c40c0]">Korai está analizando las conversaciones...</p>
+              <p className="text-xs text-[#9B8EC4]">Esto puede tardar hasta 30 segundos</p>
+            </div>
+          )}
+
+          {!insightLoading && !insight && (
+            <div className="bg-white rounded-2xl border border-[#B8A9E8] p-12 text-center">
+              <div className="text-4xl mb-3">🧠</div>
+              <p className="font-bold text-[#1E1040] mb-1">Sin análisis todavía</p>
+              <p className="text-xs text-[#9B8EC4]">Hacé clic en "Analizar ahora" para generar el primer informe de inteligencia social</p>
+            </div>
+          )}
+
+          {!insightLoading && insight && (
+            <div className="space-y-5">
+              {/* Resumen ejecutivo */}
+              <div className="bg-[#1E1040] rounded-2xl p-6 text-white">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#9B8EC4] mb-3">📋 Resumen ejecutivo — para tomadores de decisiones</p>
+                <p className="text-sm leading-relaxed">{insight.resumen_ejecutivo || "Sin resumen disponible"}</p>
+                <div className="flex gap-6 mt-4 pt-4 border-t border-white/10">
+                  <div><div className="text-2xl font-black">{insight.total_conversaciones}</div><div className="text-[10px] text-[#9B8EC4] uppercase">Con conversación</div></div>
+                  <div><div className="text-2xl font-black">{insight.total_mensajes}</div><div className="text-[10px] text-[#9B8EC4] uppercase">Mensajes analizados</div></div>
+                  <div><div className="text-2xl font-black">{insight.temas?.length || 0}</div><div className="text-[10px] text-[#9B8EC4] uppercase">Temas detectados</div></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-5">
+                {/* Temas emergentes */}
+                <div className="bg-white rounded-2xl border border-[#B8A9E8] p-5">
+                  <p className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide mb-4">🔥 Temas emergentes</p>
+                  <div className="space-y-3">
+                    {(insight.temas || []).slice(0, 6).map((t: any, i: number) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${t.frecuencia === "alta" ? "bg-red-100 text-red-600" : t.frecuencia === "media" ? "bg-yellow-100 text-yellow-600" : "bg-green-100 text-green-600"}`}>
+                          {t.frecuencia === "alta" ? "↑↑ ALTA" : t.frecuencia === "media" ? "↑ MEDIA" : "→ BAJA"}
+                        </span>
+                        <div>
+                          <p className="text-xs font-bold text-[#1E1040]">{t.tema}</p>
+                          <p className="text-[10px] text-[#9B8EC4]">{t.descripcion}</p>
+                          {t.ejemplos?.length > 0 && (
+                            <p className="text-[10px] text-[#6B5FA0] italic mt-0.5">"{t.ejemplos[0]}"</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {(!insight.temas || insight.temas.length === 0) && <p className="text-xs text-[#9B8EC4]">Sin temas detectados</p>}
+                  </div>
+                </div>
+
+                {/* Palabras clave */}
+                <div className="bg-white rounded-2xl border border-[#B8A9E8] p-5">
+                  <p className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide mb-4">🔤 Palabras clave</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(insight.palabras_clave || []).sort((a: any, b: any) => b.peso - a.peso).slice(0, 20).map((p: any, i: number) => {
+                      const catColor: Record<string, string> = {
+                        empleo: "#3b82f6", vivienda: "#f59e0b", salud: "#10b981",
+                        ingresos: "#8b5cf6", familia: "#ec4899", violencia: "#ef4444",
+                        educacion: "#06b6d4", otro: "#6b7280"
+                      };
+                      const color = catColor[p.categoria] || "#6b7280";
+                      const size = Math.max(10, Math.min(16, 10 + p.peso));
+                      return (
+                        <span key={i} className="px-2 py-1 rounded-lg font-bold" style={{ fontSize: size, background: color + "18", color, border: `1px solid ${color}33` }}>
+                          {p.palabra}
+                        </span>
+                      );
+                    })}
+                    {(!insight.palabras_clave || insight.palabras_clave.length === 0) && <p className="text-xs text-[#9B8EC4]">Sin datos</p>}
+                  </div>
+                  {/* Leyenda */}
+                  <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-[#f0ecff]">
+                    {[["empleo","#3b82f6"],["vivienda","#f59e0b"],["salud","#10b981"],["ingresos","#8b5cf6"],["familia","#ec4899"],["violencia","#ef4444"]].map(([cat, color]) => (
+                      <span key={cat} className="text-[9px] font-bold flex items-center gap-1" style={{ color }}>
+                        <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />{cat}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Alertas territoriales */}
+              {insight.alertas_territoriales?.length > 0 && (
+                <div className="bg-white rounded-2xl border border-[#B8A9E8] p-5">
+                  <p className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide mb-4">📍 Concentración territorial</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {insight.alertas_territoriales.filter((a: any) => a.barrio).slice(0, 6).map((a: any, i: number) => (
+                      <div key={i} className="bg-[#f8f6ff] rounded-xl p-3">
+                        <p className="font-black text-sm text-[#1E1040]">{a.barrio}</p>
+                        <p className="text-xs text-[#9B8EC4]">{a.total} casos · {a.criticos} críticos</p>
+                        <div className="mt-1.5 bg-[#B8A9E8]/30 rounded-full h-1.5">
+                          <div className="h-1.5 rounded-full bg-red-400" style={{ width: `${Math.min(100, a.porcentaje)}%` }} />
+                        </div>
+                        <p className="text-[10px] text-red-500 font-bold mt-1">{a.porcentaje}% críticos</p>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Alertas cualitativas */}
+                  {insight.alertas_territoriales.filter((a: any) => a.tipo).length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {insight.alertas_territoriales.filter((a: any) => a.tipo).map((a: any, i: number) => (
+                        <div key={i} className={`flex items-start gap-2 p-3 rounded-xl ${a.urgencia === "alta" ? "bg-red-50 border border-red-200" : a.urgencia === "media" ? "bg-yellow-50 border border-yellow-200" : "bg-blue-50 border border-blue-200"}`}>
+                          <span className="text-sm flex-shrink-0">{a.urgencia === "alta" ? "🔴" : a.urgencia === "media" ? "🟡" : "🔵"}</span>
+                          <div>
+                            <p className="text-xs font-bold text-[#1E1040]">{a.tipo}</p>
+                            <p className="text-[10px] text-[#6B5FA0]">{a.descripcion}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Correlaciones */}
+              {insight.correlaciones?.length > 0 && (
+                <div className="bg-white rounded-2xl border border-[#B8A9E8] p-5">
+                  <p className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide mb-4">🔗 Correlaciones diagnóstico → conversación</p>
+                  <div className="space-y-3">
+                    {insight.correlaciones.map((c: any, i: number) => (
+                      <div key={i} className="grid grid-cols-3 gap-3 p-3 bg-[#f8f6ff] rounded-xl">
+                        <div><p className="text-[10px] text-[#9B8EC4] uppercase mb-1">Diagnóstico</p><p className="text-xs font-bold text-[#1E1040]">{c.diagnostico}</p></div>
+                        <div><p className="text-[10px] text-[#9B8EC4] uppercase mb-1">Patrón en conversación</p><p className="text-xs text-[#1E1040]">{c.patron_conversacion}</p></div>
+                        <div><p className="text-[10px] text-[#9B8EC4] uppercase mb-1">Implicancia</p><p className="text-xs text-[#5c40c0] font-bold">{c.implicancia}</p></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Historial de análisis */}
+              {lastInsights.length > 1 && (
+                <div className="bg-white rounded-2xl border border-[#B8A9E8] p-5">
+                  <p className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide mb-3">📅 Análisis anteriores</p>
+                  <div className="space-y-2">
+                    {lastInsights.slice(1).map((ins: any, i: number) => (
+                      <button key={i} onClick={() => setInsight(ins)} className="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[#f8f6ff] transition-colors text-left">
+                        <span className="text-xs text-[#1E1040]">{new Date(ins.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })}</span>
+                        <span className="text-[10px] text-[#9B8EC4]">{ins.total_mensajes} mensajes · {ins.temas?.length || 0} temas</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TAB: Áreas de derivación */}
       {activeTab === "areas" && (
