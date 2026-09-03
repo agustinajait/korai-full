@@ -150,7 +150,7 @@ export default function MunicipioLanding() {
           transition={{ delay: 0.3 }} className="grid grid-cols-3 gap-2">
           {[
             { icon: <Clock className="w-4 h-4" />, label: "2 minutos" },
-            { icon: <Lock className="w-4 h-4" />, label: "Anónimo" },
+            { icon: <Lock className="w-4 h-4" />, label: "Confidencial" },
             { icon: <Users className="w-4 h-4" />, label: "Gratuito" },
           ].map((chip, i) => (
             <div key={i} className="flex flex-col items-center gap-1.5 py-3 rounded-2xl border"
