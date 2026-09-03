@@ -1126,6 +1126,45 @@ export default function Superadmin() {
                 </button>
               </div>
 
+              {/* Perfil sociodemográfico */}
+              {(() => {
+                const raw = editingUser.perfil_contextual;
+                const perfil = (() => { try { return typeof raw === "string" ? JSON.parse(raw) : (raw || {}); } catch { return {}; } })();
+                const demo = perfil?.demographics || perfil || {};
+                const EDAD_LABEL: Record<string, string> = { menor18: "Menor de 18", "18-24": "18 a 24 años", "25-40": "25 a 40 años", "41-60": "41 a 60 años", mas60: "Más de 60" };
+                const LABORAL_LABEL: Record<string, string> = { tengo_trabajo: "Tiene trabajo ✅", buscando: "Buscando trabajo 🔍", no_trabajo: "No trabaja ⏸" };
+                const VIVIENDA_LABEL: Record<string, string> = { propia: "Propia 🏡", alquiler: "Alquilada 🔑", prestada: "Prestada 🤝", inestable: "Inestable ⚠️" };
+                const CARGO_LABEL: Record<string, string> = { ninos: "Niños/adolescentes 👶", adultos: "Adultos mayores 👴", ambos: "Ambos 👨‍👩‍👧‍👦", no: "Sin personas a cargo 🙋" };
+                const INGRESO_LABEL: Record<string, string> = { menos_700k: "Menos de $700k", "700k_1300k": "$700k–$1.3M", "1300k_2000k": "$1.3M–$2M", mas_2000k: "Más de $2M", prefiero_no: "Prefiere no decir" };
+                const BENEFICIO_LABEL: Record<string, string> = { si: "Sí recibe ✅", no: "No recibe ❌" };
+                const barrio = editingUser.territorio?.barrio;
+                const campos = [
+                  ["Barrio", barrio],
+                  ["Edad", EDAD_LABEL[demo.edad]],
+                  ["Situación laboral", LABORAL_LABEL[demo.situacion_laboral]],
+                  ["Vivienda", VIVIENDA_LABEL[demo.tipo_vivienda]],
+                  ["Personas a cargo", CARGO_LABEL[demo.personas_cargo]],
+                  ["Cantidad a cargo", demo.cantidad_cargo],
+                  ["Ingreso hogar", INGRESO_LABEL[demo.ingreso_hogar]],
+                  ["Beneficio social", BENEFICIO_LABEL[demo.beneficio_social]],
+                  ["Comentario", perfil?.comentario],
+                ].filter(([, v]) => v);
+                if (campos.length === 0) return null;
+                return (
+                  <div className="bg-white border border-[#B8A9E8] rounded-2xl p-5 space-y-3">
+                    <h4 className="font-black text-sm text-[#1E1040]">Perfil sociodemográfico</h4>
+                    <div className="space-y-2">
+                      {campos.map(([label, value]) => (
+                        <div key={label} className="flex items-start justify-between gap-2">
+                          <span className="text-[10px] font-bold text-[#9B8EC4] uppercase tracking-wide flex-shrink-0">{label}</span>
+                          <span className="text-xs text-[#1E1040] text-right">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Diagnóstico de bienestar */}
               {(() => {
                 const plan = generatePlanDesdeScores(editingUser.answers || {});
