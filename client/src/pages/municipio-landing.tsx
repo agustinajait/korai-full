@@ -106,24 +106,28 @@ export default function MunicipioLanding() {
 
         {/* Header: logo municipio o logo Korai */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center gap-2">
+          className="flex items-center justify-center gap-3">
           {tenant?.logo_url ? (
             <img
               src={tenant.logo_url}
               alt={tenant.nombre}
-              className="h-14 w-auto object-contain"
+              className="h-12 w-auto object-contain max-w-[180px]"
               onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
           ) : (
-            <div className="flex items-center gap-2">
+            <>
               <img src={koraiLogo} alt="Korai" className="w-9 h-9 object-contain" />
               <span style={{ fontFamily: "'Montserrat', sans-serif", color: "#1E1040" }}
                 className="text-2xl font-black tracking-tight">
                 KOR<span style={{ color: secondary }}>AI</span>
               </span>
-            </div>
+            </>
           )}
-          {/* Nombre municipio */}
+        </motion.div>
+
+        {/* Nombre municipio badge */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+          className="flex justify-center">
           <span className="text-xs font-bold px-3 py-1 rounded-full"
             style={{ background: primary + "18", color: primary, fontFamily: "'Montserrat', sans-serif" }}>
             {tenant?.nombre}
@@ -132,9 +136,9 @@ export default function MunicipioLanding() {
 
         {/* Título y subtítulo */}
         <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.15 }} className="mt-4 space-y-2">
-          <h1 className="text-3xl font-black leading-tight"
-            style={{ fontFamily: "'Montserrat', sans-serif", color: "#1E1040" }}>
+          transition={{ delay: 0.15 }} className="mt-2 space-y-2">
+          <h1 className="text-2xl font-black leading-snug"
+            style={{ fontFamily: "'Montserrat', sans-serif", color: "#1E1040", textWrap: "balance" } as React.CSSProperties}>
             {titulo}
           </h1>
           <p className="text-sm leading-relaxed" style={{ color: "#6B5FA0", fontFamily: "'Montserrat', sans-serif" }}>
