@@ -171,12 +171,18 @@ export default function Superadmin() {
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState("");
   const [importLoading, setImportLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"analisis" | "usuarios" | "usuario" | "areas" | "inteligencia">("usuarios");
+  const [activeTab, setActiveTab] = useState<"analisis" | "usuarios" | "usuario" | "areas" | "inteligencia" | "clientes">("usuarios");
   // Estado gestión áreas
   const [editingArea, setEditingArea] = useState<any>(null);
   const [areaForm, setAreaForm] = useState({ nombre: "", descripcion: "", color: "#6366f1", icono: "📋", email_contacto: "" });
   const [savingArea, setSavingArea] = useState(false);
   const [deletingAreaId, setDeletingAreaId] = useState<string | null>(null);
+  // Clientes
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [clientesLoading, setClientesLoading] = useState(false);
+  const [showNuevoCliente, setShowNuevoCliente] = useState(false);
+  const [clienteForm, setClienteForm] = useState({ nombre: "", slug: "", email: "", password: "", color_primario: "#5c40c0" });
+  const [creandoCliente, setCreandoCliente] = useState(false);
   const [profileTab, setProfileTab] = useState<"perfil" | "diagnostico">("perfil");
   const [derivationAreas, setDerivationAreas] = useState<any[]>([]);
   const [insight, setInsight] = useState<any>(null);
@@ -282,6 +288,14 @@ export default function Superadmin() {
     } catch { alert("Error al guardar los cambios."); }
     setSavingEdit(false);
   };
+
+  useEffect(() => {
+    if (activeTab !== "clientes") return;
+    setClientesLoading(true);
+    fetch(`${SUPABASE_URL}/rest/v1/tenants?order=created_at.desc`, {
+      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+    }).then(r => r.json()).then(data => { if (Array.isArray(data)) setClientes(data); setClientesLoading(false); }).catch(() => setClientesLoading(false));
+  }, [activeTab]);
 
   const handleDerivar = async () => {
     if (!editingUser || !derivandoAreaId) return;
@@ -536,7 +550,7 @@ export default function Superadmin() {
       {/* ── TABS ── */}
       <div className="sticky z-10 bg-white border-b border-[#B8A9E8]" style={{ top: "152px" }}>
         <div className="mx-auto px-10 flex gap-1" style={{ maxWidth: 1100 }}>
-          {(["usuarios", "analisis", "inteligencia", "areas"] as const).map(tab => (
+          {(["usuarios", "analisis", "inteligencia", "clientes", "areas"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -546,7 +560,7 @@ export default function Superadmin() {
                 : { color: "#9B8EC4", borderBottom: "2px solid transparent" }
               }
             >
-              {tab === "usuarios" ? "Usuarios" : tab === "analisis" ? "Análisis" : tab === "inteligencia" ? "🧠 Inteligencia" : "🏷 Áreas"}
+              {tab === "usuarios" ? "Usuarios" : tab === "analisis" ? "Análisis" : tab === "inteligencia" ? "🧠 Inteligencia" : tab === "clientes" ? "🏛 Clientes" : "🏷 Áreas"}
             </button>
           ))}
           <button
@@ -1536,6 +1550,141 @@ export default function Superadmin() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* TAB: Clientes */}
+      {activeTab === "clientes" && (
+        <div className="py-8 mx-auto px-10 space-y-6" style={{ maxWidth: 900 }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-black text-xl text-[#1E1040]">🏛 Clientes</h2>
+              <p className="text-xs text-[#9B8EC4] mt-0.5">Municipios y organizaciones con acceso a su propio panel</p>
+            </div>
+            <button onClick={() => { setShowNuevoCliente(true); setClienteForm({ nombre: "", slug: "", email: "", password: "", color_primario: "#5c40c0" }); }}
+              className="flex items-center gap-1.5 px-4 h-9 rounded-xl text-xs font-bold text-white bg-[#5c40c0] hover:bg-[#4a30a0] transition-colors">
+              + Nuevo cliente
+            </button>
+          </div>
+
+          {clientesLoading && <div className="text-center py-8"><Loader2 className="w-5 h-5 animate-spin text-[#5c40c0] mx-auto" /></div>}
+
+          {!clientesLoading && (
+            <div className="space-y-3">
+              {clientes.length === 0 && !clientesLoading && (
+                <div className="bg-white rounded-2xl border border-[#B8A9E8] p-12 text-center">
+                  <div className="text-4xl mb-3">🏛</div>
+                  <p className="font-bold text-[#1E1040] mb-1">Sin clientes todavía</p>
+                  <p className="text-xs text-[#9B8EC4]">Creá el primer cliente con el botón "Nuevo cliente"</p>
+                </div>
+              )}
+              {clientes.map(c => (
+                <div key={c.id} className="bg-white rounded-2xl border border-[#B8A9E8] p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black flex-shrink-0" style={{ background: c.color_primario || "#5c40c0" }}>
+                    {(c.name || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-black text-[#1E1040]">{c.name}</p>
+                    <p className="text-xs text-[#9B8EC4]">app.korai.lat/{c.slug} · {c.client_users?.[0]?.email || "Sin usuario"}</p>
+                  </div>
+                  <a href={`/cliente`} target="_blank" className="text-xs text-[#5c40c0] underline">Ver panel</a>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal nuevo cliente */}
+      {showNuevoCliente && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-black text-[#1E1040]">🏛 Nuevo cliente</h3>
+              <button onClick={() => setShowNuevoCliente(false)} className="text-[#9B8EC4] hover:text-[#5c40c0] text-xl leading-none">×</button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Nombre del municipio *</label>
+                <input value={clienteForm.nombre} onChange={e => setClienteForm(f => ({ ...f, nombre: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") }))}
+                  className="w-full h-10 px-3 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none" placeholder="Ej: Municipio de San Isidro" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Slug (URL) *</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[#9B8EC4]">app.korai.lat/</span>
+                  <input value={clienteForm.slug} onChange={e => setClienteForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") }))}
+                    className="flex-1 h-10 px-3 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none font-mono" placeholder="san-isidro" />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Email de acceso *</label>
+                <input type="email" value={clienteForm.email} onChange={e => setClienteForm(f => ({ ...f, email: e.target.value }))}
+                  className="w-full h-10 px-3 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none" placeholder="admin@municipio.gob.ar" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Contraseña *</label>
+                <input type="text" value={clienteForm.password} onChange={e => setClienteForm(f => ({ ...f, password: e.target.value }))}
+                  className="w-full h-10 px-3 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none font-mono" placeholder="Contraseña segura" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Color primario</label>
+                <div className="flex gap-2 items-center">
+                  <input type="color" value={clienteForm.color_primario} onChange={e => setClienteForm(f => ({ ...f, color_primario: e.target.value }))}
+                    className="w-10 h-10 rounded-lg border border-[#B8A9E8] cursor-pointer p-0.5" />
+                  <input value={clienteForm.color_primario} onChange={e => setClienteForm(f => ({ ...f, color_primario: e.target.value }))}
+                    className="flex-1 h-10 px-3 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm focus:outline-none font-mono" />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowNuevoCliente(false)} className="flex-1 h-9 rounded-xl border border-[#B8A9E8] text-xs font-bold text-[#9B8EC4]">Cancelar</button>
+              <button
+                disabled={creandoCliente || !clienteForm.nombre.trim() || !clienteForm.slug.trim() || !clienteForm.email.trim() || !clienteForm.password.trim()}
+                onClick={async () => {
+                  setCreandoCliente(true);
+                  try {
+                    // 1. Crear tenant
+                    const tRes = await fetch(`${SUPABASE_URL}/rest/v1/tenants`, {
+                      method: "POST",
+                      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=representation" },
+                      body: JSON.stringify({ name: clienteForm.nombre, slug: clienteForm.slug, color_primario: clienteForm.color_primario }),
+                    });
+                    const tenants = await tRes.json();
+                    const tenant = Array.isArray(tenants) ? tenants[0] : null;
+                    if (!tenant) throw new Error("Error al crear tenant");
+
+                    // 2. Crear campaign para ese tenant
+                    await fetch(`${SUPABASE_URL}/rest/v1/campaigns`, {
+                      method: "POST",
+                      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+                      body: JSON.stringify({ tenant_id: tenant.id, name: clienteForm.nombre, status: "active" }),
+                    });
+
+                    // 3. Crear usuario cliente (hash en el browser)
+                    const msg = clienteForm.password + "korai_salt_2026";
+                    const data = new TextEncoder().encode(msg);
+                    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+                    const hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+                    await fetch(`${SUPABASE_URL}/rest/v1/client_users`, {
+                      method: "POST",
+                      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+                      body: JSON.stringify({ tenant_id: tenant.id, email: clienteForm.email.toLowerCase().trim(), password_hash: hash, nombre: clienteForm.nombre, rol: "admin" }),
+                    });
+
+                    setClientes(prev => [...prev, { ...tenant, client_users: [{ email: clienteForm.email }] }]);
+                    setShowNuevoCliente(false);
+                    alert(`✅ Cliente creado!\n\nURL: app.korai.lat/cliente\nEmail: ${clienteForm.email}\nContraseña: ${clienteForm.password}`);
+                  } catch (err: any) { alert("Error: " + err.message); }
+                  setCreandoCliente(false);
+                }}
+                className="flex-1 h-9 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40"
+              >
+                {creandoCliente ? "Creando..." : "Crear cliente"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
