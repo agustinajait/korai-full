@@ -40,7 +40,14 @@ export default function ClientePanel() {
   const [notesLoading, setNotesLoading] = useState(false);
   const [search, setSearch] = useState("");
   // Config
-  const [configForm, setConfigForm] = useState<any>({});
+  const [configForm, setConfigForm] = useState<any>({
+    bienvenida_titulo: "",
+    bienvenida_subtitulo: "",
+    color_primario: "#5c40c0",
+    color_secundario: "#9B8EC4",
+    logo_url: "",
+    imagen_portada_url: "",
+  });
   const [savingConfig, setSavingConfig] = useState(false);
 
   useEffect(() => {
