@@ -146,7 +146,7 @@ export default function MunicipioLanding() {
             <img src={fliaImg} alt="Familia" className="w-full object-contain"
               style={{
                 maxHeight: "200px",
-                filter: `hue-rotate(150deg) drop-shadow(0 6px 24px ${primary}35)`,
+                filter: `drop-shadow(0 6px 24px ${primary}35)`,
               }} />
           </motion.div>
 
