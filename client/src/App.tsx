@@ -17,6 +17,7 @@ import Superadmin from "@/pages/superadmin";
 import Join from "@/pages/join";
 import AreaPanel from "@/pages/area-panel";
 import ClientePanel from "@/pages/cliente-panel";
+import MunicipioLanding from "@/pages/municipio-landing";
 import { Loader2 } from "lucide-react";
 
 function ProtectedDashboard() {
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/join/:token" component={Join} />
       <Route path="/area/:areaId" component={AreaPanel} />
       <Route path="/cliente" component={ClientePanel} />
+      <Route path="/:slug" component={MunicipioLanding} />
       <Route component={NotFound} />
     </Switch>
   );
