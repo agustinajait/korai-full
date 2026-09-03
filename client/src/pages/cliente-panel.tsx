@@ -325,10 +325,35 @@ export default function ClientePanel() {
                   placeholder="Ej: Respondé algunas preguntas y te conectamos con recursos de tu municipio" />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">URL del logo</label>
-                <input value={configForm.logo_url} onChange={e => setConfigForm((f: any) => ({ ...f, logo_url: e.target.value }))}
-                  className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none"
-                  placeholder="https://..." />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Logo</label>
+                <div className="flex gap-2 items-center">
+                  {configForm.logo_url && (
+                    <img src={configForm.logo_url} alt="logo" className="h-10 w-auto object-contain rounded-lg border border-gray-200 bg-gray-50 p-1"
+                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  )}
+                  <label className="flex-1 flex items-center justify-center gap-2 h-10 px-3 rounded-xl border-2 border-dashed border-gray-300 text-xs font-bold text-gray-500 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-all">
+                    📁 {configForm.logo_url ? "Cambiar imagen" : "Subir logo (PNG, JPG, SVG)"}
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 500_000) { alert("El archivo debe pesar menos de 500KB"); return; }
+                      const reader = new FileReader();
+                      reader.onload = ev => {
+                        setConfigForm((f: any) => ({ ...f, logo_url: ev.target?.result as string }));
+                      };
+                      reader.readAsDataURL(file);
+                    }} />
+                  </label>
+                  {configForm.logo_url && (
+                    <button onClick={() => setConfigForm((f: any) => ({ ...f, logo_url: "" }))}
+                      className="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">Máx. 500KB. También podés pegar una URL en el campo de abajo.</p>
+                <input value={configForm.logo_url?.startsWith("data:") ? "" : configForm.logo_url}
+                  onChange={e => setConfigForm((f: any) => ({ ...f, logo_url: e.target.value }))}
+                  className="w-full h-9 px-3 mt-1 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none"
+                  placeholder="O pegá una URL: https://..." />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
