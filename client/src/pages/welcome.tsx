@@ -248,11 +248,15 @@ function TransitionScreen({ onStart }: { onStart: () => void }) {
 export default function Welcome() {
   const [_, setLocation] = useLocation();
 
-  // Si viene de una landing de municipio, saltear la pantalla genérica de Korai
+  // Si viene de una landing de municipio en esta misma sesión, saltar la home genérica
   const cameFromMunicipio = (() => {
     try {
-      const ctx = JSON.parse(localStorage.getItem("korai_context") || "null");
-      return !!(ctx?.tenant_id && ctx?.slug);
+      const flag = sessionStorage.getItem("korai_from_municipio");
+      if (flag) {
+        sessionStorage.removeItem("korai_from_municipio"); // usar solo una vez
+        return true;
+      }
+      return false;
     } catch { return false; }
   })();
 

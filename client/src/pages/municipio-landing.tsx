@@ -67,6 +67,8 @@ export default function MunicipioLanding() {
         slug,
       }));
     }
+    // Flag de sesión para saltar la home genérica (se borra al cerrar pestaña)
+    sessionStorage.setItem("korai_from_municipio", "1");
     setLocation("/");
   }
 
