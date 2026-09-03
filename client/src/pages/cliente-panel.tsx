@@ -272,7 +272,7 @@ export default function ClientePanel() {
         {activeTab === "usuarios" && (
           <div className="space-y-3">
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre o teléfono..."
-              className="w-full h-10 px-4 rounded-xl bg-white border border-gray-200 text-sm focus:outline-none" />
+              className="w-full h-10 px-4 rounded-xl bg-white border border-gray-200 text-sm text-gray-900 focus:outline-none" />
             <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
               {filtered.length === 0 && <p className="text-center py-12 text-gray-400 text-sm">Sin usuarios todavía</p>}
               {filtered.map((r, i) => {
@@ -315,19 +315,19 @@ export default function ClientePanel() {
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Título de bienvenida</label>
                 <input value={configForm.bienvenida_titulo} onChange={e => setConfigForm((f: any) => ({ ...f, bienvenida_titulo: e.target.value }))}
-                  className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none"
+                  className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none"
                   placeholder="Ej: Diagnóstico de Bienestar San Isidro" />
               </div>
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Subtítulo</label>
                 <textarea value={configForm.bienvenida_subtitulo} onChange={e => setConfigForm((f: any) => ({ ...f, bienvenida_subtitulo: e.target.value }))}
-                  rows={2} className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none resize-none"
+                  rows={2} className="w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none resize-none"
                   placeholder="Ej: Respondé algunas preguntas y te conectamos con recursos de tu municipio" />
               </div>
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">URL del logo</label>
                 <input value={configForm.logo_url} onChange={e => setConfigForm((f: any) => ({ ...f, logo_url: e.target.value }))}
-                  className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none"
+                  className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none"
                   placeholder="https://..." />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -337,7 +337,7 @@ export default function ClientePanel() {
                     <input type="color" value={configForm.color_primario} onChange={e => setConfigForm((f: any) => ({ ...f, color_primario: e.target.value }))}
                       className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
                     <input value={configForm.color_primario} onChange={e => setConfigForm((f: any) => ({ ...f, color_primario: e.target.value }))}
-                      className="flex-1 h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none font-mono" />
+                      className="flex-1 h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none font-mono" />
                   </div>
                 </div>
                 <div>
@@ -346,7 +346,7 @@ export default function ClientePanel() {
                     <input type="color" value={configForm.color_secundario} onChange={e => setConfigForm((f: any) => ({ ...f, color_secundario: e.target.value }))}
                       className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
                     <input value={configForm.color_secundario} onChange={e => setConfigForm((f: any) => ({ ...f, color_secundario: e.target.value }))}
-                      className="flex-1 h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none font-mono" />
+                      className="flex-1 h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none font-mono" />
                   </div>
                 </div>
               </div>
