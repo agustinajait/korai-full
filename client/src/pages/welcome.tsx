@@ -247,7 +247,18 @@ function TransitionScreen({ onStart }: { onStart: () => void }) {
 
 export default function Welcome() {
   const [_, setLocation] = useLocation();
-  const [mode, setMode] = useState<"landing" | "form" | "context" | "transition" | "returning">("landing");
+
+  // Si viene de una landing de municipio, saltear la pantalla genérica de Korai
+  const cameFromMunicipio = (() => {
+    try {
+      const ctx = JSON.parse(localStorage.getItem("korai_context") || "null");
+      return !!(ctx?.tenant_id && ctx?.slug);
+    } catch { return false; }
+  })();
+
+  const [mode, setMode] = useState<"landing" | "form" | "context" | "transition" | "returning">(
+    cameFromMunicipio ? "form" : "landing"
+  );
 
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
@@ -392,7 +403,7 @@ export default function Welcome() {
           <div className="flex flex-col gap-0">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
               className="flex justify-center">
-              <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "220px", filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
+              <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "220px", filter: "hue-rotate(150deg) drop-shadow(0 4px 20px rgba(34,197,94,0.2))" }} />
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-3">
               <div className="flex items-center gap-3 p-4 rounded-2xl border border-[#E9D5FF] bg-[#F5F3FF]">
