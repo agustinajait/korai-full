@@ -48,7 +48,6 @@ export default function MunicipioLanding() {
         if (!Array.isArray(data) || !data[0]) { setNotFound(true); setLoading(false); return; }
         const t = data[0] as Tenant;
         setTenant(t);
-        // fetch campaign
         const cr = await fetch(
           `${SUPABASE_URL}/rest/v1/campaigns?tenant_id=eq.${t.id}&activo=eq.true&limit=1`,
           { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
@@ -96,67 +95,69 @@ export default function MunicipioLanding() {
     );
   }
 
-  const primary = tenant?.color_primario ?? "#5c40c0";
-  const secondary = tenant?.color_secundario ?? "#22C55E";
-  const titulo = tenant?.bienvenida_titulo || `Diagnóstico Social - ${tenant?.nombre}`;
+  const primary = tenant?.color_primario || "#5c40c0";
+  const secondary = tenant?.color_secundario || "#22C55E";
+  const titulo = tenant?.bienvenida_titulo || `Diagnóstico Social`;
   const subtitulo = tenant?.bienvenida_subtitulo || "Respondé unas preguntas y conectamos con los recursos que necesitás.";
 
-  // Derive lighter tones for cards/backgrounds
-  const bgPage = "#F8F7FF";
-  const C = {
-    text:     "#1E1040",
-    textSub:  "#6B5FA0",
-    border:   "#DDD6FE",
-    bgCard:   "#FFFFFF",
-    primaryLight: primary + "22",
-  };
-
   return (
-    <div className="min-h-screen w-full flex justify-center" style={{ background: bgPage }}>
-      <div className="w-full max-w-sm flex flex-col min-h-screen px-5 pt-12 pb-6 gap-4">
+    <div className="min-h-screen w-full flex justify-center" style={{ background: "#F8F7FF" }}>
+      <div className="w-full max-w-sm flex flex-col min-h-screen px-5 pt-10 pb-6 gap-3">
 
-        {/* Logo / Nombre municipio */}
+        {/* Header: logo municipio o logo Korai */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-center gap-3">
+          className="flex flex-col items-center gap-2">
           {tenant?.logo_url ? (
-            <img src={tenant.logo_url} alt={tenant.nombre} className="h-12 w-auto object-contain"
-              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            <img
+              src={tenant.logo_url}
+              alt={tenant.nombre}
+              className="h-14 w-auto object-contain"
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
           ) : (
-            <>
+            <div className="flex items-center gap-2">
               <img src={koraiLogo} alt="Korai" className="w-9 h-9 object-contain" />
-              <span style={{ fontFamily: "'Montserrat', sans-serif", color: C.text }}
+              <span style={{ fontFamily: "'Montserrat', sans-serif", color: "#1E1040" }}
                 className="text-2xl font-black tracking-tight">
                 KOR<span style={{ color: secondary }}>AI</span>
               </span>
-            </>
+            </div>
           )}
-        </motion.div>
-
-        {/* Nombre del municipio como badge */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-          className="flex justify-center">
+          {/* Nombre municipio */}
           <span className="text-xs font-bold px-3 py-1 rounded-full"
             style={{ background: primary + "18", color: primary, fontFamily: "'Montserrat', sans-serif" }}>
             {tenant?.nombre}
           </span>
         </motion.div>
 
-        {/* Headline bullets — misma estructura que welcome */}
-        <div className="space-y-3 mt-4">
+        {/* Título y subtítulo */}
+        <motion.div initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.15 }} className="mt-4 space-y-2">
+          <h1 className="text-3xl font-black leading-tight"
+            style={{ fontFamily: "'Montserrat', sans-serif", color: "#1E1040" }}>
+            {titulo}
+          </h1>
+          <p className="text-sm leading-relaxed" style={{ color: "#6B5FA0", fontFamily: "'Montserrat', sans-serif" }}>
+            {subtitulo}
+          </p>
+        </motion.div>
+
+        {/* Bullets — igual que welcome */}
+        <div className="space-y-2 mt-2">
           {[
-            { emoji: "💜", text: titulo.split(" ").slice(0, 3).join(" ") || "Queremos conocerte," },
-            { emoji: "👂", text: titulo.split(" ").slice(3, 6).join(" ") || "escucharte y acompañarte" },
-            { emoji: "👥", text: subtitulo.split(" ").slice(0, 6).join(" ") + "..." },
+            { emoji: "💜", text: "Queremos conocerte," },
+            { emoji: "👂", text: "escucharte y acercarte" },
+            { emoji: "👥", text: "oportunidades para vos y tu familia." },
           ].map((item, i) => (
             <motion.div key={i} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15 + i * 0.1 }}
+              transition={{ delay: 0.2 + i * 0.08 }}
               className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-xl"
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg"
                 style={{ background: primary + "20" }}>
                 {item.emoji}
               </div>
-              <span style={{ fontFamily: "'Montserrat', sans-serif", color: primary }}
-                className="text-xl font-black leading-tight">
+              <span className="text-lg font-black leading-tight"
+                style={{ fontFamily: "'Montserrat', sans-serif", color: primary }}>
                 {item.text}
               </span>
             </motion.div>
@@ -165,50 +166,43 @@ export default function MunicipioLanding() {
 
         <div className="flex-1" />
 
-        <div className="flex flex-col gap-0">
-          {/* Imagen familia — misma que welcome */}
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }} className="flex justify-center">
-            <img src={fliaImg} alt="Familia" className="w-full object-contain"
-              style={{ maxHeight: "200px", filter: `drop-shadow(0 4px 20px ${primary}30)` }} />
-          </motion.div>
+        {/* Imagen */}
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }} className="flex justify-center">
+          <img src={fliaImg} alt="Familia" className="w-full object-contain"
+            style={{ maxHeight: "190px", filter: `drop-shadow(0 4px 20px ${primary}30)` }} />
+        </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }} className="space-y-3">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }} className="space-y-3">
 
-            {/* Info card — igual que welcome */}
-            <div className="flex items-center gap-3 p-4 rounded-2xl border"
-              style={{ borderColor: primary + "40", background: primary + "10" }}>
-              <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-xl"
-                style={{ background: primary + "25" }}>
-                ⏱️
-              </div>
-              <p style={{ fontFamily: "'Montserrat', sans-serif", color: C.text }} className="text-sm leading-snug">
-                Es un{" "}
-                <span className="font-black" style={{ color: primary }}>diagnóstico simple</span>{" "}
-                que dura solo{" "}
-                <span className="font-black" style={{ color: secondary }}>unos minutos</span>{" "}
-                y nos permite acompañarte mejor.
-              </p>
-            </div>
-
-            {/* CTA — gradiente con colores del municipio */}
-            <button onClick={startDiagnosis}
-              className="w-full h-14 text-lg font-black rounded-2xl shadow-lg flex items-center justify-center gap-3 text-white transition-opacity hover:opacity-90"
-              style={{
-                fontFamily: "'Montserrat', sans-serif",
-                background: `linear-gradient(135deg, ${primary}, ${secondary})`,
-                boxShadow: `0 8px 32px ${primary}40`,
-              }}>
-              Comenzar <ArrowRight className="w-5 h-5" />
-            </button>
-
-            <p className="text-[10px] text-center flex items-center justify-center gap-1"
-              style={{ color: C.textSub, fontFamily: "'Montserrat', sans-serif" }}>
-              <Shield className="w-3 h-3" /> Tu información está protegida · Anónimo y voluntario
+          {/* Info card */}
+          <div className="flex items-center gap-3 p-4 rounded-2xl border"
+            style={{ borderColor: primary + "40", background: primary + "10" }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg"
+              style={{ background: primary + "25" }}>⏱️</div>
+            <p style={{ fontFamily: "'Montserrat', sans-serif", color: "#1E1040" }} className="text-sm leading-snug">
+              Es un <span className="font-black" style={{ color: primary }}>diagnóstico simple</span> que dura solo{" "}
+              <span className="font-black" style={{ color: secondary }}>unos minutos</span> y nos permite acompañarte mejor.
             </p>
-          </motion.div>
-        </div>
+          </div>
+
+          {/* CTA */}
+          <button onClick={startDiagnosis}
+            className="w-full h-14 text-lg font-black rounded-2xl shadow-lg flex items-center justify-center gap-3 text-white transition-opacity hover:opacity-90"
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+              background: `linear-gradient(135deg, ${primary}, ${secondary})`,
+              boxShadow: `0 8px 32px ${primary}40`,
+            }}>
+            Comenzar <ArrowRight className="w-5 h-5" />
+          </button>
+
+          <p className="text-[10px] text-center flex items-center justify-center gap-1"
+            style={{ color: "#6B5FA0", fontFamily: "'Montserrat', sans-serif" }}>
+            <Shield className="w-3 h-3" /> Tu información está protegida · Anónimo y voluntario
+          </p>
+        </motion.div>
       </div>
     </div>
   );
