@@ -189,8 +189,8 @@ export default function MunicipioLanding() {
               </div>
             )}
             <div className="text-right max-w-[110px]">
-              <p className="text-[11px] font-black leading-tight text-white/60 uppercase tracking-wide"
-                style={{ fontFamily: "'Montserrat', sans-serif" }}>
+              <p className="text-[11px] font-black leading-tight uppercase tracking-wide"
+                style={{ fontFamily: "'Montserrat', sans-serif", color: primary }}>
                 Un {tenant?.nombre}<br />más cerca<br />de su gente
               </p>
             </div>
@@ -204,7 +204,7 @@ export default function MunicipioLanding() {
               <span style={{ color: primary }}>{lastWord}</span>
               <span className="ml-1 text-2xl">↗</span>
             </h1>
-            <p className="text-sm leading-relaxed text-white/70 text-center"
+            <p className="text-sm leading-relaxed text-white/90 text-center"
               style={{ fontFamily: "'Montserrat', sans-serif" }}>
               {subtitulo}
             </p>
@@ -218,7 +218,7 @@ export default function MunicipioLanding() {
               style={{ background: primary + "25" }}>
               <Users className="w-5 h-5" style={{ color: primary }} />
             </div>
-            <p className="text-xs text-white/80 leading-relaxed" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+            <p className="text-xs text-white leading-relaxed" style={{ fontFamily: "'Montserrat', sans-serif" }}>
               Esta propuesta llega a <span className="font-black" style={{ color: primary }}>personas y familias</span> a
               través de los <strong className="text-white">espacios municipales</strong> donde ya acompañamos a la comunidad.
             </p>
@@ -279,7 +279,7 @@ export default function MunicipioLanding() {
               style={{ background: "rgba(255,255,255,0.15)" }}>
               <BarChart3 className="w-6 h-6 text-white" />
             </div>
-            <p className="text-xs text-white/80 leading-relaxed" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+            <p className="text-xs text-white leading-relaxed" style={{ fontFamily: "'Montserrat', sans-serif" }}>
               <span className="font-black text-white">Korai</span> analiza tu situación y la de tu familia en áreas clave como{" "}
               <span className="font-black" style={{ color: primary }}>empleo, vivienda, salud y más</span>,
               para identificar tus necesidades, conectarte con oportunidades y acompañarte en tu proceso.
@@ -298,7 +298,7 @@ export default function MunicipioLanding() {
                 <span style={{ color: primary }}>{chip.icon}</span>
                 <span className="text-xs font-black text-white"
                   style={{ fontFamily: "'Montserrat', sans-serif" }}>{chip.title}</span>
-                <span className="text-[9px] text-white/50 leading-tight"
+                <span className="text-[9px] text-white/75 leading-tight"
                   style={{ fontFamily: "'Montserrat', sans-serif" }}>{chip.desc}</span>
               </div>
             ))}
@@ -319,13 +319,13 @@ export default function MunicipioLanding() {
 
           {/* Footer */}
           <div className="flex items-center justify-between">
-            <p className="text-[10px] text-white/40 flex items-center gap-1"
+            <p className="text-[10px] text-white/60 flex items-center gap-1"
               style={{ fontFamily: "'Montserrat', sans-serif" }}>
               <Shield className="w-3 h-3" /> Tu información está protegida
             </p>
             <div className="flex items-center gap-1">
-              <img src={koraiLogo} alt="Korai" className="w-4 h-4 object-contain opacity-40" />
-              <span className="text-[10px] text-white/40 font-bold"
+              <img src={koraiLogo} alt="Korai" className="w-4 h-4 object-contain opacity-60" />
+              <span className="text-[10px] text-white/60 font-bold"
                 style={{ fontFamily: "'Montserrat', sans-serif" }}>
                 Impulsado por Korai
               </span>
