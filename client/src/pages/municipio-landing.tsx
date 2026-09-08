@@ -32,22 +32,38 @@ interface Area {
   descripcion?: string;
   emoji?: string;
   color?: string;
+  imagen_url?: string;
 }
 
-const DEFAULT_AREAS: Area[] = [
-  { id: "1", nombre: "Empleo", descripcion: "Formación e inclusión", emoji: "💼", color: "#dcfce7" },
-  { id: "2", nombre: "Salud", descripcion: "Cuidado más cerca de tu comunidad", emoji: "🩺", color: "#fce7f3" },
-  { id: "3", nombre: "Vivienda", descripcion: "Acceso y mejora habitacional", emoji: "🏠", color: "#e0f2fe" },
-  { id: "4", nombre: "Niñez y Juventud", descripcion: "Más oportunidades para crecer", emoji: "👶", color: "#fff3e0" },
-  { id: "5", nombre: "Personas Mayores", descripcion: "Bienestar y vida activa", emoji: "👴", color: "#fefce8" },
-  { id: "6", nombre: "Acción Social", descripcion: "Acompañamiento en los barrios", emoji: "🤝", color: "#f3e8ff" },
+// Fotos por defecto por nombre de área (Unsplash libre)
+const AREA_DEFAULTS: Record<string, { color: string; emoji: string; imagen_url: string }> = {
+  empleo:    { color: "#dcfce7", emoji: "💼", imagen_url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80" },
+  salud:     { color: "#fce7f3", emoji: "🩺", imagen_url: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80" },
+  vivienda:  { color: "#e0f2fe", emoji: "🏠", imagen_url: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80" },
+  niñez:     { color: "#fff3e0", emoji: "👶", imagen_url: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400&q=80" },
+  juventud:  { color: "#fff3e0", emoji: "🎓", imagen_url: "https://images.unsplash.com/photo-1529390079861-591de354faf5?w=400&q=80" },
+  mayores:   { color: "#fefce8", emoji: "👴", imagen_url: "https://images.unsplash.com/photo-1516307365426-bea591f05011?w=400&q=80" },
+  acción:    { color: "#f3e8ff", emoji: "🤝", imagen_url: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=400&q=80" },
+  social:    { color: "#f3e8ff", emoji: "🤝", imagen_url: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=400&q=80" },
+};
+
+const FALLBACK_AREAS: Area[] = [
+  { id: "1", nombre: "Centros Faro", descripcion: "Primera infancia", emoji: "👶", color: "#e0f2fe", imagen_url: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400&q=80" },
+  { id: "2", nombre: "Niñez y Juventud", descripcion: "Más oportunidades para su futuro", emoji: "🎓", color: "#fff3e0", imagen_url: "https://images.unsplash.com/photo-1529390079861-591de354faf5?w=400&q=80" },
+  { id: "3", nombre: "Empleo", descripcion: "Formación e inclusión", emoji: "💼", color: "#dcfce7", imagen_url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80" },
+  { id: "4", nombre: "Salud", descripcion: "Cuidado más cerca de tu comunidad", emoji: "🏥", color: "#fce7f3", imagen_url: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80" },
 ];
 
-// Blob SVG decorativo
-function Blob({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return (
-    <div className={className} style={{ ...style, borderRadius: "60% 40% 70% 30% / 50% 60% 40% 50%", opacity: 0.18 }} />
-  );
+function getAreaDefaults(nombre: string) {
+  const key = nombre.toLowerCase();
+  for (const [k, v] of Object.entries(AREA_DEFAULTS)) {
+    if (key.includes(k)) return v;
+  }
+  return { color: "#f0f0f0", emoji: "🏛️", imagen_url: "" };
+}
+
+function Blob({ style }: { style?: React.CSSProperties }) {
+  return <div className="absolute pointer-events-none" style={{ borderRadius: "60% 40% 70% 30% / 50% 60% 40% 50%", opacity: 0.15, ...style }} />;
 }
 
 export default function MunicipioLanding() {
@@ -73,7 +89,6 @@ export default function MunicipioLanding() {
         const t = data[0] as Tenant;
         setTenant(t);
 
-        // Fetch campaign
         const cr = await fetch(
           `${SUPABASE_URL}/rest/v1/campaigns?tenant_id=eq.${t.id}&activo=eq.true&limit=1`,
           { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
@@ -81,13 +96,12 @@ export default function MunicipioLanding() {
         const camps = await cr.json();
         if (Array.isArray(camps) && camps[0]) setCampaignId(camps[0].id);
 
-        // Fetch areas
         const ar = await fetch(
-          `${SUPABASE_URL}/rest/v1/derivation_areas?tenant_id=eq.${t.id}&activo=eq.true&order=nombre.asc`,
+          `${SUPABASE_URL}/rest/v1/derivation_areas?tenant_id=eq.${t.id}&activo=eq.true&order=nombre.asc&limit=4`,
           { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
         );
         const arData = await ar.json();
-        setAreas(Array.isArray(arData) && arData.length > 0 ? arData : DEFAULT_AREAS);
+        setAreas(Array.isArray(arData) && arData.length > 0 ? arData : FALLBACK_AREAS);
         setLoading(false);
       })
       .catch(() => { setNotFound(true); setLoading(false); });
@@ -127,32 +141,40 @@ export default function MunicipioLanding() {
 
   const primary = tenant?.color_primario || "#22C55E";
   const titulo = tenant?.bienvenida_titulo || `${tenant?.nombre} te acompaña`;
-  const subtitulo = tenant?.bienvenida_subtitulo || "Queremos conocerte mejor, para conectarte con oportunidades y acompañarte en tu proceso.";
+  const subtitulo = tenant?.bienvenida_subtitulo || "Queremos conocerte mejor, para entender tus necesidades y seguir construyendo una comunidad más cercana.";
 
-  // Split title: last word gets accent color
   const tituloWords = titulo.split(" ");
   const lastWord = tituloWords.pop();
   const firstPart = tituloWords.join(" ");
 
-  const AREA_COLORS = ["#e0f7f0", "#fff3e0", "#f0e8ff", "#dcfce7", "#fefce8", "#fce7f3"];
+  const displayAreas = areas.slice(0, 4).map(a => {
+    const def = getAreaDefaults(a.nombre);
+    return {
+      ...a,
+      color: a.color || def.color,
+      emoji: a.emoji || def.emoji,
+      imagen_url: a.imagen_url || def.imagen_url,
+    };
+  });
 
   return (
     <div className="min-h-screen w-full flex justify-center" style={{ background: "#0d2b28" }}>
       <div className="w-full max-w-sm relative overflow-hidden">
 
-        {/* Blobs decorativos */}
-        <Blob className="absolute -top-16 -left-16 w-48 h-48" style={{ background: primary }} />
-        <Blob className="absolute top-32 -right-12 w-36 h-36" style={{ background: primary }} />
-        <Blob className="absolute bottom-80 -left-10 w-28 h-28" style={{ background: primary }} />
+        {/* Blobs */}
+        <Blob style={{ top: -60, left: -60, width: 180, height: 180, background: primary }} />
+        <Blob style={{ top: 80, right: -40, width: 130, height: 130, background: primary }} />
+        <Blob style={{ bottom: 200, left: -30, width: 100, height: 100, background: primary }} />
+        <Blob style={{ bottom: 40, right: -20, width: 80, height: 80, background: primary }} />
 
-        <div className="relative z-10 px-5 pt-10 pb-10 flex flex-col gap-6">
+        <div className="relative z-10 px-4 pt-10 pb-10 flex flex-col gap-5">
 
-          {/* Header: logo + texto lateral */}
+          {/* Header */}
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
             className="flex items-start justify-between">
             {tenant?.logo_url ? (
               <img src={tenant.logo_url} alt={tenant.nombre}
-                className="h-16 w-auto object-contain bg-white rounded-xl p-2"
+                className="h-16 w-auto object-contain bg-white rounded-xl p-2 max-w-[160px]"
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
             ) : (
               <div className="bg-white rounded-xl px-3 py-2 flex items-center gap-2">
@@ -165,80 +187,114 @@ export default function MunicipioLanding() {
                 </span>
               </div>
             )}
-            <div className="text-right max-w-[120px]">
-              <p className="text-xs font-black leading-tight text-white/70 uppercase tracking-wide"
+            <div className="text-right max-w-[110px]">
+              <p className="text-[11px] font-black leading-tight text-white/60 uppercase tracking-wide"
                 style={{ fontFamily: "'Montserrat', sans-serif" }}>
                 Un {tenant?.nombre}<br />más cerca<br />de su gente
               </p>
             </div>
           </motion.div>
 
-          {/* Título grande */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <h1 className="text-[36px] font-black leading-tight text-white"
+          {/* Título */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <h1 className="text-[38px] font-black leading-none text-white mb-3"
               style={{ fontFamily: "'Montserrat', sans-serif" }}>
-              {firstPart}{" "}
+              {firstPart}{"\n"}
               <span style={{ color: primary }}>{lastWord}</span>
+              <span className="ml-1 text-2xl">↗</span>
             </h1>
-            <p className="text-sm leading-relaxed text-white/70 mt-3"
+            <p className="text-sm leading-relaxed text-white/70 text-center"
               style={{ fontFamily: "'Montserrat', sans-serif" }}>
-              {subtitulo}
+              <strong className="text-white/90">Queremos conocerte mejor,</strong><br />
+              {subtitulo.replace(/queremos conocerte mejor,?\s*/i, "")}
             </p>
           </motion.div>
 
-          {/* Grid de áreas */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <div className="grid grid-cols-3 gap-2">
-              {areas.slice(0, 6).map((area, i) => {
-                const bg = area.color || AREA_COLORS[i % AREA_COLORS.length];
-                return (
-                  <div key={area.id} className="rounded-2xl overflow-hidden" style={{ background: bg }}>
-                    {/* Color block superior */}
-                    <div className="h-16 flex items-center justify-center text-3xl"
-                      style={{ background: bg + "cc" }}>
-                      {area.emoji || "🏛️"}
-                    </div>
-                    {/* Info inferior */}
-                    <div className="px-2 py-2 bg-white">
-                      <p className="text-[10px] font-black text-gray-800 leading-tight"
-                        style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                        {area.nombre}
-                      </p>
-                      {area.descripcion && (
-                        <p className="text-[9px] text-gray-500 mt-0.5 leading-tight">{area.descripcion}</p>
-                      )}
-                    </div>
+          {/* Card intro */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+            className="rounded-2xl p-4 flex items-center gap-3"
+            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: primary + "25" }}>
+              <Users className="w-5 h-5" style={{ color: primary }} />
+            </div>
+            <p className="text-xs text-white/80 leading-relaxed" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+              Esta propuesta llega a <span className="font-black" style={{ color: primary }}>personas y familias</span> a
+              través de los <strong className="text-white">espacios municipales</strong> donde ya acompañamos a la comunidad.
+            </p>
+          </motion.div>
+
+          {/* Grid 2x2 de áreas con fotos */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <div className="grid grid-cols-2 gap-2">
+              {displayAreas.map((area) => (
+                <div key={area.id} className="rounded-2xl overflow-hidden" style={{ background: area.color }}>
+                  {/* Foto */}
+                  <div className="h-28 overflow-hidden relative">
+                    {area.imagen_url ? (
+                      <img
+                        src={area.imagen_url}
+                        alt={area.nombre}
+                        className="w-full h-full object-cover"
+                        onError={e => {
+                          const el = e.target as HTMLImageElement;
+                          el.style.display = "none";
+                          const parent = el.parentElement;
+                          if (parent) {
+                            parent.style.display = "flex";
+                            parent.style.alignItems = "center";
+                            parent.style.justifyContent = "center";
+                            parent.style.fontSize = "40px";
+                            parent.innerHTML = area.emoji || "🏛️";
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-4xl"
+                        style={{ background: area.color }}>
+                        {area.emoji}
+                      </div>
+                    )}
                   </div>
-                );
-              })}
+                  {/* Info */}
+                  <div className="px-3 py-3 bg-white">
+                    <p className="text-[11px] font-black text-gray-800 leading-tight"
+                      style={{ fontFamily: "'Montserrat', sans-serif" }}>
+                      {area.nombre}
+                    </p>
+                    {area.descripcion && (
+                      <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">{area.descripcion}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </motion.div>
 
-          {/* Card descripción Korai */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+          {/* Card Korai */}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
             className="rounded-2xl p-4 flex items-start gap-3"
-            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: primary + "30" }}>
-              <BarChart3 className="w-5 h-5" style={{ color: primary }} />
+            style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(255,255,255,0.15)" }}>
+              <BarChart3 className="w-6 h-6 text-white" />
             </div>
             <p className="text-xs text-white/80 leading-relaxed" style={{ fontFamily: "'Montserrat', sans-serif" }}>
               <span className="font-black text-white">Korai</span> analiza tu situación y la de tu familia en áreas clave como{" "}
               <span className="font-black" style={{ color: primary }}>empleo, vivienda, salud y más</span>,
-              para identificar tus necesidades y conectarte con oportunidades.
+              para identificar tus necesidades, conectarte con oportunidades y acompañarte en tu proceso.
             </p>
           </motion.div>
 
-          {/* Chips con descripción */}
+          {/* Chips */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-            className="grid grid-cols-3 gap-2">
+            className="grid grid-cols-3 gap-1">
             {[
-              { icon: <Clock className="w-4 h-4" />, title: "2 minutos", desc: "Es simple y rápido" },
-              { icon: <Lock className="w-4 h-4" />, title: "Confidencial", desc: "Tu información está protegida" },
-              { icon: <Users className="w-4 h-4" />, title: "Gratuito", desc: "Tu participación suma" },
+              { icon: <Clock className="w-5 h-5" />, title: "2 minutos", desc: "Es simple y rápido" },
+              { icon: <Lock className="w-5 h-5" />, title: "Confidencial", desc: "Tu información está protegida" },
+              { icon: <Users className="w-5 h-5" />, title: "Gratuito", desc: "Tu participación suma" },
             ].map((chip, i) => (
-              <div key={i} className="flex flex-col items-center gap-1 py-3 px-1 rounded-2xl text-center"
-                style={{ background: "rgba(255,255,255,0.07)" }}>
+              <div key={i} className="flex flex-col items-start gap-1 py-3 px-2">
                 <span style={{ color: primary }}>{chip.icon}</span>
                 <span className="text-xs font-black text-white"
                   style={{ fontFamily: "'Montserrat', sans-serif" }}>{chip.title}</span>
@@ -249,7 +305,7 @@ export default function MunicipioLanding() {
           </motion.div>
 
           {/* CTA */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
             <button onClick={startDiagnosis}
               className="w-full h-14 text-base font-black rounded-2xl flex items-center justify-center gap-3 text-white transition-all hover:opacity-90 active:scale-[0.98]"
               style={{
@@ -262,13 +318,13 @@ export default function MunicipioLanding() {
           </motion.div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between pb-2">
+          <div className="flex items-center justify-between">
             <p className="text-[10px] text-white/40 flex items-center gap-1"
               style={{ fontFamily: "'Montserrat', sans-serif" }}>
               <Shield className="w-3 h-3" /> Tu información está protegida
             </p>
             <div className="flex items-center gap-1">
-              <img src={koraiLogo} alt="Korai" className="w-4 h-4 object-contain opacity-50" />
+              <img src={koraiLogo} alt="Korai" className="w-4 h-4 object-contain opacity-40" />
               <span className="text-[10px] text-white/40 font-bold"
                 style={{ fontFamily: "'Montserrat', sans-serif" }}>
                 Impulsado por Korai
@@ -276,9 +332,9 @@ export default function MunicipioLanding() {
             </div>
           </div>
 
-          {/* Texto decorativo bottom-left */}
-          <div className="absolute bottom-4 left-4 -rotate-6 opacity-20 pointer-events-none">
-            <p className="text-[10px] font-black text-white uppercase tracking-widest leading-tight">
+          {/* Texto decorativo */}
+          <div className="absolute bottom-6 left-4 -rotate-6 opacity-15 pointer-events-none">
+            <p className="text-[9px] font-black text-white uppercase tracking-widest leading-tight">
               Comunidades<br />más oportunidades
             </p>
           </div>
