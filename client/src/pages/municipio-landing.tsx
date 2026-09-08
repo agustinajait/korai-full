@@ -54,6 +54,20 @@ const FALLBACK_AREAS: Area[] = [
   { id: "4", nombre: "Salud", descripcion: "Cuidado más cerca de tu comunidad", emoji: "🏥", color: "#fce7f3", imagen_url: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80" },
 ];
 
+// Asegura que el color sea legible sobre fondo oscuro (#0d2b28)
+function ensureReadableOnDark(hex: string): string {
+  try {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    if (lum < 0.25) return "#4ade80"; // verde brillante si el color es muy oscuro
+    return hex;
+  } catch {
+    return "#22C55E";
+  }
+}
+
 function getAreaDefaults(nombre: string) {
   const key = nombre.toLowerCase();
   for (const [k, v] of Object.entries(AREA_DEFAULTS)) {
@@ -140,6 +154,8 @@ export default function MunicipioLanding() {
   }
 
   const primary = tenant?.color_primario || "#22C55E";
+  // Color legible sobre fondo oscuro (si el primary es muy oscuro, se usa verde brillante)
+  const accentOnDark = ensureReadableOnDark(primary);
   const titulo = tenant?.bienvenida_titulo || `${tenant?.nombre} te acompaña`;
   const subtitulo = tenant?.bienvenida_subtitulo || "Queremos conocerte mejor, para entender tus necesidades y seguir construyendo una comunidad más cercana.";
 
@@ -190,7 +206,7 @@ export default function MunicipioLanding() {
             )}
             <div className="text-right max-w-[110px]">
               <p className="text-[11px] font-black leading-tight uppercase tracking-wide"
-                style={{ fontFamily: "'Montserrat', sans-serif", color: primary }}>
+                style={{ fontFamily: "'Montserrat', sans-serif", color: accentOnDark }}>
                 Un {tenant?.nombre}<br />más cerca<br />de su gente
               </p>
             </div>
@@ -201,7 +217,7 @@ export default function MunicipioLanding() {
             <h1 className="text-[38px] font-black leading-none text-white mb-3"
               style={{ fontFamily: "'Montserrat', sans-serif" }}>
               {firstPart}{"\n"}
-              <span style={{ color: primary }}>{lastWord}</span>
+              <span style={{ color: accentOnDark }}>{lastWord}</span>
               <span className="ml-1 text-2xl">↗</span>
             </h1>
             <p className="text-sm leading-relaxed text-white/90 text-center"
@@ -215,11 +231,11 @@ export default function MunicipioLanding() {
             className="rounded-2xl p-4 flex items-center gap-3"
             style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
             <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: primary + "25" }}>
-              <Users className="w-5 h-5" style={{ color: primary }} />
+              style={{ background: accentOnDark + "25" }}>
+              <Users className="w-5 h-5" style={{ color: accentOnDark }} />
             </div>
             <p className="text-xs text-white leading-relaxed" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-              Esta propuesta llega a <span className="font-black" style={{ color: primary }}>personas y familias</span> a
+              Esta propuesta llega a <span className="font-black" style={{ color: accentOnDark }}>personas y familias</span> a
               través de los <strong className="text-white">espacios municipales</strong> donde ya acompañamos a la comunidad.
             </p>
           </motion.div>
@@ -281,7 +297,7 @@ export default function MunicipioLanding() {
             </div>
             <p className="text-xs text-white leading-relaxed" style={{ fontFamily: "'Montserrat', sans-serif" }}>
               <span className="font-black text-white">Korai</span> analiza tu situación y la de tu familia en áreas clave como{" "}
-              <span className="font-black" style={{ color: primary }}>empleo, vivienda, salud y más</span>,
+              <span className="font-black" style={{ color: accentOnDark }}>empleo, vivienda, salud y más</span>,
               para identificar tus necesidades, conectarte con oportunidades y acompañarte en tu proceso.
             </p>
           </motion.div>
@@ -295,7 +311,7 @@ export default function MunicipioLanding() {
               { icon: <Users className="w-5 h-5" />, title: "Gratuito", desc: "Tu participación suma" },
             ].map((chip, i) => (
               <div key={i} className="flex flex-col items-start gap-1 py-3 px-2">
-                <span style={{ color: primary }}>{chip.icon}</span>
+                <span style={{ color: accentOnDark }}>{chip.icon}</span>
                 <span className="text-xs font-black text-white"
                   style={{ fontFamily: "'Montserrat', sans-serif" }}>{chip.title}</span>
                 <span className="text-[9px] text-white/75 leading-tight"
