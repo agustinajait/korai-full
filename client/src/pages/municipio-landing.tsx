@@ -204,10 +204,10 @@ export default function MunicipioLanding() {
                 </span>
               </div>
             )}
-            <div className="text-right max-w-[110px]">
+            <div className="text-right max-w-[130px]">
               <p className="text-[11px] font-black leading-tight uppercase tracking-wide"
                 style={{ fontFamily: "'Montserrat', sans-serif", color: accentOnDark }}>
-                Un {tenant?.nombre}<br />más cerca<br />de su gente
+                {tenant?.nombre}<br />más cerca<br />de su gente
               </p>
             </div>
           </motion.div>

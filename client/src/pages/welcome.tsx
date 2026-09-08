@@ -264,6 +264,23 @@ export default function Welcome() {
     cameFromMunicipio ? "form" : "landing"
   );
 
+  // Si vino desde una landing de municipio, el botón volver debe llevar de vuelta al slug
+  const municipioSlug = (() => {
+    try {
+      const ctx = localStorage.getItem("korai_context");
+      if (ctx) return JSON.parse(ctx)?.slug as string | undefined;
+    } catch {}
+    return undefined;
+  })();
+
+  function goBack() {
+    if (municipioSlug) {
+      setLocation(`/${municipioSlug}`);
+    } else {
+      setMode("landing");
+    }
+  }
+
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [dni, setDni] = useState("");
@@ -436,7 +453,7 @@ export default function Welcome() {
     return (
       <div className="min-h-screen w-full flex flex-col" style={{ background: C.bg }}>
         <div className="flex items-center px-5 pt-6 pb-2">
-          <button onClick={() => setMode("landing")} className="p-1 rounded-full hover:bg-black/5 transition-colors">
+          <button onClick={goBack} className="p-1 rounded-full hover:bg-black/5 transition-colors">
             <ChevronLeft className="w-5 h-5" style={{ color: C.textSub }} />
           </button>
         </div>
@@ -558,7 +575,7 @@ export default function Welcome() {
           </Button>
         </div>
 
-        <button onClick={() => setMode("landing")} className="w-full text-xs font-semibold py-2 transition-colors" style={{ color: C.textSub }}>
+        <button onClick={goBack} className="w-full text-xs font-semibold py-2 transition-colors" style={{ color: C.textSub }}>
           ← Volver
         </button>
       </motion.div>
