@@ -174,8 +174,8 @@ export default function MunicipioLanding() {
             className="flex items-start justify-between">
             {tenant?.logo_url ? (
               <img src={tenant.logo_url} alt={tenant.nombre}
-                className="w-auto object-contain bg-white rounded-xl p-2"
-                style={{ height: "64px", maxWidth: "160px", imageRendering: "auto" }}
+                className="w-auto object-contain"
+                style={{ height: "64px", maxWidth: "180px", imageRendering: "auto" }}
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
             ) : (
               <div className="bg-white rounded-xl px-3 py-2 flex items-center gap-2">
@@ -206,8 +206,7 @@ export default function MunicipioLanding() {
             </h1>
             <p className="text-sm leading-relaxed text-white/70 text-center"
               style={{ fontFamily: "'Montserrat', sans-serif" }}>
-              <strong className="text-white/90">Queremos conocerte mejor,</strong><br />
-              {subtitulo.replace(/queremos conocerte mejor,?\s*/i, "")}
+              {subtitulo}
             </p>
           </motion.div>
 
