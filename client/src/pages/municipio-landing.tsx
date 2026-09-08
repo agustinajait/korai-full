@@ -174,7 +174,8 @@ export default function MunicipioLanding() {
             className="flex items-start justify-between">
             {tenant?.logo_url ? (
               <img src={tenant.logo_url} alt={tenant.nombre}
-                className="h-16 w-auto object-contain bg-white rounded-xl p-2 max-w-[160px]"
+                className="w-auto object-contain bg-white rounded-xl p-2"
+                style={{ height: "64px", maxWidth: "160px", imageRendering: "auto" }}
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
             ) : (
               <div className="bg-white rounded-xl px-3 py-2 flex items-center gap-2">

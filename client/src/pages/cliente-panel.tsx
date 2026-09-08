@@ -332,11 +332,12 @@ export default function ClientePanel() {
                       onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
                   )}
                   <label className="flex-1 flex items-center justify-center gap-2 h-10 px-3 rounded-xl border-2 border-dashed border-gray-300 text-xs font-bold text-gray-500 cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-all">
-                    📁 {configForm.logo_url ? "Cambiar imagen" : "Subir logo (PNG, JPG, SVG)"}
-                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                    📁 {configForm.logo_url ? "Cambiar imagen" : "Subir logo"}
+                    <input type="file" accept="image/svg+xml,image/png,image/jpeg,image/webp" className="hidden" onChange={e => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      if (file.size > 500_000) { alert("El archivo debe pesar menos de 500KB"); return; }
+                      const maxSize = file.type === "image/svg+xml" ? 1_000_000 : 800_000;
+                      if (file.size > maxSize) { alert("El archivo es muy grande. Usá un SVG o PNG optimizado."); return; }
                       const reader = new FileReader();
                       reader.onload = ev => {
                         setConfigForm((f: any) => ({ ...f, logo_url: ev.target?.result as string }));
@@ -349,7 +350,7 @@ export default function ClientePanel() {
                       className="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
                   )}
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">Máx. 500KB. También podés pegar una URL en el campo de abajo.</p>
+                <p className="text-[10px] text-gray-400 mt-1">💡 <strong>SVG recomendado</strong> — escala sin pixelarse. PNG de alta resolución (mín. 300px) también funciona bien.</p>
                 <input value={configForm.logo_url?.startsWith("data:") ? "" : configForm.logo_url}
                   onChange={e => setConfigForm((f: any) => ({ ...f, logo_url: e.target.value }))}
                   className="w-full h-9 px-3 mt-1 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none"
