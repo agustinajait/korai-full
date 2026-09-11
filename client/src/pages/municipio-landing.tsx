@@ -155,6 +155,7 @@ export default function MunicipioLanding() {
   }
 
   const primary = tenant?.color_primario || "#22C55E";
+  const secondary = tenant?.color_secundario || primary;
   const bgColor = tenant?.settings?.color_fondo || "#0d2b28";
   // Color legible sobre fondo oscuro (si el primary es muy oscuro, se usa verde brillante)
   const accentOnDark = ensureReadableOnDark(primary);
@@ -179,10 +180,10 @@ export default function MunicipioLanding() {
     <div className="min-h-screen w-full flex justify-center" style={{ background: bgColor }}>
       <div className="w-full max-w-sm relative overflow-hidden">
 
-        {/* Blobs */}
+        {/* Blobs — alternan primary y secondary */}
         <Blob style={{ top: -60, left: -60, width: 180, height: 180, background: primary }} />
-        <Blob style={{ top: 80, right: -40, width: 130, height: 130, background: primary }} />
-        <Blob style={{ bottom: 200, left: -30, width: 100, height: 100, background: primary }} />
+        <Blob style={{ top: 80, right: -40, width: 130, height: 130, background: secondary }} />
+        <Blob style={{ bottom: 200, left: -30, width: 100, height: 100, background: secondary }} />
         <Blob style={{ bottom: 40, right: -20, width: 80, height: 80, background: primary }} />
 
         <div className="relative z-10 px-4 pt-10 pb-10 flex flex-col gap-5">
@@ -198,7 +199,7 @@ export default function MunicipioLanding() {
             ) : (
               <div className="bg-white rounded-xl px-3 py-2 flex items-center gap-2">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-black text-lg"
-                  style={{ background: primary }}>
+                  style={{ background: secondary }}>
                   {tenant?.name?.charAt(0) ?? "M"}
                 </div>
                 <span className="font-black text-sm text-gray-800" style={{ fontFamily: "'Montserrat', sans-serif" }}>

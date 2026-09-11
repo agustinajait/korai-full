@@ -375,7 +375,7 @@ export default function ClientePanel() {
               <div className="space-y-3">
                 {[
                   { key: "color_primario", label: "Color primario", desc: "Botón CTA y textos resaltados" },
-                  { key: "color_secundario", label: "Color secundario", desc: "Blobs decorativos" },
+                  { key: "color_secundario", label: "Color secundario", desc: "Blobs y avatar de inicio" },
                   { key: "color_fondo", label: "Color de fondo", desc: "Fondo de la landing pública" },
                 ].map(({ key, label, desc }) => (
                   <div key={key} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
