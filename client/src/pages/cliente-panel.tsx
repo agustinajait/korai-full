@@ -376,7 +376,8 @@ export default function ClientePanel() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Color secundario</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Color de fondo</label>
+                  <p className="text-[9px] text-gray-400 mb-1">Fondo de la landing pública</p>
                   <div className="flex gap-2 items-center">
                     <input type="color" value={configForm.color_secundario} onChange={e => setConfigForm((f: any) => ({ ...f, color_secundario: e.target.value }))}
                       className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
