@@ -24,6 +24,7 @@ interface Tenant {
   color_secundario?: string;
   bienvenida_titulo?: string;
   bienvenida_subtitulo?: string;
+  settings?: { color_fondo?: string };
 }
 
 interface Area {
@@ -154,7 +155,7 @@ export default function MunicipioLanding() {
   }
 
   const primary = tenant?.color_primario || "#22C55E";
-  const bgColor = tenant?.color_secundario || "#0d2b28";
+  const bgColor = tenant?.settings?.color_fondo || "#0d2b28";
   // Color legible sobre fondo oscuro (si el primary es muy oscuro, se usa verde brillante)
   const accentOnDark = ensureReadableOnDark(primary);
   const titulo = tenant?.bienvenida_titulo || `${tenant?.name} te acompaña`;

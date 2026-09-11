@@ -45,6 +45,7 @@ export default function ClientePanel() {
     bienvenida_subtitulo: "",
     color_primario: "#5c40c0",
     color_secundario: "#9B8EC4",
+    color_fondo: "#0d2b28",
     logo_url: "",
     imagen_portada_url: "",
   });
@@ -70,6 +71,7 @@ export default function ClientePanel() {
         bienvenida_subtitulo: t.bienvenida_subtitulo || "",
         color_primario: t.color_primario || "#5c40c0",
         color_secundario: t.color_secundario || "#9B8EC4",
+        color_fondo: t.settings?.color_fondo || "#0d2b28",
         logo_url: t.logo_url || "",
         imagen_portada_url: t.imagen_portada_url || "",
       });
@@ -117,12 +119,17 @@ export default function ClientePanel() {
   const saveConfig = async () => {
     if (!tenant) return;
     setSavingConfig(true);
+    const { color_fondo, ...rest } = configForm;
+    const payload = {
+      ...rest,
+      settings: { ...(tenant.settings || {}), color_fondo },
+    };
     await fetch(`${SUPABASE_URL}/rest/v1/tenants?id=eq.${tenant.id}`, {
       method: "PATCH",
       headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
-      body: JSON.stringify(configForm),
+      body: JSON.stringify(payload),
     });
-    setTenant((prev: any) => ({ ...prev, ...configForm }));
+    setTenant((prev: any) => ({ ...prev, ...rest, settings: { ...(prev?.settings || {}), color_fondo } }));
     setSavingConfig(false);
     alert("✅ Configuración guardada");
   };
@@ -365,9 +372,10 @@ export default function ClientePanel() {
                   className="w-full h-9 px-3 mt-1 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none"
                   placeholder="O pegá una URL: https://..." />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Color primario</label>
+                  <p className="text-[9px] text-gray-400 mb-1">Botón y acentos</p>
                   <div className="flex gap-2 items-center">
                     <input type="color" value={configForm.color_primario} onChange={e => setConfigForm((f: any) => ({ ...f, color_primario: e.target.value }))}
                       className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
@@ -376,12 +384,22 @@ export default function ClientePanel() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Color de fondo</label>
-                  <p className="text-[9px] text-gray-400 mb-1">Fondo de la landing pública</p>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Color secundario</label>
+                  <p className="text-[9px] text-gray-400 mb-1">Detalles y blobs</p>
                   <div className="flex gap-2 items-center">
                     <input type="color" value={configForm.color_secundario} onChange={e => setConfigForm((f: any) => ({ ...f, color_secundario: e.target.value }))}
                       className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
                     <input value={configForm.color_secundario} onChange={e => setConfigForm((f: any) => ({ ...f, color_secundario: e.target.value }))}
+                      className="flex-1 h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none font-mono" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Color de fondo</label>
+                  <p className="text-[9px] text-gray-400 mb-1">Fondo de la landing</p>
+                  <div className="flex gap-2 items-center">
+                    <input type="color" value={configForm.color_fondo} onChange={e => setConfigForm((f: any) => ({ ...f, color_fondo: e.target.value }))}
+                      className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                    <input value={configForm.color_fondo} onChange={e => setConfigForm((f: any) => ({ ...f, color_fondo: e.target.value }))}
                       className="flex-1 h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none font-mono" />
                   </div>
                 </div>
