@@ -104,7 +104,7 @@ export default function MunicipioLanding() {
         setTenant(t);
 
         const cr = await fetch(
-          `${SUPABASE_URL}/rest/v1/campaigns?tenant_id=eq.${t.id}&activo=eq.true&limit=1`,
+          `${SUPABASE_URL}/rest/v1/campaigns?tenant_id=eq.${t.id}&limit=1`,
           { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
         );
         const camps = await cr.json();
