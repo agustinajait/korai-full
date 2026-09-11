@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
-import { Loader2, LogOut, Users, MessageSquare, TrendingUp, ChevronRight, MessageCircle, ArrowLeft, Settings } from "lucide-react";
+import { Loader2, LogOut, Users, MessageSquare, TrendingUp, ChevronRight, MessageCircle, ArrowLeft, Settings, ExternalLink } from "lucide-react";
 import { calcularScores, generatePlanDesdeScores } from "@/lib/korai-logic";
 
 const SUPABASE_URL = "https://jgqqkgfppovkbwklctol.supabase.co";
@@ -229,6 +229,15 @@ export default function ClientePanel() {
           <p className="font-black text-[#1E1040] text-sm">{tenant?.name || "Panel"}</p>
           <p className="text-[10px] text-gray-400">Panel de diagnósticos</p>
         </div>
+        <a
+          href={`/${tenant?.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-bold hover:opacity-80 transition-opacity"
+          style={{ background: colorP + "15", color: colorP }}
+        >
+          <ExternalLink className="w-3.5 h-3.5" /> Ver landing
+        </a>
         <button
           onClick={() => { localStorage.removeItem("korai_client_session"); setLocation("/admin"); }}
           className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-bold text-gray-500 hover:bg-gray-100"
