@@ -17,7 +17,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 interface Tenant {
   id: string;
-  nombre: string;
+  name: string;
   slug: string;
   logo_url?: string;
   color_primario?: string;
@@ -156,7 +156,7 @@ export default function MunicipioLanding() {
   const primary = tenant?.color_primario || "#22C55E";
   // Color legible sobre fondo oscuro (si el primary es muy oscuro, se usa verde brillante)
   const accentOnDark = ensureReadableOnDark(primary);
-  const titulo = tenant?.bienvenida_titulo || `${tenant?.nombre} te acompaña`;
+  const titulo = tenant?.bienvenida_titulo || `${tenant?.name} te acompaña`;
   const subtitulo = tenant?.bienvenida_subtitulo || "Queremos conocerte mejor, para entender tus necesidades y seguir construyendo una comunidad más cercana.";
 
   const tituloWords = titulo.split(" ");
@@ -189,7 +189,7 @@ export default function MunicipioLanding() {
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
             className="flex items-start justify-between">
             {tenant?.logo_url ? (
-              <img src={tenant.logo_url} alt={tenant.nombre}
+              <img src={tenant.logo_url} alt={tenant.name}
                 className="w-auto object-contain"
                 style={{ height: "64px", maxWidth: "180px", imageRendering: "auto" }}
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -197,17 +197,17 @@ export default function MunicipioLanding() {
               <div className="bg-white rounded-xl px-3 py-2 flex items-center gap-2">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-black text-lg"
                   style={{ background: primary }}>
-                  {tenant?.nombre?.charAt(0) ?? "M"}
+                  {tenant?.name?.charAt(0) ?? "M"}
                 </div>
                 <span className="font-black text-sm text-gray-800" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                  {tenant?.nombre}
+                  {tenant?.name}
                 </span>
               </div>
             )}
             <div className="text-right max-w-[130px]">
               <p className="text-[11px] font-black leading-tight uppercase tracking-wide"
                 style={{ fontFamily: "'Montserrat', sans-serif", color: accentOnDark }}>
-                {tenant?.nombre}<br />más cerca<br />de su gente
+                {tenant?.name}<br />más cerca<br />de su gente
               </p>
             </div>
           </motion.div>
