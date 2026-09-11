@@ -42,10 +42,19 @@ const AREA_DEFAULTS: Record<string, { color: string; emoji: string; imagen_url: 
   salud:     { color: "#fce7f3", emoji: "🩺", imagen_url: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&q=80" },
   vivienda:  { color: "#e0f2fe", emoji: "🏠", imagen_url: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80" },
   niñez:     { color: "#fff3e0", emoji: "👶", imagen_url: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400&q=80" },
+  faro:      { color: "#fff3e0", emoji: "👶", imagen_url: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400&q=80" },
+  jardín:    { color: "#fff3e0", emoji: "🌱", imagen_url: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400&q=80" },
+  jardin:    { color: "#fff3e0", emoji: "🌱", imagen_url: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400&q=80" },
   juventud:  { color: "#fff3e0", emoji: "🎓", imagen_url: "https://images.unsplash.com/photo-1529390079861-591de354faf5?w=400&q=80" },
+  eva:       { color: "#e0f2fe", emoji: "📚", imagen_url: "https://images.unsplash.com/photo-1529390079861-591de354faf5?w=400&q=80" },
+  nodo:      { color: "#e0f2fe", emoji: "📚", imagen_url: "https://images.unsplash.com/photo-1529390079861-591de354faf5?w=400&q=80" },
+  udi:       { color: "#fce7f3", emoji: "🧒", imagen_url: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400&q=80" },
+  cic:       { color: "#dcfce7", emoji: "🏛️", imagen_url: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=400&q=80" },
   mayores:   { color: "#fefce8", emoji: "👴", imagen_url: "https://images.unsplash.com/photo-1516307365426-bea591f05011?w=400&q=80" },
   acción:    { color: "#f3e8ff", emoji: "🤝", imagen_url: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=400&q=80" },
   social:    { color: "#f3e8ff", emoji: "🤝", imagen_url: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=400&q=80" },
+  organiz:   { color: "#f3e8ff", emoji: "🤝", imagen_url: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=400&q=80" },
+  comunitar: { color: "#f3e8ff", emoji: "🤝", imagen_url: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=400&q=80" },
 };
 
 const FALLBACK_AREAS: Area[] = [
