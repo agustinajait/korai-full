@@ -157,8 +157,9 @@ export default function MunicipioLanding() {
   const primary = tenant?.color_primario || "#22C55E";
   const secondary = tenant?.color_secundario || primary;
   const bgColor = tenant?.settings?.color_fondo || "#0d2b28";
-  // Color legible sobre fondo oscuro (si el primary es muy oscuro, se usa verde brillante)
-  const accentOnDark = ensureReadableOnDark(primary);
+  // Para textos de acento sobre el fondo, usar el secundario si está definido, sino el primario
+  // ensureReadableOnDark asegura que sea legible sobre fondos oscuros
+  const accentOnDark = ensureReadableOnDark(tenant?.color_secundario ? secondary : primary);
   const titulo = tenant?.bienvenida_titulo || `${tenant?.name} te acompaña`;
   const subtitulo = tenant?.bienvenida_subtitulo || "Queremos conocerte mejor, para entender tus necesidades y seguir construyendo una comunidad más cercana.";
 
