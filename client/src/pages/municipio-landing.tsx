@@ -112,7 +112,7 @@ export default function MunicipioLanding() {
         if (Array.isArray(camps) && camps[0]) setCampaignId(camps[0].id);
 
         const ar = await fetch(
-          `${SUPABASE_URL}/rest/v1/derivation_areas?tenant_id=eq.${t.id}&activo=eq.true&order=nombre.asc&limit=4`,
+          `${SUPABASE_URL}/rest/v1/derivation_areas?tenant_id=eq.${t.id}&activa=eq.true&order=orden.asc&limit=4`,
           { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
         );
         const arData = await ar.json();
