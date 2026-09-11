@@ -372,37 +372,28 @@ export default function ClientePanel() {
                   className="w-full h-9 px-3 mt-1 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none"
                   placeholder="O pegá una URL: https://..." />
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Color primario</label>
-                  <p className="text-[9px] text-gray-400 mb-1">Botón y acentos</p>
-                  <div className="flex gap-2 items-center">
-                    <input type="color" value={configForm.color_primario} onChange={e => setConfigForm((f: any) => ({ ...f, color_primario: e.target.value }))}
-                      className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
-                    <input value={configForm.color_primario} onChange={e => setConfigForm((f: any) => ({ ...f, color_primario: e.target.value }))}
-                      className="flex-1 h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none font-mono" />
+              <div className="space-y-3">
+                {[
+                  { key: "color_primario", label: "Color primario", desc: "Botón CTA y textos resaltados" },
+                  { key: "color_secundario", label: "Color secundario", desc: "Blobs decorativos" },
+                  { key: "color_fondo", label: "Color de fondo", desc: "Fondo de la landing pública" },
+                ].map(({ key, label, desc }) => (
+                  <div key={key} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                    <label className="relative cursor-pointer flex-shrink-0">
+                      <div className="w-10 h-10 rounded-xl border-2 border-white shadow-md" style={{ background: configForm[key] }} />
+                      <input type="color" value={configForm[key]}
+                        onChange={e => setConfigForm((f: any) => ({ ...f, [key]: e.target.value }))}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
+                    </label>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-gray-700">{label}</p>
+                      <p className="text-[10px] text-gray-400">{desc}</p>
+                    </div>
+                    <input value={configForm[key]}
+                      onChange={e => setConfigForm((f: any) => ({ ...f, [key]: e.target.value }))}
+                      className="w-24 h-8 px-2 rounded-lg bg-white border border-gray-200 text-xs text-gray-900 focus:outline-none font-mono text-center" />
                   </div>
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Color secundario</label>
-                  <p className="text-[9px] text-gray-400 mb-1">Detalles y blobs</p>
-                  <div className="flex gap-2 items-center">
-                    <input type="color" value={configForm.color_secundario} onChange={e => setConfigForm((f: any) => ({ ...f, color_secundario: e.target.value }))}
-                      className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
-                    <input value={configForm.color_secundario} onChange={e => setConfigForm((f: any) => ({ ...f, color_secundario: e.target.value }))}
-                      className="flex-1 h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none font-mono" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Color de fondo</label>
-                  <p className="text-[9px] text-gray-400 mb-1">Fondo de la landing</p>
-                  <div className="flex gap-2 items-center">
-                    <input type="color" value={configForm.color_fondo} onChange={e => setConfigForm((f: any) => ({ ...f, color_fondo: e.target.value }))}
-                      className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
-                    <input value={configForm.color_fondo} onChange={e => setConfigForm((f: any) => ({ ...f, color_fondo: e.target.value }))}
-                      className="flex-1 h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none font-mono" />
-                  </div>
-                </div>
+                ))}
               </div>
               {/* Preview */}
               <div className="rounded-xl p-4 space-y-1" style={{ background: configForm.color_primario + "12", border: `1px solid ${configForm.color_primario}33` }}>
