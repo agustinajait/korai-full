@@ -113,6 +113,21 @@ export default function MunicipioLanding() {
         const t = data[0] as Tenant;
         setTenant(t);
 
+        // Inyectar Open Graph meta tags para link preview
+        const setMeta = (prop: string, content: string) => {
+          let el = document.querySelector(`meta[property="${prop}"]`) as HTMLMetaElement;
+          if (!el) { el = document.createElement("meta"); el.setAttribute("property", prop); document.head.appendChild(el); }
+          el.setAttribute("content", content);
+        };
+        const title = t.bienvenida_titulo || `${t.name} te acompaña`;
+        const desc = t.bienvenida_subtitulo || "Respondé algunas preguntas y conectate con los recursos de tu municipio.";
+        document.title = title;
+        setMeta("og:title", title);
+        setMeta("og:description", desc);
+        setMeta("og:type", "website");
+        setMeta("og:url", window.location.href);
+        if (t.logo_url && !t.logo_url.startsWith("data:")) setMeta("og:image", t.logo_url);
+
         const cr = await fetch(
           `${SUPABASE_URL}/rest/v1/campaigns?tenant_id=eq.${t.id}&limit=1`,
           { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
