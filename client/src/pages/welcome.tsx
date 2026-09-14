@@ -395,55 +395,126 @@ export default function Welcome() {
 
   if (mode === "landing") {
     return (
-      <div className="min-h-screen w-full flex justify-center" style={{ background: "#F8F7FF" }}>
-        <div className="w-full max-w-sm flex flex-col min-h-screen px-5 pt-12 pb-6 gap-4">
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-2">
-            <img src={koraiLogo} alt="KORAI logo" className="w-10 h-10 object-contain" />
-            <span style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-3xl font-black tracking-tight text-[#1E1040]">
-              KOR<span className="text-[#22C55E]">AI</span>
+      <div className="min-h-screen w-full flex justify-center relative overflow-hidden"
+        style={{ background: "#0f0a1e", fontFamily: "'Montserrat', sans-serif" }}>
+
+        {/* Grain texture */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`,
+          opacity: 0.6,
+        }} />
+
+        {/* Background glows */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute" style={{
+            top: "-10%", left: "-20%", width: "70vw", height: "70vw", maxWidth: 500, maxHeight: 500,
+            borderRadius: "50%", background: "radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 70%)",
+            filter: "blur(40px)",
+          }} />
+          <div className="absolute" style={{
+            bottom: "5%", right: "-15%", width: "60vw", height: "60vw", maxWidth: 420, maxHeight: 420,
+            borderRadius: "50%", background: "radial-gradient(circle, rgba(34,197,94,0.18) 0%, transparent 70%)",
+            filter: "blur(40px)",
+          }} />
+          <div className="absolute" style={{
+            top: "40%", left: "50%", transform: "translateX(-50%)", width: "80vw", height: "40vw", maxWidth: 400, maxHeight: 200,
+            borderRadius: "50%", background: "radial-gradient(circle, rgba(14,165,233,0.10) 0%, transparent 70%)",
+            filter: "blur(60px)",
+          }} />
+        </div>
+
+        <div className="w-full max-w-sm flex flex-col min-h-screen px-5 pt-10 pb-6 relative z-10">
+
+          {/* Logo */}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center gap-2.5 mb-8">
+            <img src={koraiLogo} alt="KORAI logo" className="w-9 h-9 object-contain" />
+            <span className="text-3xl font-black tracking-tight" style={{ color: "#fff" }}>
+              KOR<span style={{ color: "#22C55E" }}>AI</span>
             </span>
           </motion.div>
-          <div className="space-y-3 mt-6">
+
+          {/* Hero headline */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="mb-6 text-center">
+            <h1 className="text-4xl font-black leading-[1.1] tracking-tight mb-3" style={{
+              color: "#fff",
+              textWrap: "balance" as any,
+            }}>
+              Conocé los recursos<br />
+              <span style={{ color: "#22C55E" }}>que te pertenecen</span>
+            </h1>
+            <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
+              Un diagnóstico rápido que conecta a cada persona con los programas y oportunidades que más le sirven.
+            </p>
+          </motion.div>
+
+          {/* Family illustration */}
+          <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
+            className="flex justify-center mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-3xl" style={{
+                background: "radial-gradient(ellipse at 50% 80%, rgba(124,58,237,0.3) 0%, transparent 70%)",
+                filter: "blur(20px)",
+              }} />
+              <img src={fliaImg} alt="Familia KORAI"
+                className="relative object-contain"
+                style={{ maxHeight: "200px", width: "100%", filter: "drop-shadow(0 8px 32px rgba(124,58,237,0.3))" }} />
+            </div>
+          </motion.div>
+
+          {/* Pillars */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="grid grid-cols-3 gap-2 mb-6">
             {[
-              { emoji: "💜", color: "#7C3AED", text: "Queremos conocerte," },
-              { emoji: "👂", color: "#0EA5E9", text: "escucharte y acercarte" },
-              { emoji: "👥", color: "#22C55E", text: "oportunidades para vos y tu familia." },
-            ].map((item, i) => (
-              <motion.div key={i} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.1 }}
-                className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-xl" style={{ background: `${item.color}22` }}>
-                  {item.emoji}
-                </div>
-                <span style={{ fontFamily: "'Montserrat', sans-serif", color: item.color }} className="text-xl font-black leading-tight">
-                  {item.text}
-                </span>
+              { emoji: "💼", label: "Empleo" },
+              { emoji: "📚", label: "Educación" },
+              { emoji: "🩺", label: "Salud" },
+              { emoji: "🏠", label: "Vivienda" },
+              { emoji: "🧾", label: "Ingresos" },
+              { emoji: "🤝", label: "Red" },
+            ].map((a, i) => (
+              <motion.div key={a.label}
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 + i * 0.05 }}
+                className="flex flex-col items-center gap-1 py-3 rounded-2xl"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <span className="text-xl">{a.emoji}</span>
+                <span className="text-[10px] font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>{a.label}</span>
               </motion.div>
             ))}
-          </div>
-          <div className="flex-1" />
-          <div className="flex flex-col gap-0">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}
-              className="flex justify-center">
-              <img src={fliaImg} alt="Familia KORAI" className="w-full object-contain" style={{ maxHeight: "220px", filter: "drop-shadow(0 4px 20px rgba(124,58,237,0.15))" }} />
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-3">
-              <div className="flex items-center gap-3 p-4 rounded-2xl border border-[#E9D5FF] bg-[#F5F3FF]">
-                <div className="w-11 h-11 rounded-full bg-[#EDE9FE] flex items-center justify-center flex-shrink-0 text-xl">⏱️</div>
-                <p style={{ fontFamily: "'Montserrat', sans-serif" }} className="text-sm text-[#1E1040] leading-snug">
-                  Es un <span className="font-black text-[#7C3AED]">diagnóstico simple</span> que dura solo <span className="font-black text-[#22C55E]">unos minutos</span> y nos permite acompañarte mejor.
-                </p>
-              </div>
-              <Button onClick={() => setMode("form")}
-                className="w-full h-14 text-lg font-black rounded-2xl shadow-lg flex items-center justify-center gap-3"
-                style={{ fontFamily: "'Montserrat', sans-serif", background: "linear-gradient(135deg, #7C3AED, #22C55E)" }}>
-                Comenzar <ArrowRight className="w-5 h-5" />
-              </Button>
-              <button onClick={() => setMode("returning")} className="w-full py-1 text-xs font-semibold text-center" style={{ fontFamily: "'Montserrat', sans-serif", color: C.textSub }}>
-                Ya hice mi diagnóstico → Ver mis resultados
-              </button>
-              <p className="text-[10px] text-center" style={{ color: C.textSub }}>🔒 Tu información está protegida</p>
-            </motion.div>
-          </div>
+          </motion.div>
+
+          {/* CTA */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+            className="space-y-3 mt-auto">
+            <div className="flex items-center gap-3 p-4 rounded-2xl"
+              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <div className="text-2xl">⏱️</div>
+              <p className="text-sm leading-snug" style={{ color: "rgba(255,255,255,0.7)" }}>
+                Solo <span className="font-black" style={{ color: "#22C55E" }}>unos minutos</span> y recibís un plan personalizado para tu situación.
+              </p>
+            </div>
+
+            <Button onClick={() => setMode("form")}
+              className="w-full h-14 text-lg font-black rounded-2xl flex items-center justify-center gap-3"
+              style={{
+                background: "linear-gradient(135deg, #7C3AED 0%, #22C55E 100%)",
+                boxShadow: "0 4px 32px rgba(124,58,237,0.4)",
+                border: "none",
+              }}>
+              Comenzar mi diagnóstico <ArrowRight className="w-5 h-5" />
+            </Button>
+
+            <button onClick={() => setMode("returning")}
+              className="w-full py-2 text-xs font-semibold text-center transition-opacity hover:opacity-80"
+              style={{ color: "rgba(255,255,255,0.4)" }}>
+              Ya hice mi diagnóstico → Ver mis resultados
+            </button>
+            <p className="text-[10px] text-center" style={{ color: "rgba(255,255,255,0.25)" }}>
+              🔒 Tu información está protegida
+            </p>
+          </motion.div>
         </div>
       </div>
     );
