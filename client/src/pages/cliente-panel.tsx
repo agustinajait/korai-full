@@ -37,7 +37,7 @@ export default function ClientePanel() {
   const [activeTab, setActiveTab] = useState<"usuarios" | "config" | "areas">("usuarios");
   const [areas, setAreas] = useState<any[]>([]);
   const [areasLoading, setAreasLoading] = useState(false);
-  const [editingArea, setEditingArea] = useState<any>(null);
+  const [editingArea, setEditingArea] = useState<any>(null); // null = cerrado, "new" = nuevo, object = editar
   const [areaForm, setAreaForm] = useState<any>({});
   const [savingArea, setSavingArea] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -345,18 +345,7 @@ export default function ClientePanel() {
                 <p className="text-xs text-gray-400">Estas son las 4 áreas que aparecen en las cards con fotos</p>
               </div>
               <button
-                onClick={async () => {
-                  const nombre = prompt("Nombre del área:");
-                  if (!nombre) return;
-                  const session = (() => { try { return JSON.parse(localStorage.getItem("korai_client_session") || "null"); } catch { return null; } })();
-                  const res = await fetch(`${SUPABASE_URL}/rest/v1/derivation_areas`, {
-                    method: "POST",
-                    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=representation" },
-                    body: JSON.stringify({ tenant_id: session.tenant_id, nombre, activa: true, orden: areas.length + 1 }),
-                  });
-                  const data = await res.json();
-                  if (Array.isArray(data) && data[0]) setAreas(prev => [...prev, data[0]]);
-                }}
+                onClick={() => { setEditingArea("new"); setAreaForm({ nombre: "", descripcion: "", imagen_url: "" }); }}
                 className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-bold text-white"
                 style={{ background: colorP }}>
                 + Nueva área
@@ -406,24 +395,26 @@ export default function ClientePanel() {
           </div>
         )}
 
-        {/* Modal editar área */}
-        {editingArea && (
+        {/* Modal nueva / editar área */}
+        {editingArea !== null && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-black text-[#1E1040]">✏️ Editar área</h3>
+                <h3 className="text-base font-black text-[#1E1040]">{editingArea === "new" ? "➕ Nueva área" : "✏️ Editar área"}</h3>
                 <button onClick={() => setEditingArea(null)} className="text-[#9B8EC4] text-xl leading-none">×</button>
               </div>
               <div className="space-y-3">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Nombre</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Nombre *</label>
                   <input value={areaForm.nombre} onChange={e => setAreaForm((f: any) => ({ ...f, nombre: e.target.value }))}
-                    className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none" />
+                    className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none"
+                    placeholder="Ej: Centros Faro" autoFocus />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Descripción</label>
                   <input value={areaForm.descripcion} onChange={e => setAreaForm((f: any) => ({ ...f, descripcion: e.target.value }))}
-                    className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none" />
+                    className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none"
+                    placeholder="Breve descripción" />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">URL de imagen</label>
@@ -435,21 +426,33 @@ export default function ClientePanel() {
               <div className="flex gap-2">
                 <button onClick={() => setEditingArea(null)} className="flex-1 h-9 rounded-xl border border-gray-200 text-xs font-bold text-gray-400">Cancelar</button>
                 <button
-                  disabled={savingArea}
+                  disabled={savingArea || !areaForm.nombre?.trim()}
                   onClick={async () => {
+                    if (!areaForm.nombre?.trim()) return;
                     setSavingArea(true);
-                    await fetch(`${SUPABASE_URL}/rest/v1/derivation_areas?id=eq.${editingArea.id}`, {
-                      method: "PATCH",
-                      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
-                      body: JSON.stringify(areaForm),
-                    });
-                    setAreas(prev => prev.map(a => a.id === editingArea.id ? { ...a, ...areaForm } : a));
+                    const session = (() => { try { return JSON.parse(localStorage.getItem("korai_client_session") || "null"); } catch { return null; } })();
+                    if (editingArea === "new") {
+                      const res = await fetch(`${SUPABASE_URL}/rest/v1/derivation_areas`, {
+                        method: "POST",
+                        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=representation" },
+                        body: JSON.stringify({ tenant_id: session.tenant_id, nombre: areaForm.nombre, descripcion: areaForm.descripcion, imagen_url: areaForm.imagen_url, activa: true, orden: areas.length + 1 }),
+                      });
+                      const data = await res.json();
+                      if (Array.isArray(data) && data[0]) setAreas(prev => [...prev, data[0]]);
+                    } else {
+                      await fetch(`${SUPABASE_URL}/rest/v1/derivation_areas?id=eq.${editingArea.id}`, {
+                        method: "PATCH",
+                        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+                        body: JSON.stringify(areaForm),
+                      });
+                      setAreas(prev => prev.map(a => a.id === editingArea.id ? { ...a, ...areaForm } : a));
+                    }
                     setSavingArea(false);
                     setEditingArea(null);
                   }}
                   className="flex-1 h-9 rounded-xl text-white text-xs font-bold disabled:opacity-50"
                   style={{ background: colorP }}>
-                  {savingArea ? "Guardando..." : "Guardar"}
+                  {savingArea ? "Guardando..." : editingArea === "new" ? "Crear" : "Guardar"}
                 </button>
               </div>
             </div>
