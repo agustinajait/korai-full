@@ -205,6 +205,25 @@ export default function MunicipioLanding() {
     <div className="min-h-screen w-full flex justify-center" style={{ background: bgColor }}>
       <div className="w-full max-w-sm relative overflow-hidden">
 
+        {/* Textura de grano */}
+        <div className="absolute inset-0 pointer-events-none z-0" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+          opacity: 0.04,
+          mixBlendMode: "overlay",
+        }} />
+
+        {/* Glow radial superior */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none z-0" style={{
+          width: 340, height: 260,
+          background: `radial-gradient(ellipse at 50% 0%, ${primary}55 0%, transparent 70%)`,
+        }} />
+
+        {/* Glow radial inferior */}
+        <div className="absolute bottom-0 right-0 pointer-events-none z-0" style={{
+          width: 200, height: 200,
+          background: `radial-gradient(ellipse at 100% 100%, ${secondary}33 0%, transparent 70%)`,
+        }} />
+
         {/* Blobs — alternan primary y secondary */}
         <Blob style={{ top: -60, left: -60, width: 180, height: 180, background: primary }} />
         <Blob style={{ top: 80, right: -40, width: 130, height: 130, background: secondary }} />
