@@ -34,7 +34,12 @@ export default function ClientePanel() {
   const [tenant, setTenant] = useState<any>(null);
   const [responses, setResponses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"usuarios" | "config">("usuarios");
+  const [activeTab, setActiveTab] = useState<"usuarios" | "config" | "areas">("usuarios");
+  const [areas, setAreas] = useState<any[]>([]);
+  const [areasLoading, setAreasLoading] = useState(false);
+  const [editingArea, setEditingArea] = useState<any>(null);
+  const [areaForm, setAreaForm] = useState<any>({});
+  const [savingArea, setSavingArea] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [notesLoading, setNotesLoading] = useState(false);
@@ -86,6 +91,16 @@ export default function ClientePanel() {
         if (Array.isArray(data)) setResponses(data);
       }
       setLoading(false);
+
+      // Cargar áreas del tenant
+      setAreasLoading(true);
+      const arRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/derivation_areas?tenant_id=eq.${session.tenant_id}&order=orden.asc`,
+        { headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      const arData = await arRes.json();
+      if (Array.isArray(arData)) setAreas(arData);
+      setAreasLoading(false);
     }).catch(() => { setLocation("/admin"); });
   }, []);
 
@@ -275,7 +290,7 @@ export default function ClientePanel() {
 
         {/* Tabs */}
         <div className="flex gap-1 border-b border-gray-200 mb-5">
-          {([["usuarios", "👥 Usuarios"], ["config", "⚙️ Configuración"]] as const).map(([key, label]) => (
+          {([["usuarios", "👥 Usuarios"], ["areas", "🖼️ Áreas"], ["config", "⚙️ Configuración"]] as const).map(([key, label]) => (
             <button key={key} onClick={() => setActiveTab(key)}
               className="px-5 py-2.5 text-sm font-bold transition-colors"
               style={activeTab === key ? { color: colorP, borderBottom: `2px solid ${colorP}` } : { color: "#9B8EC4", borderBottom: "2px solid transparent" }}>
@@ -317,6 +332,126 @@ export default function ClientePanel() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: Áreas */}
+        {activeTab === "areas" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-black text-[#1E1040]">Áreas de tu landing</h3>
+                <p className="text-xs text-gray-400">Estas son las 4 áreas que aparecen en las cards con fotos</p>
+              </div>
+              <button
+                onClick={async () => {
+                  const nombre = prompt("Nombre del área:");
+                  if (!nombre) return;
+                  const session = (() => { try { return JSON.parse(localStorage.getItem("korai_client_session") || "null"); } catch { return null; } })();
+                  const res = await fetch(`${SUPABASE_URL}/rest/v1/derivation_areas`, {
+                    method: "POST",
+                    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=representation" },
+                    body: JSON.stringify({ tenant_id: session.tenant_id, nombre, activa: true, orden: areas.length + 1 }),
+                  });
+                  const data = await res.json();
+                  if (Array.isArray(data) && data[0]) setAreas(prev => [...prev, data[0]]);
+                }}
+                className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-bold text-white"
+                style={{ background: colorP }}>
+                + Nueva área
+              </button>
+            </div>
+            {areasLoading && <div className="text-center py-6"><Loader2 className="w-5 h-5 animate-spin mx-auto text-gray-400" /></div>}
+            <div className="space-y-2">
+              {areas.map(area => (
+                <div key={area.id} className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center gap-3">
+                  {area.imagen_url ? (
+                    <img src={area.imagen_url} alt={area.nombre} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 bg-gray-100">🏛️</div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-sm text-[#1E1040] truncate">{area.nombre}</p>
+                    <p className="text-xs text-gray-400 truncate">{area.descripcion || "Sin descripción"}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={async () => {
+                        const newActiva = !area.activa;
+                        await fetch(`${SUPABASE_URL}/rest/v1/derivation_areas?id=eq.${area.id}`, {
+                          method: "PATCH",
+                          headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+                          body: JSON.stringify({ activa: newActiva }),
+                        });
+                        setAreas(prev => prev.map(a => a.id === area.id ? { ...a, activa: newActiva } : a));
+                      }}
+                      className={`text-[10px] font-bold px-2 h-6 rounded-full ${area.activa ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>
+                      {area.activa ? "✓ Activa" : "Inactiva"}
+                    </button>
+                    <button
+                      onClick={() => { setEditingArea(area); setAreaForm({ nombre: area.nombre, descripcion: area.descripcion || "", imagen_url: area.imagen_url || "" }); }}
+                      className="text-xs font-bold px-3 h-8 rounded-lg text-[#5c40c0] bg-[#ede9fe] hover:bg-[#ddd6fe] transition-colors">
+                      ✏️
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {areas.length === 0 && !areasLoading && (
+                <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+                  Sin áreas. Usá "+ Nueva área" para agregar.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Modal editar área */}
+        {editingArea && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-black text-[#1E1040]">✏️ Editar área</h3>
+                <button onClick={() => setEditingArea(null)} className="text-[#9B8EC4] text-xl leading-none">×</button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Nombre</label>
+                  <input value={areaForm.nombre} onChange={e => setAreaForm((f: any) => ({ ...f, nombre: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">Descripción</label>
+                  <input value={areaForm.descripcion} onChange={e => setAreaForm((f: any) => ({ ...f, descripcion: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide block mb-1">URL de imagen</label>
+                  <input value={areaForm.imagen_url} onChange={e => setAreaForm((f: any) => ({ ...f, imagen_url: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-900 focus:outline-none" placeholder="https://..." />
+                  {areaForm.imagen_url && <img src={areaForm.imagen_url} alt="" className="mt-2 h-20 w-full object-cover rounded-xl" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setEditingArea(null)} className="flex-1 h-9 rounded-xl border border-gray-200 text-xs font-bold text-gray-400">Cancelar</button>
+                <button
+                  disabled={savingArea}
+                  onClick={async () => {
+                    setSavingArea(true);
+                    await fetch(`${SUPABASE_URL}/rest/v1/derivation_areas?id=eq.${editingArea.id}`, {
+                      method: "PATCH",
+                      headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+                      body: JSON.stringify(areaForm),
+                    });
+                    setAreas(prev => prev.map(a => a.id === editingArea.id ? { ...a, ...areaForm } : a));
+                    setSavingArea(false);
+                    setEditingArea(null);
+                  }}
+                  className="flex-1 h-9 rounded-xl text-white text-xs font-bold disabled:opacity-50"
+                  style={{ background: colorP }}>
+                  {savingArea ? "Guardando..." : "Guardar"}
+                </button>
+              </div>
             </div>
           </div>
         )}
