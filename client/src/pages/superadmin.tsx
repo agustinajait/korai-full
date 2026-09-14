@@ -183,6 +183,9 @@ export default function Superadmin() {
   const [showNuevoCliente, setShowNuevoCliente] = useState(false);
   const [clienteForm, setClienteForm] = useState({ nombre: "", slug: "", email: "", password: "", color_primario: "#5c40c0" });
   const [creandoCliente, setCreandoCliente] = useState(false);
+  const [editandoCliente, setEditandoCliente] = useState<any>(null);
+  const [editClienteForm, setEditClienteForm] = useState<any>({});
+  const [guardandoCliente, setGuardandoCliente] = useState(false);
   const [profileTab, setProfileTab] = useState<"perfil" | "diagnostico">("perfil");
   const [derivationAreas, setDerivationAreas] = useState<any[]>([]);
   const [insight, setInsight] = useState<any>(null);
@@ -1587,7 +1590,12 @@ export default function Superadmin() {
                     <p className="font-black text-[#1E1040]">{c.name}</p>
                     <p className="text-xs text-[#9B8EC4]">app.korai.lat/{c.slug} · {c.client_users?.[0]?.email || "Sin usuario"}</p>
                   </div>
-                  <a href={`/cliente`} target="_blank" className="text-xs text-[#5c40c0] underline">Ver panel</a>
+                  <button
+                    onClick={() => { setEditandoCliente(c); setEditClienteForm({ name: c.name || "", slug: c.slug || "", color_primario: c.color_primario || "#5c40c0", logo_url: c.logo_url || "", bienvenida_titulo: c.bienvenida_titulo || "", bienvenida_subtitulo: c.bienvenida_subtitulo || "" }); }}
+                    className="text-xs font-bold px-3 h-8 rounded-lg text-[#5c40c0] bg-[#ede9fe] hover:bg-[#ddd6fe] transition-colors">
+                    ✏️ Editar
+                  </button>
+                  <a href={`/${c.slug}`} target="_blank" className="text-xs text-[#9B8EC4] hover:text-[#5c40c0] underline">Ver landing</a>
                 </div>
               ))}
             </div>
@@ -1682,6 +1690,78 @@ export default function Superadmin() {
                 className="flex-1 h-9 rounded-xl bg-[#5c40c0] text-white text-xs font-bold disabled:opacity-40"
               >
                 {creandoCliente ? "Creando..." : "Crear cliente"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal editar cliente */}
+      {editandoCliente && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-black text-[#1E1040]">✏️ Editar cliente</h3>
+              <button onClick={() => setEditandoCliente(null)} className="text-[#9B8EC4] hover:text-[#5c40c0] text-xl leading-none">×</button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Nombre</label>
+                <input value={editClienteForm.name} onChange={e => setEditClienteForm((f: any) => ({ ...f, name: e.target.value }))}
+                  className="w-full h-10 px-3 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm text-gray-900 focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Slug (URL)</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[#9B8EC4]">app.korai.lat/</span>
+                  <input value={editClienteForm.slug} onChange={e => setEditClienteForm((f: any) => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") }))}
+                    className="flex-1 h-10 px-3 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm text-gray-900 focus:outline-none font-mono" />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Logo URL</label>
+                <input value={editClienteForm.logo_url} onChange={e => setEditClienteForm((f: any) => ({ ...f, logo_url: e.target.value }))}
+                  className="w-full h-10 px-3 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm text-gray-900 focus:outline-none" placeholder="https://..." />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Título de bienvenida</label>
+                <input value={editClienteForm.bienvenida_titulo} onChange={e => setEditClienteForm((f: any) => ({ ...f, bienvenida_titulo: e.target.value }))}
+                  className="w-full h-10 px-3 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm text-gray-900 focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Subtítulo</label>
+                <textarea value={editClienteForm.bienvenida_subtitulo} onChange={e => setEditClienteForm((f: any) => ({ ...f, bienvenida_subtitulo: e.target.value }))}
+                  rows={2} className="w-full px-3 py-2 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm text-gray-900 focus:outline-none resize-none" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-[#6B5FA0] uppercase tracking-wide block mb-1">Color primario</label>
+                <div className="flex gap-2 items-center">
+                  <input type="color" value={editClienteForm.color_primario} onChange={e => setEditClienteForm((f: any) => ({ ...f, color_primario: e.target.value }))}
+                    className="w-10 h-10 rounded-lg border border-[#B8A9E8] cursor-pointer p-0.5" />
+                  <input value={editClienteForm.color_primario} onChange={e => setEditClienteForm((f: any) => ({ ...f, color_primario: e.target.value }))}
+                    className="flex-1 h-10 px-3 rounded-xl bg-[#f8f6ff] border border-[#B8A9E8] text-sm text-gray-900 focus:outline-none font-mono" />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button onClick={() => setEditandoCliente(null)} className="flex-1 h-9 rounded-xl border border-[#B8A9E8] text-xs font-bold text-[#9B8EC4]">Cancelar</button>
+              <button
+                disabled={guardandoCliente}
+                onClick={async () => {
+                  setGuardandoCliente(true);
+                  await fetch(`${SUPABASE_URL}/rest/v1/tenants?id=eq.${editandoCliente.id}`, {
+                    method: "PATCH",
+                    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", "Prefer": "return=minimal" },
+                    body: JSON.stringify(editClienteForm),
+                  });
+                  setClientes(prev => prev.map(c => c.id === editandoCliente.id ? { ...c, ...editClienteForm } : c));
+                  setGuardandoCliente(false);
+                  setEditandoCliente(null);
+                  alert("✅ Cliente actualizado");
+                }}
+                className="flex-1 h-9 rounded-xl text-white text-xs font-bold disabled:opacity-50"
+                style={{ background: "#5c40c0" }}>
+                {guardandoCliente ? "Guardando..." : "Guardar cambios"}
               </button>
             </div>
           </div>
